@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thẻ Trả Lời — Quét thẻ giấy trên lớp | Học Toán Cùng Thầy Tâm</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: #f2f6fd; color: #1c2b45; }
+  header.top { background: linear-gradient(120deg, #312e81, #6d28a8); color: #fff; }
+  .top-in { max-width: 1220px; margin: auto; padding: 18px 16px; }
+  .top-in h1 { font-size: clamp(22px, 3.4vw, 32px); font-weight: 1000; }
+  .top-in p { opacity: .88; margin-top: 5px; font-size: 14.5px; line-height: 1.55; max-width: 900px; }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .steps span { background: #ffffff22; border: 1px solid #ffffff3d; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+  nav.tabs { position: sticky; top: 0; z-index: 40; background: #fff; border-bottom: 1px solid #dde6f5; }
+  .tabs-in { max-width: 1220px; margin: auto; display: flex; gap: 6px; padding: 9px 16px; flex-wrap: wrap; }
+  .tabs-in button { border: 0; background: #eef3fb; color: #31507e; font-weight: 900; font-size: 14.5px; padding: 10px 16px; border-radius: 999px; cursor: pointer; }
+  .tabs-in button.on { background: #312e81; color: #fff; }
+  .wrap { max-width: 1220px; margin: auto; padding: 20px 16px 60px; }
+  .view { display: none; }
+  .view.on { display: block; }
+  .card { background: #fff; border: 1px solid #e2eaf6; border-radius: 16px; padding: 18px; box-shadow: 0 3px 10px #1c2b450d; margin-top: 16px; }
+  .card h2 { font-size: 17px; font-weight: 1000; margin-bottom: 10px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input[type=text], textarea, select { padding: 11px 13px; border-radius: 11px; border: 1.5px solid #ccd9ee; font-size: 14.5px; outline: none; background: #fff; font-family: inherit; }
+  input[type=text]:focus, textarea:focus { border-color: #6d28a8; }
+  textarea { width: 100%; min-height: 96px; resize: vertical; }
+  .btn { padding: 11px 17px; border-radius: 11px; border: 0; font-weight: 800; font-size: 14px; cursor: pointer; background: #312e81; color: #fff; }
+  .btn:hover { background: #27236b; }
+  .btn.sec { background: #e7f0ff; color: #274b9f; }
+  .btn.sec:hover { background: #d5e5ff; }
+  .btn.green { background: #0e9f6e; }
+  .btn.green:hover { background: #0b8459; }
+  .btn.warn { background: #fff1d6; color: #9a6206; }
+  .btn.danger { background: #fde8e6; color: #b3372f; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .small { font-size: 12.5px; color: #7286a3; line-height: 1.55; }
+  .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 9px; margin-top: 12px; }
+  .stu { display: flex; align-items: center; gap: 9px; background: #fbfdff; border: 1px solid #e2eaf6; border-radius: 12px; padding: 8px 11px; }
+  .stu .stt { background: #312e81; color: #fff; font-weight: 1000; border-radius: 8px; padding: 3px 8px; font-size: 13px; }
+  .stu .nm { flex: 1; font-weight: 700; font-size: 14px; }
+  .stu .x { border: 0; background: transparent; color: #c3cfe0; font-size: 15px; cursor: pointer; }
+  .stu .x:hover { color: #e2483d; }
+  .qlist { display: grid; gap: 9px; margin-top: 6px; }
+  .qitem { border: 1px solid #e2eaf6; border-radius: 12px; padding: 11px 13px; background: #fbfdff; font-size: 14px; line-height: 1.55; }
+  .qitem b.qn { color: #312e81; }
+  .qitem .opts { color: #43597a; }
+  .qitem .key { display: inline-block; background: #e5f8ef; color: #0b8459; font-weight: 900; border-radius: 7px; padding: 1px 8px; font-size: 12.5px; }
+  .qitem .del { float: right; border: 0; background: transparent; color: #c3cfe0; cursor: pointer; font-size: 15px; }
+  .qitem .del:hover { color: #e2483d; }
+  .sess-head { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .sess-head .qno { font-size: 19px; font-weight: 1000; }
+  .bigq { margin-top: 12px; background: #171038; color: #fff; border-radius: 16px; padding: 20px 22px; }
+  .bigq .qq { font-size: clamp(18px, 2.6vw, 26px); font-weight: 800; line-height: 1.5; }
+  .bigq .oo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  @media (max-width: 640px) { .bigq .oo { grid-template-columns: 1fr; } }
+  .bigq .oo div { background: #2c1e63; border-radius: 12px; padding: 12px 14px; font-size: 16px; font-weight: 700; }
+  .bigq .oo div b { color: #ffd94d; margin-right: 7px; }
+  .bigq .oo div.correct { background: #0e9f6e; }
+  .camgrid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 14px; margin-top: 16px; }
+  @media (max-width: 900px) { .camgrid { grid-template-columns: 1fr; } }
+  .cambox { background: #0c0c18; border-radius: 16px; overflow: hidden; position: relative; min-height: 240px; }
+  .cambox video { width: 100%; display: block; }
+  .cambox .camnote { position: absolute; left: 10px; bottom: 10px; right: 10px; background: #000a; color: #fff; border-radius: 10px; padding: 8px 11px; font-size: 13px; line-height: 1.5; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+  .cell { border: 2px solid #dbe4f2; background: #f4f7fc; border-radius: 12px; padding: 8px 9px; cursor: pointer; min-height: 62px; }
+  .cell .n { font-size: 11px; font-weight: 900; color: #7286a3; }
+  .cell .nm { font-size: 13px; font-weight: 800; line-height: 1.25; margin-top: 1px; }
+  .cell .a { font-size: 15px; font-weight: 1000; margin-top: 2px; }
+  .cell.ans { background: #e8f1ff; border-color: #6f9dff; }
+  .cell.ans .a { color: #274b9f; }
+  .cell.right { background: #e5f8ef; border-color: #37d399; }
+  .cell.right .a { color: #0b8459; }
+  .cell.wrong { background: #fdecea; border-color: #f0a49e; }
+  .cell.wrong .a { color: #b3372f; }
+  .bars { display: grid; gap: 9px; margin-top: 10px; }
+  .bar { display: grid; grid-template-columns: 30px 1fr 86px; gap: 10px; align-items: center; font-size: 14px; font-weight: 800; }
+  .bar .track { background: #eef3fb; height: 22px; border-radius: 8px; overflow: hidden; }
+  .bar .fill { height: 100%; border-radius: 8px; }
+  table.sum { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+  table.sum th, table.sum td { border: 1px solid #e2eaf6; padding: 8px 10px; text-align: left; }
+  table.sum th { background: #f2f6fd; }
+  .pastebox { display: none; margin-top: 10px; }
+  .pastebox.open { display: block; }
+  .roombox { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
+  @media (max-width: 760px) { .roombox { grid-template-columns: 1fr; } }
+  .bigcode { font-size: 44px; font-weight: 1000; letter-spacing: 10px; color: #312e81; margin: 6px 0 10px; }
+  body.phone header.top { display: none; }
+  /* ===== KHU IN THE ===== */
+  #printArea { display: none; }
+  .sheet { background: #fff; }
+  .pcard { position: relative; border: 1.5px dashed #b9c6d8; border-radius: 10px; margin: 0 auto; background: #fff; overflow: hidden; }
+  .pcard .code { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); }
+  .pcard .lt { position: absolute; font-weight: 1000; color: #111; }
+  .pcard .lt.t { top: 6px; left: 50%; transform: translateX(-50%); }
+  .pcard .lt.b { bottom: 6px; left: 50%; transform: translateX(-50%); }
+  .pcard .lt.l { left: 10px; top: 50%; transform: translateY(-50%); }
+  .pcard .lt.r { right: 10px; top: 50%; transform: translateY(-50%); }
+  .pcard .no { position: absolute; top: 8px; right: 12px; font-weight: 1000; color: #111; }
+  .pcard .who { position: absolute; left: 12px; bottom: 8px; color: #333; font-weight: 700; }
+  .pcard .brand { position: absolute; left: 12px; top: 8px; color: #666; font-weight: 700; }
+  @media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { display: block; position: absolute; inset: 0; }
+    .sheet { page-break-after: always; }
+    @page { size: A4 portrait; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <h1>🪧 Thẻ Trả Lời — Cả lớp trả lời, thầy quét một lượt</h1>
+    <p>Mỗi học sinh một tấm thẻ giấy in sẵn tên và mã riêng. Chọn đáp án nào, xoay cạnh đó lên trên rồi giơ cao; thầy mở camera lia một vòng quanh lớp, máy tự ghi nhận đáp án của từng em và chấm ngay.</p>
+    <div class="steps"><span>1 · In thẻ</span><span>2 · Mở buổi học</span><span>3 · Quét trên lớp</span><span>Không cần điện thoại cho học sinh · Không cần máy bấm</span><span>Bản V5 · Hướng dẫn đầy đủ trong app · Nhập danh sách từ file</span></div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-in">
+    <button data-tab="lop" class="on" type="button">1 · Lớp &amp; In thẻ</button>
+    <button data-tab="cauhoi" type="button">2 · Câu hỏi</button>
+    <button data-tab="buoi" type="button">3 · Buổi học</button>
+    <button data-tab="huongdan" type="button">📖 Hướng dẫn</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ============ TAB LOP ============ -->
+  <div class="view on" id="view-lop">
+    <div class="card">
+      <h2>👥 Danh sách lớp</h2>
+      <div class="row">
+        <input type="text" id="oneName" placeholder="Nhập họ tên học sinh rồi bấm Enter" style="flex:1; min-width:220px">
+        <button class="btn" id="addOne" type="button">Thêm</button>
+        <button class="btn sec" id="togglePaste" type="button">📋 Dán danh sách cả lớp</button>
+        <button class="btn sec" id="loadSample" type="button">Danh sách mẫu</button>
+      </div>
+      <div class="pastebox" id="pasteBox">
+        <textarea id="pasteText" placeholder="Dán danh sách lớp vào đây, mỗi dòng một học sinh. Số thứ tự ở đầu dòng sẽ tự được bỏ qua. Số thẻ của mỗi em chính là số thứ tự trong danh sách này."></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="applyPaste" type="button">Thêm tất cả</button>
+          <span class="small">Tên trùng sẽ tự bỏ qua.</span>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sec" id="exportBtn" type="button">⬇ Xuất dữ liệu (JSON)</button>
+        <label class="btn sec" style="cursor:pointer">⬆ Nhập dữ liệu<input type="file" id="importFile" accept=".json" style="display:none"></label>
+        <button class="btn danger" id="clearBtn" type="button">🗑 Xoá danh sách</button>
+      </div>
+      <p class="small" style="margin-top:10px">Số thẻ của mỗi em chính là số thứ tự trong danh sách. Dạy nhiều lớp có thể dùng chung một bộ thẻ theo số thứ tự: em số 7 ở lớp nào cũng cầm thẻ số 7.</p>
+      <div class="roster" id="roster"></div>
+    </div>
+
+    <div class="card">
+      <h2>📂 Lấy danh sách từ file</h2>
+      <p class="small">Chọn file danh sách lớp có sẵn trên máy — app tự tìm cột Họ tên trong file, bỏ qua số thứ tự và các cột khác, tên trùng tự bỏ qua:</p>
+      <div class="row" style="margin-top:10px">
+        <label class="btn green" style="cursor:pointer">📂 Chọn file danh sách<input type="file" id="rosterFile" accept=".xlsx,.xls,.csv,.txt,.docx" style="display:none"></label>
+        <span class="small">Nhận file <b>Excel (.xlsx, .xls)</b> · <b>CSV</b> · <b> TXT</b> (mỗi dòng một học sinh) · <b>Word (.docx)</b> có bảng hoặc danh sách họ tên.</span>
+      </div>
+      <p class="small" id="rosterFileNote" style="margin-top:8px"></p>
+    </div>
+
+    <div class="card">
+      <h2>🖨 In thẻ cho cả lớp</h2>
+      <div class="row">
+        <label class="small" style="font-weight:800"><input type="radio" name="perPage" value="2" checked> 2 thẻ / tờ A4 — lớp học bình thường</label>
+        <label class="small" style="font-weight:800"><input type="radio" name="perPage" value="1"> 1 thẻ / tờ A4 — mã to, phòng rộng, quét xa</label>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn green" id="printBtn" type="button">🖨 Xem &amp; in thẻ</button>
+        <span class="small">In trên giấy A4 trắng, mực đen, tỉ lệ 100%. Giấy mỏng dễ cong thì dán lên bìa cứng: thẻ thẳng, quét nhạy. In một lần, dùng cho mọi buổi học cả năm.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB CAU HOI ============ -->
+  <div class="view" id="view-cauhoi">
+    <div class="card">
+      <h2>📝 Ngân hàng câu hỏi</h2>
+      <div class="row">
+        <label class="btn sec" style="cursor:pointer">📘 Nhập từ file Word (.docx)<input type="file" id="docxFile" accept=".docx" style="display:none"></label>
+        <button class="btn sec" id="toggleTxt" type="button">📄 Dán văn bản theo mẫu</button>
+        <button class="btn sec" id="sampleQ" type="button">Nạp 8 câu mẫu Toán 12</button>
+        <button class="btn danger" id="clearQ" type="button">🗑 Xoá hết câu hỏi</button>
+      </div>
+      <div class="pastebox" id="txtBox">
+        <textarea id="txtInput" style="min-height:150px" placeholder="Dán các câu hỏi theo mẫu: mỗi câu gồm dòng Câu 1: nội dung, bốn dòng A. B. C. D. và dòng Đáp án: B. Giữa các câu cách nhau một dòng trống cũng được."></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn" id="applyTxt" type="button">Đọc các câu hỏi</button></div>
+      </div>
+      <p class="small" style="margin-top:10px">Định dạng file Word giống các trò chơi khác của lớp: Câu 1: ... / A. ... / B. ... / C. ... / D. ... / Đáp án: B. Chỉ những câu có đủ 4 phương án A, B, C, D mới dùng được với thẻ giấy.</p>
+      <div class="qlist" id="qlist"></div>
+    </div>
+    <div class="card">
+      <h2>➕ Thêm câu hỏi nhanh</h2>
+      <input type="text" id="nqText" placeholder="Nội dung câu hỏi" style="width:100%">
+      <div class="row" style="margin-top:8px">
+        <input type="text" id="nqA" placeholder="Phương án A" style="flex:1;min-width:150px">
+        <input type="text" id="nqB" placeholder="Phương án B" style="flex:1;min-width:150px">
+        <input type="text" id="nqC" placeholder="Phương án C" style="flex:1;min-width:150px">
+        <input type="text" id="nqD" placeholder="Phương án D" style="flex:1;min-width:150px">
+        <select id="nqKey"><option value="0">Đáp án: A</option><option value="1">Đáp án: B</option><option value="2">Đáp án: C</option><option value="3">Đáp án: D</option></select>
+        <button class="btn" id="addQ" type="button">Thêm câu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB BUOI HOC ============ -->
+  <div class="view" id="view-buoi">
+    <div class="card" id="syncCard">
+      <h2>🔗 Kết nối màn hình chiếu với điện thoại quét</h2>
+      <div style="background:#f3efff;border:1.5px solid #cdbcf5;border-radius:12px;padding:13px 16px;margin:10px 0">
+        <b style="font-size:15px">Bắt đầu từ đây — làm đúng theo thứ tự 5 bước:</b>
+        <ol style="margin:9px 0 2px 20px;line-height:1.8;font-size:14px">
+          <li><b>Bước 1 (chỉ làm một lần cho mỗi máy):</b> mở phần <b>Cấu hình Firebase</b> ở ngay dưới, dán đoạn cấu hình rồi bấm <b>Lưu cấu hình</b> — làm trên cả máy tính và điện thoại. Thấy dòng chữ báo đã kết nối được tới Firebase là xong bước này, từ các buổi sau không phải làm lại.</li>
+          <li><b>Bước 2 (máy tính):</b> nạp danh sách lớp ở mục 1 và câu hỏi ở mục 2 trước, rồi quay lại đây bấm <b>Tạo phòng &amp; hiện mã QR</b>. Màn hình hiện mã phòng 6 số và mã QR to.</li>
+          <li><b>Bước 3 (điện thoại):</b> dùng camera điện thoại quét mã QR trên màn hình chiếu, trang tự mở đúng phòng; bấm <b>Vào phòng quét</b>. Màn hình máy tính báo đã có điện thoại vào phòng là hai máy đã nối với nhau.</li>
+          <li><b>Bước 4:</b> trên điện thoại bấm <b>Bắt đầu buổi học</b> (nếu chưa bắt đầu) rồi bấm <b>Bật camera &amp; quét</b>, lia điện thoại quanh lớp. Em nào được quét, ô của em đó trên màn hình máy tính sáng lên kèm chữ đáp án.</li>
+          <li><b>Bước 5:</b> bấm <b>Chốt câu</b> trên máy tính hoặc điện thoại: cả hai màn hình cùng tô em đúng <b>màu xanh</b>, em sai <b>màu đỏ</b>, kèm biểu đồ bốn đáp án. Bấm Câu tiếp và quét tiếp như vậy.</li>
+        </ol>
+        <p class="small" style="margin-top:7px">Điều kiện bắt buộc: cả hai máy đều mở app <b>từ trang web của lớp</b> (hoc-toan-thay-tam.vercel.app, mục Thẻ Trả Lời). Mở file tải về trên máy thì điện thoại không vào phòng được và camera bị chặn.</p>
+      </div>
+      <p class="small">Giống trong video: máy tính nối máy chiếu mở một phòng và hiện mã QR; điện thoại quét mã để vào phòng làm máy quét. Đáp án hiện trực tiếp lên màn hình chiếu theo từng em; chốt câu là cả hai màn hình cùng tô đúng màu xanh, sai màu đỏ. Kết nối chạy qua Firebase — dùng luôn project đã tạo cho Rung Chuông Vàng, bộ Rules mở thư mục rooms của project đó dùng chung được cho app này, không cần tạo gì thêm.</p>
+      <details id="fbDetails" style="margin-top:10px">
+        <summary style="font-weight:800;cursor:pointer">⚙ Cấu hình Firebase (dán một lần trên mỗi máy: máy tính và điện thoại)</summary>
+        <div style="background:#fbfdff;border:1px solid #e2eaf6;border-radius:12px;padding:13px 16px;margin-top:10px;font-size:14px;line-height:1.75">
+          <b>Cách lấy đoạn cấu hình — làm đúng theo thứ tự:</b>
+          <ol style="margin:7px 0 0 20px">
+            <li>Nếu anh đã cài Firebase cho game <b>Rung Chuông Vàng</b> rồi thì dùng luôn project đó (tên project là rungchuongvang-4ef8d), bỏ qua bước tạo project và bước Rules, đi thẳng tới bước 4 để lấy cấu hình. Chưa từng cài thì làm đủ các bước dưới đây.</li>
+            <li>Vào <b>console.firebase.google.com</b>, bấm <b>Add project</b> (hoặc Create a project), đặt tên bất kỳ, bấm tiếp qua các màn hình xác nhận cho tới khi project được tạo xong.</li>
+            <li>Trong project, vào <b>Build → Realtime Database → Create database</b>: chọn vùng Singapore (asia-southeast1) nếu được hỏi. Sau đó chọn thẻ <b>Rules</b>, xoá hết nội dung cũ, dán đúng đoạn quy tắc này vào rồi bấm <b>Publish</b> (không bấm Publish là chưa có hiệu lực):<br>
+            <span style="display:block;background:#171038;color:#a5f3c1;border-radius:9px;padding:10px 13px;margin:7px 0;font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap">{ "rules": { "rooms": { "$room": { ".read": true, ".write": true } } } }</span>
+            <button class="btn sec" id="copyRules" type="button" style="padding:7px 13px">📋 Sao chép đoạn quy tắc</button></li>
+            <li>Bấm biểu tượng bánh răng ⚙ cạnh chữ <b>Project Overview → Project settings</b>. Kéo xuống phần <b>Your apps</b>, bấm biểu tượng web <b>&lt;/&gt;</b> để đăng ký app web (đặt tên bất kỳ, bấm Register app) nếu chưa có app web nào.</li>
+            <li>Mục <b>SDK setup and configuration</b>: chọn ô <b>Config</b>. Màn hình hiện đoạn bắt đầu bằng <i>const firebaseConfig = {</i> — sao chép <b>toàn bộ phần trong cặp dấu { }</b>, từ dấu { đầu tiên tới dấu } cuối cùng.</li>
+            <li>Dán đoạn vừa sao chép vào ô cấu hình ngay dưới đây rồi bấm <b>Lưu cấu hình</b>. Thấy dòng báo đã kết nối được tới Firebase là đúng. Làm lại y hệt trên điện thoại (chỉ một lần).</li>
+          </ol>
+        </div>
+        <textarea id="fbCfg" placeholder="Dán nguyên đoạn firebaseConfig lấy trong Firebase Console, mục Project settings, phần Your apps, SDK setup and configuration, dạng Config. Đoạn dán bắt đầu bằng dấu { và có dòng databaseURL." style="margin-top:8px"></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="btn sec" id="fbSave" type="button">Lưu cấu hình</button>
+          <span class="small" id="fbStatus"></span>
+        </div>
+      </details>
+      <div class="roombox">
+        <div>
+          <h3 style="font-weight:1000;font-size:15px">🖥 Trên máy tính chiếu</h3>
+          <button class="btn green" id="hostBtn" type="button" style="margin-top:8px">Tạo phòng &amp; hiện mã QR</button>
+          <div id="hostInfo" style="display:none;margin-top:12px">
+            <div class="small">Mã phòng — thầy nhập mã này trên điện thoại nếu không quét được QR:</div>
+            <div class="bigcode" id="roomCodeBig"></div>
+            <canvas id="qrCanvas" width="220" height="220" style="background:#fff;border:1px solid #e2eaf6;border-radius:12px"></canvas>
+            <p class="small" id="hostStatus" style="margin-top:8px">Đang chờ điện thoại vào phòng…</p>
+            <button class="btn danger" id="closeRoom" type="button">Đóng phòng</button>
+          </div>
+        </div>
+        <div>
+          <h3 style="font-weight:1000;font-size:15px">📱 Trên điện thoại quét</h3>
+          <div class="row" style="margin-top:8px">
+            <input type="text" id="joinCode" inputmode="numeric" maxlength="6" placeholder="Mã phòng 6 số" style="width:150px">
+            <button class="btn" id="joinBtn" type="button">Vào phòng quét</button>
+          </div>
+          <p class="small" id="joinStatus" style="margin-top:8px">Hoặc dùng camera điện thoại quét thẳng mã QR trên màn hình chiếu: trang tự mở đúng phòng, chỉ cần bấm Vào phòng quét.</p>
+        </div>
+      </div>
+      <p class="small" id="syncStatus" style="margin-top:10px"></p>
+      <button class="btn sec" id="gotoGuide" type="button" style="margin-top:10px">📖 Xem hướng dẫn đầy đủ từng phần</button>
+    </div>
+    <div class="card">
+      <h2>📱 Hướng dẫn quét bằng điện thoại <button class="btn sec" id="helpToggle" type="button" style="float:right;padding:7px 13px">Xem các bước</button></h2>
+      <div id="helpBody" style="display:none;font-size:14px;line-height:1.75">
+        <ol style="margin-left:20px">
+          <li><b>Chuẩn bị một lần:</b> ở mục 1 nhập danh sách lớp rồi in thẻ, phát cho mỗi em đúng thẻ mang số thứ tự của mình; ở mục 2 nạp sẵn câu hỏi. Nếu chuẩn bị trên máy tính mà quét bằng điện thoại, bấm <b>Xuất dữ liệu (JSON)</b> ở mục 1 trên máy tính, rồi mở app trên điện thoại và bấm <b>Nhập dữ liệu</b> để mang danh sách và câu hỏi sang.</li>
+          <li><b>Kết nối hai máy (như trong video):</b> dán cấu hình Firebase một lần trên cả máy tính và điện thoại (mở phần Cấu hình Firebase ở đầu mục này). Trên máy tính bấm <b>Tạo phòng &amp; hiện mã QR</b>; trên điện thoại quét mã QR đó rồi bấm <b>Vào phòng quét</b>. Từ đó điện thoại quét tới đâu, màn hình chiếu hiện tới đó; chốt câu là cả hai màn hình cùng tô đúng xanh, sai đỏ từng em.</li>
+          <li><b>Mở app trên điện thoại qua trang web của lớp</b> (hoc-toan-thay-tam.vercel.app, mục Thẻ Trả Lời). Camera chỉ chạy khi mở qua địa chỉ web https; mở file tải về trực tiếp thì trình duyệt chặn camera.</li>
+          <li>Vào mục <b>3 · Buổi học</b>, bấm <b>Bắt đầu buổi học</b> — câu hỏi đầu tiên hiện lên.</li>
+          <li>Bấm <b>📷 Bật camera &amp; quét</b> và chọn Cho phép khi trình duyệt hỏi quyền camera.</li>
+          <li><b>Cả lớp giơ thẻ:</b> chọn đáp án nào thì xoay cạnh ghi chữ đó lên trên, cầm thẻ ở phần giấy trắng, không che ô mã đen ở giữa, giơ cao và giữ yên.</li>
+          <li><b>Thầy lia điện thoại chậm</b> từ trái qua phải theo từng dãy bàn, dừng một hai giây ở mỗi dãy. Em nào máy đọc được, ô của em đó ở sơ đồ lớp hiện ngay chữ đáp án và dòng trạng thái báo số em đã ghi nhận.</li>
+          <li>Em nào chưa được đọc: lia camera lại gần em đó hơn, khoảng một đến hai mét là nhạy nhất; vẫn chưa được thì bấm thẳng vào ô của em đó ở sơ đồ lớp để ghi đáp án tay, bấm nhiều lần để đổi lần lượt A, B, C, D hoặc bỏ trống.</li>
+          <li>Bấm <b>✔ Chốt câu</b>: xem biểu đồ bốn đáp án và đúng sai của từng em; câu nào nhiều em sai thì giảng lại ngay. Bấm <b>Câu tiếp ▶</b> và quét tiếp như trên.</li>
+          <li>Cuối buổi bấm <b>🏁 Tổng kết buổi</b> để xem bảng xếp hạng và tải file kết quả CSV về máy.</li>
+        </ol>
+        <p class="small" style="margin-top:8px">Quét chưa nhạy thường do: phòng thiếu sáng hoặc học sinh ngồi ngược sáng; thẻ bị cong — dán thẻ lên bìa cứng cho thẳng; lia camera quá nhanh; ống kính bẩn. Lớp đông, phòng rộng thì in kiểu 1 thẻ một tờ A4 để ô mã to, quét được xa hơn.</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sess-head">
+        <span class="qno" id="sessTitle">Chưa bắt đầu buổi học</span>
+        <div style="flex:1"></div>
+        <button class="btn green" id="startSess" type="button">▶ Bắt đầu buổi học</button>
+        <button class="btn sec" id="prevQ" type="button" disabled>◀ Câu trước</button>
+        <button class="btn sec" id="nextQ" type="button" disabled>Câu tiếp ▶</button>
+        <button class="btn warn" id="lockQ" type="button" disabled>✔ Chốt câu &amp; xem kết quả</button>
+        <button class="btn" id="endSess" type="button" disabled>🏁 Tổng kết buổi</button>
+      </div>
+      <div class="bigq" id="bigq" style="display:none">
+        <div class="qq" id="bigQText"></div>
+        <div class="oo" id="bigQOpts"></div>
+      </div>
+      <div class="camgrid">
+        <div>
+          <div class="cambox">
+            <video id="cam" autoplay playsinline muted></video>
+            <div class="camnote" id="camNote">Camera chưa mở. Bấm Bật camera, lia chậm một vòng quanh lớp; thẻ nào máy đọc được sẽ sáng lên ở sơ đồ lớp bên cạnh. Em nào máy chưa đọc được, thầy bấm thẳng vào ô của em đó ở sơ đồ để ghi đáp án tay.</div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="camBtn" type="button">📷 Bật camera &amp; quét</button>
+            <button class="btn sec" id="camStop" type="button" disabled>Tắt camera</button>
+            <span class="small" id="scanStat">Đã ghi nhận: 0 em</span>
+          </div>
+          <div class="card" id="resultCard" style="display:none; margin-top:14px">
+            <h2>📊 Kết quả câu này</h2>
+            <div class="bars" id="bars"></div>
+            <p class="small" id="resultNote" style="margin-top:8px"></p>
+          </div>
+        </div>
+        <div>
+          <h2 style="font-size:16px;font-weight:1000;margin-bottom:9px">🗺 Sơ đồ lớp — bấm vào ô để ghi hoặc sửa đáp án tay (lần lượt A, B, C, D, bỏ trống)</h2>
+          <div class="grid" id="classGrid"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="summaryCard" style="display:none">
+      <h2>🏆 Tổng kết buổi học</h2>
+      <div id="summaryBody"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn sec" id="csvBtn" type="button">⬇ Tải bảng kết quả (CSV)</button>
+        <button class="btn sec" id="closeSummary" type="button">Đóng tổng kết</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB HUONG DAN ============ -->
+  <div class="view" id="view-huongdan">
+    <div class="card">
+      <h2>📖 Hướng dẫn sử dụng Thẻ Trả Lời — đọc một lần, dùng cả năm</h2>
+      <p style="font-size:14.5px;line-height:1.75">Ứng dụng này giúp cả lớp trả lời trắc nghiệm bằng thẻ giấy: mỗi học sinh cầm một tấm thẻ in sẵn tên và ô mã riêng, chọn đáp án nào thì xoay cạnh ghi chữ đó lên trên rồi giơ cao. Thầy dùng điện thoại lia camera một vòng quanh lớp, máy tự đọc đáp án của từng em; nếu nối với máy tính chiếu, kết quả hiện trực tiếp lên màn hình lớn cho cả lớp cùng xem, em đúng hiện màu xanh, em sai hiện màu đỏ. Toàn bộ công việc chia làm ba phần chuẩn bị và một phần dùng trên lớp. Ba phần chuẩn bị làm một lần, từ các buổi sau chỉ việc mở app và dạy.</p>
+    </div>
+
+    <div class="card">
+      <h2>Phần 1 · Chuẩn bị danh sách lớp và in thẻ (làm một lần cho mỗi lớp)</h2>
+      <ol style="margin-left:20px;line-height:1.85;font-size:14.5px">
+        <li>Mở thẻ <b>1 · Lớp &amp; In thẻ</b>. Lấy danh sách học sinh bằng một trong ba cách: bấm <b>Chọn file danh sách</b> ở mục Lấy danh sách từ file để chọn file Excel, CSV, TXT hoặc Word có sẵn (app tự tìm cột Họ tên, các cột khác tự bỏ qua); hoặc bấm <b>Dán danh sách cả lớp</b> rồi dán danh sách chép từ Excel hay Zalo, mỗi dòng một em; hoặc gõ từng tên vào ô nhập rồi bấm Enter.</li>
+        <li>Kiểm tra lại danh sách: số thứ tự trong danh sách chính là số thẻ của từng em. Dạy nhiều lớp có thể dùng chung một bộ thẻ theo số thứ tự — em số 7 ở lớp nào cũng cầm thẻ số 7.</li>
+        <li>Chọn kiểu in: <b>2 thẻ một tờ A4</b> cho lớp học bình thường, hoặc <b>1 thẻ một tờ A4</b> nếu phòng rộng, muốn ô mã to để quét được xa. Bấm <b>Xem &amp; in thẻ</b>, in trên giấy A4 trắng bằng mực đen, để tỉ lệ in 100%.</li>
+        <li>Giấy mỏng dễ cong làm thẻ khó đọc: dán mỗi thẻ lên một tấm bìa cứng cho thẳng. Phát thẻ đúng số cho từng em và dặn các em giữ thẻ cho cả năm học; mất thẻ thì in lại đúng số đó.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Phần 2 · Chuẩn bị câu hỏi (làm một lần cho mỗi bộ câu hỏi)</h2>
+      <ol style="margin-left:20px;line-height:1.85;font-size:14.5px">
+        <li>Mở thẻ <b>2 · Câu hỏi</b>. Nạp câu hỏi bằng một trong ba cách: bấm <b>Nhập từ file Word</b> và chọn file đề theo mẫu quen thuộc (mỗi câu gồm dòng Câu 1: nội dung, bốn dòng A. B. C. D. và dòng Đáp án: B); hoặc bấm <b>Dán văn bản theo mẫu</b> rồi dán các câu theo đúng mẫu đó; hoặc điền vào khung <b>Thêm câu hỏi nhanh</b> ở dưới.</li>
+        <li>Chưa có sẵn câu hỏi thì bấm <b>Nạp 8 câu mẫu Toán 12</b> để dùng thử ngay buổi đầu.</li>
+        <li>Lưu ý: thẻ giấy chỉ có bốn cạnh A, B, C, D nên ứng dụng chỉ nhận những câu trắc nghiệm có đúng bốn phương án và có ghi đáp án.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Phần 3 · Cài kết nối Firebase (chỉ làm một lần trên mỗi máy)</h2>
+      <ol style="margin-left:20px;line-height:1.85;font-size:14.5px">
+        <li>Kết nối giữa máy tính chiếu và điện thoại chạy qua Firebase của Google (miễn phí). Nếu anh đã cài Firebase cho game <b>Rung Chuông Vàng</b> thì dùng luôn project đó, không tạo mới: bộ quy tắc mở thư mục rooms đã cài cho game dùng chung được cho ứng dụng này.</li>
+        <li>Việc cần làm trên mỗi máy chỉ là: mở thẻ <b>3 · Buổi học</b>, mở phần <b>Cấu hình Firebase</b> ở đầu trang, làm theo khung hướng dẫn lấy cấu hình ngay trong đó (có sẵn đoạn quy tắc để sao chép và từng bước bấm chuột cụ thể), dán đoạn cấu hình vào ô rồi bấm <b>Lưu cấu hình</b>.</li>
+        <li>Làm việc này trên <b>cả máy tính và điện thoại</b>, mỗi máy đúng một lần. Từ các buổi sau mở app là dùng ngay, không phải dán lại.</li>
+        <li>Nếu chỉ dạy bằng một máy (điện thoại vừa chiếu vừa quét, hoặc máy tính có webcam) thì bỏ qua phần này — ứng dụng vẫn quét và chấm tại chỗ, không cần kết nối.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Phần 4 · Kết nối hai máy và dạy một buổi học</h2>
+      <p style="font-size:14.5px;line-height:1.75;margin-bottom:8px"><b>Điều kiện bắt buộc:</b> cả máy tính và điện thoại đều mở ứng dụng <b>từ trang web của lớp</b> (hoc-toan-thay-tam.vercel.app, vào mục Thẻ Trả Lời). Mở file tải về trong thư mục Downloads thì điện thoại không vào được phòng và camera bị trình duyệt chặn.</p>
+      <ol style="margin-left:20px;line-height:1.85;font-size:14.5px">
+        <li><b>Trên máy tính:</b> mở ứng dụng từ trang web, vào thẻ <b>3 · Buổi học</b>, bấm nút xanh <b>Tạo phòng &amp; hiện mã QR</b> ở khung Kết nối. Màn hình hiện mã phòng 6 số và mã QR to, cùng dòng chữ Đang chờ điện thoại vào phòng. Để nguyên màn hình này trên máy chiếu.</li>
+        <li><b>Trên điện thoại:</b> mở ứng dụng camera thường, chĩa vào mã QR trên màn hình chiếu, chạm vào đường dẫn hiện lên. Trang ứng dụng tự mở, ô Mã phòng đã tự điền. Bấm <b>Vào phòng quét</b>. Nếu không quét được QR: mở trình duyệt trên điện thoại, vào trang ứng dụng, gõ tay mã phòng 6 số rồi bấm Vào phòng quét.</li>
+        <li><b>Dấu hiệu đã nối thành công:</b> màn hình máy tính đổi dòng trạng thái thành <i>Điện thoại đã vào phòng, sẵn sàng quét</i>, còn điện thoại báo <i>Đã vào phòng</i>. Chưa thấy hai dòng này thì hai máy chưa nối được — xem Phần 5.</li>
+        <li><b>Bắt đầu buổi:</b> bấm <b>Bắt đầu buổi học</b> (bấm trên máy tính hay điện thoại đều được). Câu hỏi hiện to trên màn hình chiếu, phía dưới là sơ đồ lớp gồm ô của từng em.</li>
+        <li><b>Quét thẻ:</b> đọc câu hỏi, cho cả lớp suy nghĩ, rồi hô giơ thẻ. Học sinh chọn đáp án nào thì xoay cạnh ghi chữ đó lên trên, cầm thẻ ở phần giấy trắng, không che ô mã đen ở giữa, giơ cao và giữ yên. Trên điện thoại bấm <b>Bật camera &amp; quét</b> (chọn Cho phép khi máy hỏi quyền camera), lia điện thoại chậm theo từng dãy bàn, dừng một hai giây ở mỗi dãy. Em nào được máy đọc, ô của em đó trên màn hình chiếu sáng lên kèm chữ đáp án, góc màn hình đếm số em đã ghi nhận.</li>
+        <li><b>Chốt câu và xem đúng sai:</b> quét xong, bấm <b>Chốt câu</b>. Ngay lập tức trên cả màn hình chiếu và điện thoại: ô của em trả lời đúng chuyển <b>màu xanh</b>, em sai chuyển <b>màu đỏ</b>, đáp án đúng có dấu tích, và biểu đồ bốn đáp án cho biết mỗi phương án có bao nhiêu em chọn. Nhìn vào đó giảng lại ngay chỗ nhiều em sai.</li>
+        <li><b>Qua câu tiếp:</b> bấm <b>Câu tiếp ▶</b> và lặp lại hai bước quét và chốt. Muốn sửa đáp án của một em nào đó (máy đọc sót hoặc em đổi ý trước khi chốt), bấm thẳng vào ô của em đó trên sơ đồ lớp, mỗi lần bấm đổi lần lượt A, B, C, D, bỏ trống.</li>
+        <li><b>Kết thúc buổi:</b> bấm <b>Tổng kết buổi</b> để xem bảng xếp hạng số câu đúng của cả lớp và tỉ lệ đúng từng câu; bấm <b>Tải bảng kết quả (CSV)</b> nếu muốn lưu file kết quả về máy. Xong việc, trên máy tính bấm <b>Đóng phòng</b>.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Phần 5 · Khi gặp trục trặc — tra đúng hiện tượng của mình</h2>
+      <ol style="margin-left:20px;line-height:1.85;font-size:14.5px">
+        <li><b>App báo chưa có cấu hình Firebase:</b> máy này chưa làm Phần 3. Mở phần Cấu hình Firebase ở đầu thẻ Buổi học và làm theo khung hướng dẫn trong đó.</li>
+        <li><b>Bấm Lưu cấu hình mà báo chưa hợp lệ:</b> đoạn sao chép bị thiếu. Phải sao chép đủ từ dấu { đầu tiên tới dấu } cuối cùng của đoạn firebaseConfig.</li>
+        <li><b>Điện thoại báo không thấy phòng:</b> kiểm tra lần lượt — mã phòng gõ đúng 6 số chưa; máy tính đã bấm Tạo phòng chưa; hai máy có dán cùng một đoạn cấu hình của cùng một project không.</li>
+        <li><b>Tạo phòng hoặc vào phòng báo lỗi quyền truy cập:</b> bộ quy tắc Rules của Firebase chưa được mở hoặc chưa bấm Publish. Vào project, mục Realtime Database, thẻ Rules, dán đoạn quy tắc trong khung hướng dẫn cấu hình rồi bấm Publish.</li>
+        <li><b>Camera không mở trên điện thoại:</b> thường do đang mở file tải về thay vì mở từ trang web, hoặc chưa cấp quyền camera cho trình duyệt. Mở lại ứng dụng từ trang web của lớp và cho phép camera.</li>
+        <li><b>Màn hình chiếu không hiện đáp án khi quét:</b> xem dòng trạng thái dưới mã QR trên máy tính — nếu chưa báo điện thoại đã vào phòng thì điện thoại chưa nối được, làm lại bước vào phòng ở Phần 4.</li>
+        <li><b>Một vài em quét mãi không được:</b> lia camera lại gần em đó hơn (một tới hai mét là nhạy nhất), tránh để em ngồi ngược sáng; thẻ bị cong thì dán lại lên bìa; vẫn không được thì bấm vào ô của em đó trên sơ đồ lớp để ghi đáp án tay.</li>
+        <li><b>Điện thoại mở ra bản cũ, không thấy mục mới:</b> tải lại trang (kéo xuống để làm mới trên điện thoại, hoặc Ctrl + F5 trên máy tính) để trình duyệt lấy bản mới nhất từ trang web.</li>
+      </ol>
+    </div>
+  </div>
+
+  <p class="small" style="margin-top:18px">Mẹo dùng thẻ (như trong video): cầm thẻ ở phần giấy trắng, đừng che ô mã đen ở giữa; giơ cao và giữ yên vài giây khi thầy lia camera tới. Dữ liệu danh sách, câu hỏi và kết quả buổi học chỉ lưu trên máy này.</p>
+</div>
+
+<div id="printArea"></div>
+<canvas id="proc" width="480" height="360" style="display:none"></canvas>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+/* ================= MA THE: 6x6 o =================
+   O goc (0,0) luon den = dau dinh huong. The xoay canh nao len tren,
+   o den chay toi goc do: TL=A, TR=B, BR=C, BL=D.
+   7 bit STT luu o L1, lap lai doi xung 180 do o L2 (phai khop).
+   1 bit chan le + ban sao. 16 o con lai la mau co dinh de loc gia. */
+const L1 = [[0,1],[0,2],[0,3],[0,4],[1,0],[1,1],[1,2]];
+const rot180 = rc => [5 - rc[0], 5 - rc[1]];
+const L2 = L1.map(rot180);
+const PAR = [1,3], PAR2 = rot180(PAR);
+const FIXED = {};
+(function(){
+  const used = new Set(['0,0','0,5','5,0','5,5', PAR.join(','), PAR2.join(',')]);
+  L1.concat(L2).forEach(rc => used.add(rc.join(',')));
+  let i = 0;
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) {
+    const k = r + ',' + c;
+    if (!used.has(k)) { FIXED[k] = (i % 3 === 0) ? 1 : 0; i++; }
+  }
+})();
+function encodeGrid(stt) {
+  const g = Array.from({length: 6}, () => Array(6).fill(0));
+  g[0][0] = 1;
+  let par = 0;
+  const bits = [];
+  for (let i = 0; i < 7; i++) { bits.push((stt >> i) & 1); par ^= bits[i]; }
+  L1.forEach((rc, i) => g[rc[0]][rc[1]] = bits[i]);
+  L2.forEach((rc, i) => g[rc[0]][rc[1]] = bits[i]);
+  g[PAR[0]][PAR[1]] = par; g[PAR2[0]][PAR2[1]] = par;
+  Object.keys(FIXED).forEach(k => { const [r, c] = k.split(',').map(Number); g[r][c] = FIXED[k]; });
+  return g;
+}
+function patternSVG(stt, size) {
+  const g = encodeGrid(stt);
+  let cells = '';
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++)
+    if (g[r][c]) cells += `<rect x="${28 + c * 24}" y="${28 + r * 24}" width="24" height="24" fill="#111"/>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="196" height="196" fill="#111"/><rect x="16" y="16" width="168" height="168" fill="#fff"/>${cells}</svg>`;
+}
+function rotCW(g) { const n = Array.from({length: 6}, () => Array(6).fill(0)); for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) n[r][c] = g[5 - c][r]; return n; }
+function rotCCW(g) { const n = Array.from({length: 6}, () => Array(6).fill(0)); for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) n[r][c] = g[c][5 - r]; return n; }
+/* raw: luoi 6x6 doc tu anh (chua biet huong). Tra ve {stt, ans} hoac null */
+function decodeGrid(raw) {
+  const corners = [raw[0][0], raw[0][5], raw[5][5], raw[5][0]]; // TL TR BR BL
+  if (corners.reduce((a, b) => a + b, 0) !== 1) return null;
+  const k = corners.indexOf(1);
+  let g = raw;
+  for (let i = 0; i < k; i++) g = rotCCW(g);
+  if (!(g[0][0] === 1 && g[0][5] === 0 && g[5][0] === 0 && g[5][5] === 0)) return null;
+  const bits = L1.map(rc => g[rc[0]][rc[1]]);
+  for (let i = 0; i < 7; i++) if (g[L2[i][0]][L2[i][1]] !== bits[i]) return null;
+  let par = 0; bits.forEach(b => par ^= b);
+  if (g[PAR[0]][PAR[1]] !== par || g[PAR2[0]][PAR2[1]] !== par) return null;
+  for (const key in FIXED) { const [r, c] = key.split(',').map(Number); if (g[r][c] !== FIXED[key]) return null; }
+  let stt = 0; bits.forEach((b, i) => stt |= (b << i));
+  if (stt < 1) return null;
+  return { stt, ans: 'ABCD'[k] };
+}
+
+/* ================= DU LIEU ================= */
+const LS = 'theTraLoi.v1';
+let DB = { roster: [], questions: [] };
+try { const raw = localStorage.getItem(LS); if (raw) DB = JSON.parse(raw); } catch (e) {}
+if (!Array.isArray(DB.roster)) DB.roster = [];
+if (!Array.isArray(DB.questions)) DB.questions = [];
+function save() { try { localStorage.setItem(LS, JSON.stringify(DB)); } catch (e) {} }
+
+/* ================= TAB ================= */
+$$('.tabs-in button').forEach(b => b.addEventListener('click', () => {
+  $$('.tabs-in button').forEach(x => x.classList.toggle('on', x === b));
+  $$('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.tab));
+}));
+
+/* ================= DANH SACH LOP ================= */
+function renderRoster() {
+  $('#roster').innerHTML = DB.roster.map((n, i) =>
+    `<div class="stu"><span class="stt">${String(i + 1).padStart(2, '0')}</span><span class="nm">${escapeHtml(n)}</span><button class="x" data-x="${i}" type="button" title="Xoá">✕</button></div>`).join('');
+  $$('#roster .x').forEach(b => b.addEventListener('click', () => {
+    DB.roster.splice(Number(b.dataset.x), 1); save(); renderRoster(); renderClassGrid();
+  }));
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch])); }
+function addNames(text) {
+  let added = 0;
+  text.split(/\r?\n/).forEach(line => {
+    let n = line.trim().replace(/^\d{1,3}\s*[.)\-:]?\s+/, '').trim();
+    if (n && !DB.roster.includes(n) && DB.roster.length < 127) { DB.roster.push(n); added++; }
+  });
+  return added;
+}
+$('#addOne').addEventListener('click', () => {
+  const inp = $('#oneName'); const n = inp.value.trim();
+  if (n && !DB.roster.includes(n)) { DB.roster.push(n); save(); renderRoster(); renderClassGrid(); }
+  inp.value = ''; inp.focus();
+});
+$('#oneName').addEventListener('keydown', e => { if (e.key === 'Enter') $('#addOne').click(); });
+$('#togglePaste').addEventListener('click', () => $('#pasteBox').classList.toggle('open'));
+$('#applyPaste').addEventListener('click', () => {
+  const a = addNames($('#pasteText').value);
+  $('#pasteText').value = ''; save(); renderRoster(); renderClassGrid();
+  alert('Đã thêm ' + a + ' học sinh. Tổng số lớp: ' + DB.roster.length + ' em.');
+});
+$('#loadSample').addEventListener('click', () => {
+  addNames('Nguyễn Minh Anh\nTrần Gia Bảo\nLê Ngọc Châu\nPhạm Thành Đạt\nHoàng Hải Đăng\nVũ Khánh Hà\nĐỗ Thu Hiền\nBùi Quốc Huy\nNgô Minh Khang\nĐặng Bảo Lâm\nLý Thanh Mai\nĐinh Bảo Ngọc\nChu Văn Phúc\nTạ Minh Quân\nHồ Thanh Sơn\nĐoàn Ngọc Thảo\nTrịnh Anh Thư\nVương Hải Triều\nPhan Ngọc Uyên\nDương Khánh Vy');
+  save(); renderRoster(); renderClassGrid();
+});
+$('#clearBtn').addEventListener('click', () => {
+  if (confirm('Xoá toàn bộ danh sách lớp?')) { DB.roster = []; save(); renderRoster(); renderClassGrid(); }
+});
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(DB, null, 1)], {type: 'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'the-tra-loi-du-lieu.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => {
+    try { const d = JSON.parse(t); if (Array.isArray(d.roster) && Array.isArray(d.questions)) { DB = d; save(); renderRoster(); renderQList(); renderClassGrid(); alert('Đã nhập dữ liệu.'); } }
+    catch (err) { alert('File không đúng định dạng.'); }
+  });
+  e.target.value = '';
+});
+
+/* ================= LAY DANH SACH TU FILE ================= */
+function looksLikeName(t) {
+  const s = String(t || '').trim();
+  if (s.length < 4) return false;
+  if (!/[A-Za-zÀ-ỹ]/.test(s)) return false;
+  if (s.split(/\s+/).length < 2) return false;
+  if (/^(stt|số|ngày|ghi chú|điểm)/i.test(s)) return false;
+  return true;
+}
+function namesFromTable(rows) {
+  if (!rows || !rows.length) return [];
+  let nameCol = -1, startRow = 0;
+  for (let r = 0; r < Math.min(3, rows.length); r++) {
+    const row = rows[r] || [];
+    for (let c = 0; c < row.length; c++) {
+      if (/họ\s*(và\s*)?tên|tên\s*học\s*sinh|^học\s*sinh$/i.test(String(row[c] || '').trim())) { nameCol = c; startRow = r + 1; break; }
+    }
+    if (nameCol >= 0) break;
+  }
+  if (nameCol < 0) {
+    const nCols = Math.max.apply(null, rows.map(r => (r || []).length));
+    let best = -1, bestScore = 0;
+    for (let c = 0; c < nCols; c++) {
+      let score = 0, cnt = 0;
+      rows.forEach(r => { const v = String((r || [])[c] || '').trim(); if (v) { cnt++; if (looksLikeName(v)) score += v.length; } });
+      if (cnt >= 2 && score > bestScore) { bestScore = score; best = c; }
+    }
+    nameCol = best;
+  }
+  if (nameCol < 0) return [];
+  const names = [];
+  for (let r = startRow; r < rows.length; r++) {
+    const v = String((rows[r] || [])[nameCol] || '').trim();
+    if (v && !/họ\s*(và\s*)?tên/i.test(v)) names.push(v);
+  }
+  return names;
+}
+function reportImport(added, fileName, found) {
+  $('#rosterFileNote').textContent = 'Đã đọc file ' + fileName + ': tìm thấy ' + found + ' học sinh, thêm mới ' + added + ' em (tên trùng đã bỏ qua). Tổng số lớp hiện tại: ' + DB.roster.length + ' em.';
+  save(); renderRoster(); renderClassGrid();
+}
+async function importRosterFile(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  try {
+    if (ext === 'txt') {
+      const before = DB.roster.length;
+      addNames(await file.text());
+      reportImport(DB.roster.length - before, file.name, DB.roster.length - before);
+    } else if (ext === 'csv') {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      const delim = lines.length && lines[0].includes(';') ? ';' : (lines.length && lines[0].includes('\t') ? '\t' : ',');
+      const rows = lines.map(l => l.split(delim).map(x => x.replace(/^"|"$/g, '').trim()));
+      const names = namesFromTable(rows);
+      const before = DB.roster.length;
+      addNames(names.join('\n'));
+      reportImport(DB.roster.length - before, file.name, names.length);
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      if (typeof XLSX === 'undefined') { alert('Chưa tải được thư viện đọc Excel (cần mạng). Kiểm tra mạng rồi thử lại.'); return; }
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const names = namesFromTable(rows);
+      const before = DB.roster.length;
+      addNames(names.join('\n'));
+      reportImport(DB.roster.length - before, file.name, names.length);
+    } else if (ext === 'docx') {
+      const zip = await JSZip.loadAsync(file);
+      const docFile = zip.file('word/document.xml');
+      if (!docFile) throw new Error('no doc');
+      const xml = await docFile.async('string');
+      const doc = new DOMParser().parseFromString(xml, 'text/xml');
+      const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+      const cellTexts = Array.from(doc.getElementsByTagNameNS(W, 'tc')).map(tc => Array.from(tc.getElementsByTagNameNS(W, 't')).map(t => t.textContent).join('').trim());
+      let names = [];
+      if (cellTexts.length >= 4) {
+        const per = guessTableCols(doc, W);
+        if (per > 1) { const rows = []; for (let i = 0; i < cellTexts.length; i += per) rows.push(cellTexts.slice(i, i + per)); names = namesFromTable(rows); }
+      }
+      if (!names.length) {
+        const paras = Array.from(doc.getElementsByTagNameNS(W, 'p')).map(p => Array.from(p.getElementsByTagNameNS(W, 't')).map(t => t.textContent).join('').trim());
+        names = paras.filter(looksLikeName);
+      }
+      const before = DB.roster.length;
+      addNames(names.join('\n'));
+      reportImport(DB.roster.length - before, file.name, names.length);
+    } else {
+      alert('Định dạng file chưa được hỗ trợ. Hãy dùng Excel, CSV, TXT hoặc Word.');
+    }
+  } catch (e) { alert('Không đọc được file này. Kiểm tra lại định dạng file danh sách.'); }
+}
+function guessTableCols(doc, W) {
+  const trs = doc.getElementsByTagNameNS(W, 'tr');
+  if (!trs.length) return 1;
+  return trs[0].getElementsByTagNameNS(W, 'tc').length || 1;
+}
+$('#rosterFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) importRosterFile(f); e.target.value = ''; });
+
+/* ================= IN THE ================= */
+$('#printBtn').addEventListener('click', () => {
+  if (!DB.roster.length) { alert('Chưa có học sinh nào trong danh sách.'); return; }
+  const per = Number(document.querySelector('input[name=perPage]:checked').value);
+  const cardW = per === 2 ? 178 : 184, cardH = per === 2 ? 128 : 190, code = per === 2 ? 82 : 128;
+  const fs = per === 2 ? 34 : 48;
+  let html = '';
+  DB.roster.forEach((name, i) => {
+    const stt = i + 1;
+    if (i % per === 0) html += '<div class="sheet">';
+    html += `<div class="pcard" style="width:${cardW}mm;height:${cardH}mm;${per === 2 ? 'margin-top:6mm;' : ''}">
+      <span class="brand" style="font-size:${per === 2 ? 11 : 13}px">THẺ TRẢ LỜI · THẦY TÂM</span>
+      <span class="no" style="font-size:${per === 2 ? 20 : 28}px">${String(stt).padStart(2, '0')}</span>
+      <span class="lt t" style="font-size:${fs}px">A</span>
+      <span class="lt b" style="font-size:${fs}px">C</span>
+      <span class="lt l" style="font-size:${fs}px">D</span>
+      <span class="lt r" style="font-size:${fs}px">B</span>
+      <span class="code">${patternSVG(stt, code * 3.78)}</span>
+      <span class="who" style="font-size:${per === 2 ? 13 : 16}px">${escapeHtml(name)}</span>
+    </div>`;
+    if (i % per === per - 1 || i === DB.roster.length - 1) html += '</div>';
+  });
+  $('#printArea').innerHTML = html;
+  setTimeout(() => window.print(), 60);
+});
+
+/* ================= NGAN HANG CAU HOI ================= */
+const SAMPLE_Q = [
+  { q: 'Hàm số y = x³ − 3x + 1 đồng biến trên khoảng nào?', opts: ['(−1; 1)', '(−∞; −1)', '(0; 1)', 'Không có khoảng nào'], key: 1 },
+  { q: 'Giá trị cực đại của hàm số y = x³ − 3x² + 2 là', opts: ['2', '−2', '0', '4'], key: 0 },
+  { q: 'Tiệm cận ngang của đồ thị hàm số y = (2x + 1)/(x − 3) là đường thẳng', opts: ['y = 3', 'x = 3', 'y = 2', 'y = −3'], key: 2 },
+  { q: 'Giá trị nhỏ nhất của hàm số y = x² − 4x + 5 trên ℝ là', opts: ['5', '2', '9', '1'], key: 3 },
+  { q: 'Đồ thị hàm số y = −x³ + 3x có bao nhiêu điểm cực trị?', opts: ['2', '0', '1', '3'], key: 0 },
+  { q: 'Tiệm cận đứng của đồ thị hàm số y = (3x + 2)/(x + 4) là đường thẳng', opts: ['y = 3', 'x = 4', 'x = −4', 'y = −4'], key: 2 },
+  { q: 'Cho hàm số y = f(x) có đạo hàm f′(x) = (x − 1)(x + 2)². Số điểm cực trị của hàm số là', opts: ['2', '0', '3', '1'], key: 3 },
+  { q: 'Giá trị lớn nhất của hàm số y = −x² + 6x − 5 trên đoạn [0; 4] là', opts: ['4', '−5', '3', '0'], key: 0 }
+];
+function renderQList() {
+  $('#qlist').innerHTML = DB.questions.length ? DB.questions.map((it, i) =>
+    `<div class="qitem"><button class="del" data-d="${i}" type="button" title="Xoá câu">✕</button><b class="qn">Câu ${i + 1}.</b> ${escapeHtml(it.q)}<br><span class="opts">A. ${escapeHtml(it.opts[0])} &nbsp;·&nbsp; B. ${escapeHtml(it.opts[1])} &nbsp;·&nbsp; C. ${escapeHtml(it.opts[2])} &nbsp;·&nbsp; D. ${escapeHtml(it.opts[3])}</span> <span class="key">Đáp án: ${'ABCD'[it.key]}</span></div>`).join('')
+    : '<p class="small">Chưa có câu hỏi nào. Nạp câu mẫu, nhập từ file Word hoặc thêm câu nhanh ở dưới.</p>';
+  $$('#qlist .del').forEach(b => b.addEventListener('click', () => {
+    DB.questions.splice(Number(b.dataset.d), 1); save(); renderQList();
+  }));
+}
+function parseQuestions(text) {
+  const lines = text.split(/\r?\n/).map(s => s.trim());
+  const qs = []; let cur = null;
+  const push = () => { if (cur && cur.q && cur.opts.filter(Boolean).length === 4 && cur.key >= 0) qs.push(cur); cur = null; };
+  for (const line of lines) {
+    let m;
+    if ((m = line.match(/^C[âa]u\s*\d+\s*[:.]\s*(.+)$/i))) { push(); cur = { q: m[1].trim(), opts: ['', '', '', ''], key: -1 }; }
+    else if (cur && (m = line.match(/^([ABCD])\s*[.)]\s*(.+)$/))) { cur.opts['ABCD'.indexOf(m[1])] = m[2].trim(); }
+    else if (cur && (m = line.match(/^Đ[áa]p\s*[áa]n\s*[:.]?\s*([ABCD])/i))) { cur.key = 'ABCD'.indexOf(m[1].toUpperCase()); }
+    else if (cur && line && cur.opts.every(o => !o)) { cur.q += ' ' + line; }
+  }
+  push();
+  return qs;
+}
+$('#toggleTxt').addEventListener('click', () => $('#txtBox').classList.toggle('open'));
+$('#applyTxt').addEventListener('click', () => {
+  const qs = parseQuestions($('#txtInput').value);
+  if (!qs.length) { alert('Chưa đọc được câu nào đúng mẫu. Kiểm tra lại định dạng (Câu 1: ... / A. ... / Đáp án: B).'); return; }
+  DB.questions.push(...qs); save(); renderQList();
+  alert('Đã thêm ' + qs.length + ' câu hỏi.');
+});
+$('#docxFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const zip = await JSZip.loadAsync(f);
+    const docFile = zip.file('word/document.xml');
+    if (!docFile) throw new Error('no doc');
+    const xml = await docFile.async('string');
+    const doc = new DOMParser().parseFromString(xml, 'text/xml');
+    const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+    const paras = Array.from(doc.getElementsByTagNameNS(W, 'p')).map(p =>
+      Array.from(p.getElementsByTagNameNS(W, 't')).map(t => t.textContent).join(''));
+    const qs = parseQuestions(paras.join('\n'));
+    if (!qs.length) { alert('Chưa đọc được câu nào trong file Word (câu cần có dòng Đáp án: A/B/C/D).'); return; }
+    DB.questions.push(...qs); save(); renderQList();
+    alert('Đã thêm ' + qs.length + ' câu hỏi từ file Word.');
+  } catch (err) { alert('Không đọc được file Word này.'); }
+  e.target.value = '';
+});
+$('#sampleQ').addEventListener('click', () => { DB.questions.push(...SAMPLE_Q); save(); renderQList(); });
+$('#clearQ').addEventListener('click', () => { if (confirm('Xoá toàn bộ câu hỏi?')) { DB.questions = []; save(); renderQList(); } });
+$('#addQ').addEventListener('click', () => {
+  const q = $('#nqText').value.trim();
+  const opts = [$('#nqA').value.trim(), $('#nqB').value.trim(), $('#nqC').value.trim(), $('#nqD').value.trim()];
+  if (!q || opts.some(o => !o)) { alert('Điền đủ nội dung câu hỏi và 4 phương án.'); return; }
+  DB.questions.push({ q, opts, key: Number($('#nqKey').value) }); save(); renderQList();
+  ['nqText','nqA','nqB','nqC','nqD'].forEach(id => $('#' + id).value = '');
+});
+/* ================= NHAN DIEN THE TU CAMERA ================= */
+function frameBinary(ctx, w, h) {
+  const d = ctx.getImageData(0, 0, w, h).data;
+  const gray = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) gray[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  const I = new Float64Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) { let run = 0; for (let x = 0; x < w; x++) { run += gray[y * w + x]; I[(y + 1) * (w + 1) + x + 1] = I[y * (w + 1) + x + 1] + run; } }
+  const bin = new Uint8Array(w * h), R = 18, C = 22;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const x0 = Math.max(0, x - R), x1 = Math.min(w - 1, x + R), y0 = Math.max(0, y - R), y1 = Math.min(h - 1, y + R);
+    const sum = I[(y1 + 1) * (w + 1) + x1 + 1] - I[y0 * (w + 1) + x1 + 1] - I[(y1 + 1) * (w + 1) + x0] + I[y0 * (w + 1) + x0];
+    bin[y * w + x] = gray[y * w + x] < sum / ((x1 - x0 + 1) * (y1 - y0 + 1)) - C ? 1 : 0;
+  }
+  return bin;
+}
+function labelComponents(bin, w, h) {
+  const labels = new Int32Array(w * h).fill(-1);
+  const comps = [], stack = [];
+  for (let s = 0; s < w * h; s++) {
+    if (!bin[s] || labels[s] >= 0) continue;
+    const id = comps.length;
+    let minx = w, maxx = 0, miny = h, maxy = 0, area = 0;
+    stack.length = 0; stack.push(s); labels[s] = id;
+    while (stack.length) {
+      const p = stack.pop(); area++;
+      const x = p % w, y = (p / w) | 0;
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y;
+      if (x > 0 && bin[p - 1] && labels[p - 1] < 0) { labels[p - 1] = id; stack.push(p - 1); }
+      if (x < w - 1 && bin[p + 1] && labels[p + 1] < 0) { labels[p + 1] = id; stack.push(p + 1); }
+      if (y > 0 && bin[p - w] && labels[p - w] < 0) { labels[p - w] = id; stack.push(p - w); }
+      if (y < h - 1 && bin[p + w] && labels[p + w] < 0) { labels[p + w] = id; stack.push(p + w); }
+    }
+    comps.push({ minx, maxx, miny, maxy, area });
+  }
+  return comps;
+}
+function sampleGrid(bin, w, h, bx, by, bw, bh) {
+  const g = [];
+  for (let r = 0; r < 6; r++) { const row = [];
+    for (let c = 0; c < 6; c++) {
+      const cx = Math.round(bx + (0.14 + (c + 0.5) * 0.12) * bw), cy = Math.round(by + (0.14 + (r + 0.5) * 0.12) * bh);
+      let black = 0, tot = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const x = cx + dx, y = cy + dy;
+        if (x >= 0 && x < w && y >= 0 && y < h) { tot++; if (bin[y * w + x]) black++; }
+      }
+      row.push(black / Math.max(1, tot) > 0.5 ? 1 : 0);
+    }
+    g.push(row);
+  }
+  return g;
+}
+function detectInBinary(bin, w, h) {
+  const comps = labelComponents(bin, w, h);
+  const found = [], seen = new Set();
+  for (const cp of comps) {
+    const bw = cp.maxx - cp.minx + 1, bh = cp.maxy - cp.miny + 1;
+    if (bw < 34 || bh < 34) continue;
+    const asp = bw / bh; if (asp < 0.68 || asp > 1.47) continue;
+    const fill = cp.area / (bw * bh); if (fill < 0.13 || fill > 0.50) continue;
+    const dec = decodeGrid(sampleGrid(bin, w, h, cp.minx, cp.miny, bw, bh));
+    if (dec && !seen.has(dec.stt)) { seen.add(dec.stt); found.push(dec); }
+  }
+  return found;
+}
+
+/* ================= BUOI HOC ================= */
+let SESS = null;
+let camStream = null, scanTimer = null, audioCtx = null;
+function shortName(n) { const p = String(n).trim().split(/\s+/); return p.length > 2 ? p.slice(-2).join(' ') : n; }
+function curKey() { return 'ABCD'[DB.questions[SESS.qi].key]; }
+function updateScanStat() {
+  if (!SESS) { $('#scanStat').textContent = 'Đã ghi nhận: 0 em'; return; }
+  const n = Object.keys(SESS.answers[SESS.qi]).length;
+  $('#scanStat').textContent = `Đã ghi nhận: ${n} / ${DB.roster.length} em (Câu ${SESS.qi + 1})`;
+}
+function renderClassGrid() {
+  $('#classGrid').innerHTML = DB.roster.map((n, i) => {
+    const stt = i + 1;
+    let cls = 'cell', aTxt = '';
+    if (SESS) {
+      const a = SESS.answers[SESS.qi][stt];
+      if (a) {
+        aTxt = a;
+        cls += SESS.locked[SESS.qi] ? (a === curKey() ? ' right' : ' wrong') : ' ans';
+      }
+    }
+    return `<div class="${cls}" data-stt="${stt}"><div class="n">THẺ ${String(stt).padStart(2, '0')}</div><div class="nm">${escapeHtml(shortName(n))}</div><div class="a">${aTxt}</div></div>`;
+  }).join('');
+  $$('#classGrid .cell').forEach(c => c.addEventListener('click', () => cycleAnswer(Number(c.dataset.stt))));
+  updateScanStat();
+}
+function cycleAnswer(stt) {
+  if (!SESS) { alert('Hãy bấm Bắt đầu buổi học trước.'); return; }
+  if (SESS.locked[SESS.qi]) {
+    if (!confirm('Câu này đã chốt kết quả. Mở khoá để sửa đáp án?')) return;
+    setLocked(false); $('#resultCard').style.display = 'none';
+  }
+  const cur = SESS.answers[SESS.qi][stt];
+  const order = [undefined, 'A', 'B', 'C', 'D'];
+  const nxt = order[(order.indexOf(cur) + 1) % 5];
+  setAnswer(stt, nxt === undefined ? null : nxt);
+}
+function showQuestion() {
+  const q = DB.questions[SESS.qi];
+  $('#sessTitle').textContent = `Buổi học — Câu ${SESS.qi + 1} / ${DB.questions.length}`;
+  $('#bigq').style.display = 'block';
+  $('#bigQText').textContent = `Câu ${SESS.qi + 1}. ${q.q}`;
+  $('#bigQOpts').innerHTML = q.opts.map((o, i) =>
+    `<div class="${SESS.locked[SESS.qi] && i === q.key ? 'correct' : ''}"><b>${'ABCD'[i]}</b>${escapeHtml(o)}</div>`).join('');
+  $('#prevQ').disabled = SESS.qi === 0;
+  $('#nextQ').disabled = SESS.qi === DB.questions.length - 1;
+  $('#lockQ').textContent = SESS.locked[SESS.qi] ? '🔓 Mở khoá câu này' : '✔ Chốt câu & xem kết quả';
+  if (SESS.locked[SESS.qi]) renderResults(); else $('#resultCard').style.display = 'none';
+  renderClassGrid();
+}
+function renderResults() {
+  const q = DB.questions[SESS.qi], ans = SESS.answers[SESS.qi];
+  const cnt = { A: 0, B: 0, C: 0, D: 0 };
+  Object.values(ans).forEach(a => cnt[a]++);
+  const total = Object.keys(ans).length, key = curKey();
+  const colors = { A: '#d64545', B: '#2f6fd0', C: '#e8a13a', D: '#37b24d' };
+  $('#bars').innerHTML = 'ABCD'.split('').map(L => {
+    const pct = total ? Math.round(cnt[L] / total * 100) : 0;
+    return `<div class="bar"><span>${L}${L === key ? ' ✔' : ''}</span><div class="track"><div class="fill" style="width:${pct}%;background:${colors[L]}"></div></div><span>${cnt[L]} em · ${pct}%</span></div>`;
+  }).join('');
+  const right = cnt[key], missing = DB.roster.length - total;
+  $('#resultNote').textContent = `Đáp án đúng: ${key} — Đúng ${right} em · Chưa đúng ${total - right} em · Chưa trả lời ${missing} em. Câu nào nhiều em sai, giảng lại ngay chỗ đó rồi mới qua câu tiếp.`;
+  $('#resultCard').style.display = 'block';
+}
+$('#startSess').addEventListener('click', () => {
+  if (!DB.roster.length) { alert('Chưa có danh sách lớp. Qua mục 1 thêm học sinh trước.'); return; }
+  if (!DB.questions.length) { alert('Chưa có câu hỏi. Qua mục 2 nạp câu hỏi trước.'); return; }
+  SESS = { qi: 0, answers: DB.questions.map(() => ({})), locked: DB.questions.map(() => false) };
+  $('#lockQ').disabled = false; $('#endSess').disabled = false;
+  $('#summaryCard').style.display = 'none';
+  if (FB.room) roomRef('state/qi').set(0);
+  showQuestion();
+});
+$('#prevQ').addEventListener('click', () => { if (SESS) gotoQ(SESS.qi - 1); });
+$('#nextQ').addEventListener('click', () => { if (SESS) gotoQ(SESS.qi + 1); });
+$('#lockQ').addEventListener('click', () => {
+  if (!SESS) return;
+  setLocked(!SESS.locked[SESS.qi]);
+});
+$('#endSess').addEventListener('click', () => {
+  if (!SESS) return;
+  const usedQ = DB.questions.map((q, qi) => SESS.locked[qi] || Object.keys(SESS.answers[qi]).length > 0);
+  const total = usedQ.filter(Boolean).length;
+  if (!total) { alert('Chưa có câu nào được trả lời.'); return; }
+  const rows = DB.roster.map((n, i) => {
+    const stt = i + 1; let right = 0;
+    DB.questions.forEach((q, qi) => { if (usedQ[qi] && SESS.answers[qi][stt] === 'ABCD'[q.key]) right++; });
+    return { stt, name: n, right };
+  });
+  const ranked = rows.slice().sort((a, b) => b.right - a.right || a.stt - b.stt);
+  const medals = ['🥇', '🥈', '🥉'];
+  $('#summaryBody').innerHTML =
+    `<p class="small">Cả lớp đã qua ${total} câu. Mỗi câu trả lời là một bước tiến — em nào sai nhiều ở câu nào, xem lại phần giảng câu đó.</p>` +
+    `<table class="sum"><tr><th>Hạng</th><th>Thẻ</th><th>Học sinh</th><th>Số câu đúng</th></tr>` +
+    ranked.map((r, i) => `<tr><td>${medals[i] || (i + 1)}</td><td>${String(r.stt).padStart(2, '0')}</td><td>${escapeHtml(r.name)}</td><td><b>${r.right}</b> / ${total}</td></tr>`).join('') + '</table>' +
+    `<p class="small" style="margin-top:10px">` + DB.questions.map((q, qi) => usedQ[qi] ? `Câu ${qi + 1}: đúng ${Object.keys(SESS.answers[qi]).filter(s => SESS.answers[qi][s] === 'ABCD'[q.key]).length}/${Object.keys(SESS.answers[qi]).length} em đã trả lời` : '').filter(Boolean).join(' · ') + '</p>';
+  $('#summaryCard').style.display = 'block';
+  $('#summaryCard').scrollIntoView({ behavior: 'smooth' });
+  SESS.usedQ = usedQ;
+});
+$('#closeSummary').addEventListener('click', () => $('#summaryCard').style.display = 'none');
+$('#csvBtn').addEventListener('click', () => {
+  if (!SESS || !SESS.usedQ) { alert('Bấm Tổng kết buổi trước để chốt số câu tính điểm.'); return; }
+  const head = ['STT', 'Họ tên'].concat(DB.questions.map((q, qi) => 'Câu ' + (qi + 1))).concat(['Số câu đúng']);
+  const lines = [head.join(',')];
+  DB.roster.forEach((n, i) => {
+    const stt = i + 1; let right = 0;
+    const cells = DB.questions.map((q, qi) => { const a = SESS.answers[qi][stt] || ''; if (SESS.usedQ[qi] && a === 'ABCD'[q.key]) right++; return a; });
+    lines.push([stt, '"' + n.replace(/"/g, '""') + '"'].concat(cells).concat([right]).join(','));
+  });
+  const blob = new Blob(['\ufeff' + lines.join('\n')], {type: 'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ket-qua-the-tra-loi.csv'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+function beep() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = 880; g.gain.value = 0.06;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.07);
+  } catch (e) {}
+}
+$('#camBtn').addEventListener('click', async () => {
+  if (!SESS) { alert('Hãy bấm Bắt đầu buổi học trước khi quét.'); return; }
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 } }, audio: false });
+  } catch (e) { alert('Không mở được camera. Camera chỉ chạy khi trang mở qua địa chỉ https (trang web của lớp) hoặc trên máy tính; mở file trực tiếp từ thư mục thì trình duyệt chặn camera.'); return; }
+  const video = $('#cam');
+  video.srcObject = camStream;
+  await video.play().catch(() => {});
+  const proc = $('#proc'); const ctx = proc.getContext('2d', { willReadFrequently: true });
+  $('#camStop').disabled = false; $('#camBtn').disabled = true;
+  $('#camNote').textContent = 'Đang quét… lia camera chậm quanh lớp, giữ yên một hai giây ở mỗi dãy bàn.';
+  clearInterval(scanTimer);
+  scanTimer = setInterval(() => {
+    if (!video.videoWidth) return;
+    const W = 480, H = Math.round(480 * video.videoHeight / video.videoWidth);
+    if (proc.width !== W || proc.height !== H) { proc.width = W; proc.height = H; }
+    ctx.drawImage(video, 0, 0, W, H);
+    let found = [];
+    try { found = detectInBinary(frameBinary(ctx, W, H), W, H); } catch (e) {}
+    if (!SESS || SESS.locked[SESS.qi]) return;
+    let changed = false;
+    found.forEach(f => {
+      if (f.stt >= 1 && f.stt <= DB.roster.length && SESS.answers[SESS.qi][f.stt] !== f.ans) {
+        setAnswer(f.stt, f.ans); changed = true; beep();
+      }
+    });
+    if (changed) { renderClassGrid(); $('#camNote').textContent = 'Vừa ghi nhận thêm đáp án. Đã có ' + Object.keys(SESS.answers[SESS.qi]).length + ' / ' + DB.roster.length + ' em.'; }
+  }, 260);
+});
+$('#camStop').addEventListener('click', () => {
+  clearInterval(scanTimer); scanTimer = null;
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  $('#camBtn').disabled = false; $('#camStop').disabled = true;
+});
+
+/* ================= KET NOI HAI MAY QUA FIREBASE ================= */
+const FB_LS = 'theTraLoi.firebase';
+let FB = { ready: false, db: null, room: false, role: null, code: null, hbTimer: null };
+function fbCfgRaw() { try { return localStorage.getItem(FB_LS) || ''; } catch (e) { return ''; } }
+function fbParse(raw) {
+  if (!raw) return null;
+  const a = raw.indexOf('{'), b = raw.lastIndexOf('}');
+  if (a < 0 || b <= a) return null;
+  try { const cfg = JSON.parse(raw.slice(a, b + 1)); return cfg && cfg.databaseURL ? cfg : null; } catch (e) { return null; }
+}
+function fbInit() {
+  const cfg = fbParse(fbCfgRaw());
+  if (!cfg) { $('#fbDetails').open = true; $('#fbStatus').textContent = 'Chưa có cấu hình Firebase hợp lệ — dán cấu hình rồi bấm Lưu cấu hình trước.'; return false; }
+  if (typeof firebase === 'undefined') { alert('Chưa tải được thư viện kết nối (thiết bị cần có mạng). Kiểm tra mạng rồi tải lại trang.'); return false; }
+  try {
+    if (!FB.ready) { firebase.initializeApp(cfg); FB.db = firebase.database(); FB.ready = true; }
+    return true;
+  } catch (e) { $('#fbDetails').open = true; $('#fbStatus').textContent = 'Cấu hình Firebase chưa đúng, kiểm tra lại đoạn đã dán.'; return false; }
+}
+function roomRef(path) { return FB.db.ref('rooms/tt' + FB.code + (path ? '/' + path : '')); }
+function drawQR(text) {
+  try {
+    const qr = qrcode(0, 'M'); qr.addData(text); qr.make();
+    const cv = $('#qrCanvas'), ctx = cv.getContext('2d'), n = qr.getModuleCount();
+    const cell = Math.floor(220 / (n + 4)), off = Math.floor((220 - cell * n) / 2);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 220, 220); ctx.fillStyle = '#111';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) ctx.fillRect(off + c * cell, off + r * cell, cell, cell);
+  } catch (e) {}
+}
+function ensureSESS() { if (!SESS) SESS = { qi: 0, answers: DB.questions.map(() => ({})), locked: DB.questions.map(() => false) }; }
+function setAnswer(stt, letter) {
+  if (!SESS) return;
+  if (letter) SESS.answers[SESS.qi][stt] = letter; else delete SESS.answers[SESS.qi][stt];
+  if (FB.room) { const r = roomRef('answers/' + SESS.qi + '/' + stt); if (letter) r.set(letter); else r.remove(); }
+  renderClassGrid();
+}
+function setLocked(v) {
+  if (!SESS) return;
+  SESS.locked[SESS.qi] = v;
+  if (FB.room) roomRef('qstate/' + SESS.qi + '/locked').set(v);
+  showQuestion();
+}
+function gotoQ(n) {
+  if (!SESS || n < 0 || n >= DB.questions.length) return;
+  SESS.qi = n;
+  if (FB.room) roomRef('state/qi').set(n);
+  showQuestion();
+}
+function attachRoom() {
+  roomRef('state').on('value', snap => {
+    const st = snap.val(); if (!st) return;
+    ensureSESS();
+    if (typeof st.qi === 'number' && st.qi >= 0 && st.qi < DB.questions.length) SESS.qi = st.qi;
+    $('#lockQ').disabled = false; $('#endSess').disabled = false;
+    showQuestion();
+  });
+  roomRef('answers').on('value', snap => {
+    const all = snap.val(); if (!all) return;
+    ensureSESS();
+    Object.keys(all).forEach(qi => { if (SESS.answers[qi]) SESS.answers[qi] = Object.assign({}, all[qi]); });
+    renderClassGrid(); if (SESS.locked[SESS.qi]) renderResults();
+  });
+  roomRef('qstate').on('value', snap => {
+    const all = snap.val(); if (!all) return;
+    ensureSESS();
+    Object.keys(all).forEach(qi => { if (SESS.locked[qi] !== undefined) SESS.locked[qi] = !!(all[qi] && all[qi].locked); });
+    showQuestion();
+  });
+  if (FB.role === 'host') roomRef('phone').on('value', snap => {
+    const v = snap.val();
+    $('#hostStatus').textContent = v && v.ts ? '✅ Điện thoại đã vào phòng, sẵn sàng quét.' : 'Đang chờ điện thoại vào phòng…';
+  });
+}
+$('#fbSave').addEventListener('click', () => {
+  const raw = $('#fbCfg').value.trim();
+  if (!fbParse(raw)) { $('#fbStatus').textContent = 'Đoạn dán chưa phải cấu hình hợp lệ (thiếu dấu ngoặc hoặc thiếu databaseURL).'; return; }
+  try { localStorage.setItem(FB_LS, raw); } catch (e) {}
+  FB.ready = false;
+  $('#fbStatus').textContent = fbInit() ? '✅ Đã lưu và kết nối được tới Firebase.' : 'Đã lưu nhưng chưa kết nối được.';
+});
+$('#hostBtn').addEventListener('click', async () => {
+  if (!DB.roster.length || !DB.questions.length) { alert('Cần có danh sách lớp và câu hỏi trên máy này trước khi tạo phòng.'); return; }
+  if (!fbInit()) return;
+  FB.code = String(Math.floor(100000 + Math.random() * 900000));
+  FB.room = true; FB.role = 'host';
+  ensureSESS();
+  try {
+    await roomRef().set({ meta: { roster: DB.roster, questions: DB.questions, created: Date.now() }, state: { qi: 0 } });
+  } catch (e) { alert('Không tạo được phòng. Kiểm tra mạng và bộ Rules của Firebase (thư mục rooms phải được phép đọc ghi).'); FB.room = false; return; }
+  attachRoom();
+  $('#hostInfo').style.display = 'block';
+  $('#roomCodeBig').textContent = FB.code;
+  drawQR(location.href.split('#')[0] + '#phone=' + FB.code);
+  $('#syncStatus').textContent = '🖥 Đang chiếu phòng ' + FB.code + '. Điện thoại quét được tới đâu, sơ đồ lớp ở trên sẽ hiện tới đó.';
+  showQuestion();
+});
+$('#closeRoom').addEventListener('click', async () => {
+  if (FB.code && FB.ready) { try { roomRef().off(); await roomRef().remove(); } catch (e) {} }
+  FB.room = false; FB.role = null; FB.code = null;
+  $('#hostInfo').style.display = 'none';
+  $('#syncStatus').textContent = 'Đã đóng phòng.';
+});
+$('#joinBtn').addEventListener('click', async () => {
+  const code = $('#joinCode').value.replace(/\D/g, '');
+  if (code.length !== 6) { alert('Mã phòng gồm đúng 6 số.'); return; }
+  if (!fbInit()) return;
+  FB.code = code;
+  let meta = null;
+  try { meta = (await roomRef('meta').once('value')).val(); } catch (e) {}
+  if (!meta || !Array.isArray(meta.roster) || !Array.isArray(meta.questions)) { $('#joinStatus').textContent = 'Không thấy phòng ' + code + ' — kiểm tra mã phòng và chắc chắn máy tính đã bấm Tạo phòng.'; return; }
+  DB.roster = meta.roster; DB.questions = meta.questions; save();
+  renderRoster(); renderQList();
+  FB.room = true; FB.role = 'phone';
+  SESS = null; ensureSESS();
+  attachRoom();
+  document.body.classList.add('phone');
+  const beat = () => { try { roomRef('phone').set({ ts: Date.now() }); } catch (e) {} };
+  beat(); clearInterval(FB.hbTimer); FB.hbTimer = setInterval(beat, 8000);
+  document.querySelector('[data-tab="buoi"]').click();
+  $('#joinStatus').textContent = '✅ Đã vào phòng ' + code + '. Bấm Bắt đầu buổi học nếu máy chưa hiện câu, rồi bấm Bật camera & quét.';
+  $('#syncStatus').textContent = '📱 Điện thoại đang làm máy quét cho phòng ' + code + '.';
+  showQuestion();
+});
+
+/* ================= KHOI DONG ================= */
+$('#gotoGuide').addEventListener('click', () => document.querySelector('[data-tab="huongdan"]').click());
+$('#copyRules').addEventListener('click', async () => {
+  const txt = '{ "rules": { "rooms": { "$room": { ".read": true, ".write": true } } } }';
+  try { await navigator.clipboard.writeText(txt); $('#copyRules').textContent = '✅ Đã sao chép — dán vào thẻ Rules rồi bấm Publish'; }
+  catch (e) { alert('Không sao chép tự động được. Đoạn quy tắc là: ' + txt); }
+});
+$('#helpToggle').addEventListener('click', () => {
+  const b = $('#helpBody');
+  const open = b.style.display !== 'none';
+  b.style.display = open ? 'none' : 'block';
+  $('#helpToggle').textContent = open ? 'Xem các bước' : 'Ẩn hướng dẫn';
+});
+try { const savedCfg = fbCfgRaw(); if (savedCfg) $('#fbCfg').value = savedCfg; if (!fbParse(savedCfg)) { $('#fbDetails').open = true; $('#fbStatus').textContent = 'Bạn đang ở Bước 1: dán cấu hình Firebase vào ô này rồi bấm Lưu cấu hình.'; } } catch (e) {}
+const hashM = location.hash.match(/phone=(\d{6})/);
+if (hashM) {
+  $('#joinCode').value = hashM[1];
+  if (fbParse(fbCfgRaw())) { setTimeout(() => $('#joinBtn').click(), 600); }
+  else { $('#fbDetails').open = true; $('#fbStatus').textContent = 'Điện thoại đã nhận mã phòng ' + hashM[1] + ' — dán cấu hình Firebase (một lần) rồi bấm Vào phòng quét.'; }
+}
+renderRoster();
+renderQList();
+renderClassGrid();
+window.TTL = { encodeGrid, decodeGrid, rotCW, rotCCW, detectInBinary, frameBinary, sampleGrid, patternSVG, getDB: () => DB, getSESS: () => SESS, parseQuestions, setAnswer, setLocked, gotoQ, getFB: () => FB, drawQR, importRosterFile };
+</script>
+</body>
+</html>

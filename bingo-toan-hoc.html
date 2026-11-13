@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bingo Toán Học — Cả Lớp Cùng Chơi</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', system-ui, sans-serif; }
+  body { min-height:100vh; background:linear-gradient(160deg,#062a3a,#0b5563 55%,#0e7c86); color:#fff; padding:16px; }
+  .top { max-width:1250px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .top a { color:#ffd94d; text-decoration:none; font-weight:700; }
+  h1 { text-align:center; font-size:clamp(26px,4.5vw,42px); margin:6px 0 2px; text-shadow:0 3px 0 rgba(0,0,0,.3); }
+  .sub { text-align:center; opacity:.88; margin-bottom:12px; }
+  .caller { max-width:1250px; margin:0 auto 14px; background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.2); border-radius:16px; padding:14px 18px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .qbox { flex:1; min-width:260px; }
+  .qbox .lbl { font-size:13px; letter-spacing:.12em; opacity:.8; }
+  .qbox .q { font-size:clamp(20px,3vw,30px); font-weight:800; line-height:1.25; }
+  .drawbtn { background:linear-gradient(135deg,#ffb300,#ff7847); color:#fff; border:none; font-size:19px; font-weight:800; padding:14px 26px; border-radius:999px; cursor:pointer; box-shadow:0 6px 0 #b25b00; white-space:nowrap; }
+  .drawbtn:active { transform:translateY(4px); box-shadow:0 2px 0 #b25b00; }
+  .drawbtn:disabled { opacity:.5; }
+  .ghost { background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.4); border-radius:999px; padding:12px 20px; font-size:15px; font-weight:700; cursor:pointer; }
+  .hist { max-width:1250px; margin:0 auto 14px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .hist span { font-size:13px; opacity:.85; margin-right:4px; }
+  .chip { background:rgba(255,217,77,.2); border:1px solid #ffd94d; color:#ffe97a; border-radius:999px; padding:3px 11px; font-size:14px; font-weight:700; }
+  .cards { max-width:1250px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:14px; }
+  .card { background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.18); border-radius:16px; padding:12px; }
+  .card.win { border-color:#ffd94d; box-shadow:0 0 0 3px rgba(255,217,77,.45), 0 10px 30px rgba(0,0,0,.35); }
+  .card h3 { text-align:center; font-size:19px; margin-bottom:9px; }
+  .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; }
+  .cell { aspect-ratio:1; background:#fff; color:#083344; border:none; border-radius:9px; font-size:clamp(13px,1.5vw,17px); font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; text-align:center; padding:2px; transition:transform .12s; }
+  .cell:hover { transform:scale(1.05); }
+  .cell.marked { background:#ffd94d; color:#7a4d00; box-shadow:inset 0 0 0 3px #f5a623; }
+  .cell.free { background:#37d67a; color:#fff; cursor:default; }
+  .cell.shake { animation:shk .3s; background:#ffb3b3; }
+  @keyframes shk { 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .banner { max-width:1250px; margin:0 auto 14px; text-align:center; font-size:clamp(20px,3.4vw,32px); font-weight:900; color:#ffd94d; min-height:40px; text-shadow:0 2px 0 rgba(0,0,0,.35); }
+</style>
+</head>
+<body>
+  <div class="top"><a href="index.html">← Về trang chủ Học Toán</a><span>🎱 Trò chơi cả lớp</span></div>
+  <h1>🎱 BINGO TOÁN HỌC</h1>
+  <p class="sub">Bốn đội, mỗi đội một bảng 5×5 chứa các đáp án. Thầy cô rút câu hỏi — đội nào có đáp án đó thì bấm vào ô để đánh dấu. Đủ một hàng ngang, dọc hoặc chéo là BINGO!</p>
+  <div class="banner" id="banner"></div>
+  <div class="caller">
+    <div class="qbox"><div class="lbl" id="qCount">CHƯA RÚT CÂU NÀO</div><div class="q" id="qText">Bấm “Rút câu hỏi” để bắt đầu. Cả lớp lắng nghe câu hỏi, tìm đáp án trên bảng của đội mình nhé!</div></div>
+    <button class="drawbtn" id="drawBtn">🎲 Rút câu hỏi</button>
+    <button class="ghost" id="newBtn">🔄 Ván mới</button>
+  </div>
+  <div class="hist" id="hist"><span>Đáp án đã rút:</span></div>
+  <div class="cards" id="cards"></div>
+<script>
+const QA = [
+ {q:'Đạo hàm của hàm số y = x² là?', a:'2x'},
+ {q:'log₂ 32 bằng bao nhiêu?', a:'5'},
+ {q:'Số tổ hợp C(5,2) bằng bao nhiêu?', a:'10'},
+ {q:'sin 90° bằng bao nhiêu?', a:'1'},
+ {q:'Tổng 1 + 2 + ... + 10 bằng bao nhiêu?', a:'55'},
+ {q:'Nghiệm của phương trình 3ˣ = 81 là x = ?', a:'4'},
+ {q:'Đạo hàm của hàm số y = eˣ là?', a:'eˣ'},
+ {q:'Tích phân từ 0 đến 1 của 2x dx bằng?', a:'1'},
+ {q:'cos 0° bằng bao nhiêu?', a:'1'},
+ {q:'Số đỉnh của một hình hộp chữ nhật là?', a:'8'},
+ {q:'2⁵ bằng bao nhiêu?', a:'32'},
+ {q:'Căn bậc hai của 144 là?', a:'12'},
+ {q:'Số mặt của một hình chóp tứ giác là?', a:'5'},
+ {q:'Giá trị tuyệt đối của −7 là?', a:'7'},
+ {q:'10! chia cho 8! bằng bao nhiêu?', a:'90'},
+ {q:'Đạo hàm của sin x là?', a:'cos x'},
+ {q:'Số nguyên tố nhỏ nhất là?', a:'2'},
+ {q:'Tổng các góc trong một tam giác bằng bao nhiêu độ?', a:'180°'},
+ {q:'Chu vi hình tròn bán kính R: 2πR. Với R = 1, chu vi là?', a:'2π'},
+ {q:'Số nghiệm của phương trình x² − 5x + 6 = 0 là?', a:'2'},
+ {q:'ln(e³) bằng bao nhiêu?', a:'3'},
+ {q:'Số cạnh của một hình lập phương là?', a:'12'},
+ {q:'Trung bình cộng của 4, 6, 8, 10 là?', a:'7'},
+ {q:'5² + 12² bằng bao nhiêu?', a:'169'},
+ {q:'Diện tích hình vuông cạnh 9 là?', a:'81'},
+ {q:'Số giao điểm tối đa của đường thẳng với đường tròn là?', a:'2'},
+ {q:'Hệ số góc của đường thẳng y = 3x + 1 là?', a:'3'},
+ {q:'Đạo hàm của hàm hằng y = 7 là?', a:'0'},
+ {q:'Số tổ hợp C(4,4) bằng bao nhiêu?', a:'1'},
+ {q:'Thể tích khối lập phương cạnh 3 là?', a:'27'},
+ {q:'Diện tích hình tròn bán kính 2 bằng bao nhiêu (theo π)?', a:'4π'},
+ {q:'Đạo hàm của hàm số y = x³ là?', a:'3x²'},
+ {q:'Số đo của một góc vuông là?', a:'90°'},
+ {q:'10² bằng bao nhiêu?', a:'100'},
+ {q:'Tích phân từ 0 đến 1 của x² dx bằng?', a:'1/3'},
+ {q:'4! (bốn giai thừa) bằng bao nhiêu?', a:'24'},
+ {q:'Căn bậc hai của 81 là?', a:'9'},
+ {q:'Số π xấp xỉ bằng bao nhiêu?', a:'3,14'},
+ {q:'Đạo hàm của hàm số y = 1/x là?', a:'−1/x²'},
+ {q:'Một nguyên hàm của cos x là?', a:'sin x'},
+ {q:'Thể tích khối cầu bán kính 1 bằng bao nhiêu (theo π)?', a:'4π/3'},
+ {q:'Số đỉnh của một hình bát diện đều là?', a:'6'},
+ {q:'6² − 4² bằng bao nhiêu?', a:'20'},
+ {q:'Độ dài của vectơ (5; 12) là?', a:'13'}
+];
+const TEAMS = ['🔴 Đội 1','🔵 Đội 2','🟢 Đội 3','🟡 Đội 4'];
+let deck = [], drawn = [], boards = [], winner = null;
+const $ = id => document.getElementById(id);
+let AC = null;
+function beep(f, d){ try { AC = AC || new (window.AudioContext||window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value=f; o.connect(g); g.connect(AC.destination); g.gain.setValueAtTime(.12, AC.currentTime); g.gain.exponentialRampToValueAtTime(.001, AC.currentTime + (d||.15)); o.start(); o.stop(AC.currentTime + (d||.15)); } catch(e){} }
+function shuffle(arr){ const a = [...arr]; for (let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function newGame(){
+  deck = shuffle(QA); drawn = []; winner = null;
+  boards = TEAMS.map(() => {
+    const uniq = [...new Map(QA.map(x => [x.a, x])).values()];
+    const cells = shuffle(uniq).slice(0, 24).map(x => x.a);
+    cells.splice(12, 0, '★');
+    return { cells, marked: new Set([12]) };
+  });
+  $('banner').textContent = '';
+  $('qCount').textContent = 'CHƯA RÚT CÂU NÀO';
+  $('qText').textContent = 'Bấm “Rút câu hỏi” để bắt đầu. Cả lớp lắng nghe câu hỏi, tìm đáp án trên bảng của đội mình nhé!';
+  $('drawBtn').disabled = false;
+  renderHist(); renderBoards();
+}
+function renderHist(){
+  const h = $('hist'); h.innerHTML = '<span>Đáp án đã rút:</span>' + drawn.map(x => `<span class="chip">${x.a}</span>`).join('');
+}
+function linesOf(marked){
+  const L = [];
+  for (let r=0;r<5;r++) L.push([0,1,2,3,4].map(c => r*5+c));
+  for (let c=0;c<5;c++) L.push([0,1,2,3,4].map(r => r*5+c));
+  L.push([0,6,12,18,24]); L.push([4,8,12,16,20]);
+  return L.filter(line => line.every(i => marked.has(i)));
+}
+function renderBoards(){
+  const box = $('cards'); box.innerHTML = '';
+  boards.forEach((b, ti) => {
+    const card = document.createElement('div'); card.className = 'card' + (winner === ti ? ' win' : '');
+    card.innerHTML = `<h3>${TEAMS[ti]}</h3>`;
+    const g = document.createElement('div'); g.className = 'grid';
+    b.cells.forEach((val, i) => {
+      const c = document.createElement('button');
+      c.className = 'cell' + (i === 12 ? ' free' : '') + (b.marked.has(i) ? ' marked' : '');
+      c.textContent = val;
+      c.onclick = () => clickCell(ti, i, c);
+      g.appendChild(c);
+    });
+    card.appendChild(g); box.appendChild(card);
+  });
+}
+function clickCell(ti, i, el){
+  if (winner !== null || i === 12) return;
+  const b = boards[ti];
+  if (b.marked.has(i)) return;
+  const val = b.cells[i];
+  if (drawn.some(x => x.a === val)) {
+    b.marked.add(i); beep(880,.12);
+    if (linesOf(b.marked).length > 0) {
+      winner = ti; beep(1046,.2); setTimeout(()=>beep(1318,.3),160);
+      $('banner').textContent = `🎉 BINGO! ${TEAMS[ti]} đã thắng! 🎉`;
+    }
+    renderBoards();
+  } else {
+    el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); beep(200,.2);
+  }
+}
+$('drawBtn').onclick = () => {
+  if (deck.length === 0) { $('qText').textContent = 'Đã rút hết câu hỏi! Bấm “Ván mới” để chơi lại.'; $('drawBtn').disabled = true; return; }
+  const item = deck.pop(); drawn.push(item);
+  $('qCount').textContent = `CÂU ${drawn.length} / ${QA.length} — đáp án đúng là đáp án của câu này`;
+  $('qText').textContent = item.q;
+  beep(660,.1); renderHist();
+};
+$('newBtn').onclick = newGame;
+newGame();
+</script>
+</body>
+</html>

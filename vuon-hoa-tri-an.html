@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vườn Hoa Tri Ân — Tháng 11</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: linear-gradient(180deg,#fdf3e3 0%,#e8f7e9 55%,#dff3e2 100%); color: #3d2b1f; min-height: 100vh; }
+  header { background: linear-gradient(90deg,#c2185b,#e91e63 55%,#f06292); color: #fff; padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; box-shadow: 0 3px 10px #0003; }
+  header h1 { font-size: 24px; }
+  header .sub { opacity: .95; font-size: 14px; }
+  .badge { background: #ffd54f; color: #4e2c00; font-weight: 800; padding: 2px 10px; border-radius: 999px; font-size: 13px; }
+  header .spacer { flex: 1; }
+  .hbtn { background: #ffffff26; color: #fff; border: 1.5px solid #ffffff88; border-radius: 10px; padding: 7px 12px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .hbtn:hover { background: #ffffff44; }
+  .wrap { max-width: 1500px; margin: 0 auto; padding: 14px; }
+  /* Thanh tiến độ bó hoa chung */
+  .progress-card { background: #fff; border-radius: 16px; padding: 16px 18px; box-shadow: 0 4px 14px #0001; margin-bottom: 14px; }
+  .progress-card .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .progress-card h2 { font-size: 20px; color: #ad1457; }
+  .progress-card .num { font-size: 20px; font-weight: 800; color: #1565c0; }
+  .bar { height: 18px; background: #f3e5ec; border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .bar > div { height: 100%; background: linear-gradient(90deg,#ec407a,#ffb300); width: 0%; transition: width .5s; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .stat { background: #fdf3e3; border: 1.5px solid #f3c9d8; border-radius: 12px; padding: 8px 12px; font-size: 14px; }
+  .stat b { color: #ad1457; }
+  .hint { font-size: 13.5px; color: #6d4c41; margin-top: 10px; line-height: 1.5; }
+  /* Bố cục chính */
+  .main { display: flex; gap: 14px; align-items: flex-start; }
+  #panel { width: 300px; flex: 0 0 300px; background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 4px 14px #0001; }
+  #panel h3 { font-size: 16px; margin-bottom: 8px; color: #ad1457; }
+  #panel h4 { font-size: 14px; margin: 14px 0 6px; color: #6d4c41; }
+  .btn { border: none; border-radius: 10px; padding: 9px 13px; font-size: 14px; font-weight: 700; cursor: pointer; background: #fce4ec; color: #ad1457; }
+  .btn:hover { filter: brightness(.96); }
+  .btn.primary { background: #e91e63; color: #fff; }
+  .btn.green { background: #e8f5e9; color: #2e7d32; }
+  .btn.warn { background: #fdecea; color: #b3261e; }
+  .btn.small { padding: 5px 9px; font-size: 13px; }
+  .row { display: flex; gap: 8px; margin: 9px 0; flex-wrap: wrap; align-items: center; }
+  input[type=text], input[type=number], textarea { border: 1.5px solid #e8b4c8; border-radius: 10px; padding: 8px 10px; font-size: 14px; font-family: inherit; width: 100%; }
+  input[type=number] { width: 76px; }
+  #panel textarea { height: 110px; resize: vertical; line-height: 1.5; }
+  .namelist { max-height: 260px; overflow-y: auto; border: 1px solid #f3d3de; border-radius: 10px; }
+  .namelist .nrow { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-bottom: 1px solid #fdf0f4; font-size: 14px; }
+  .namelist .nrow:last-child { border-bottom: none; }
+  .namelist .nrow .nm { flex: 1; }
+  .namelist .nrow .dp { color: #1565c0; font-weight: 700; font-size: 13px; }
+  .x { border: none; background: none; color: #d32f2f; font-size: 16px; cursor: pointer; padding: 2px 6px; }
+  .setgrid { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; font-size: 14px; }
+  .setgrid label { line-height: 1.35; }
+  details { margin-top: 12px; }
+  details summary { cursor: pointer; font-weight: 700; color: #ad1457; font-size: 14px; }
+  /* Vườn hoa */
+  #garden-wrap { flex: 1; min-width: 0; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+  .toolbar .spacer { flex: 1; }
+  #garden { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .pot { background: #fff; border-radius: 16px; padding: 12px 10px 10px; text-align: center; box-shadow: 0 3px 10px #0001; border: 2px solid transparent; position: relative; }
+  .pot.bloom8 { border-color: #f48fb1; }
+  .pot.bloom9 { border-color: #ec407a; box-shadow: 0 3px 14px #ec407a33; }
+  .pot.bloom10 { border-color: #ffb300; box-shadow: 0 4px 18px #ffb30055; }
+  .pot .flower { font-size: 52px; line-height: 1.15; }
+  .pot .pname { font-weight: 800; font-size: 15px; margin-top: 4px; }
+  .pot .stage { font-size: 13px; color: #6d4c41; }
+  .pot .drops { font-size: 14px; margin-top: 4px; }
+  .pot .drops b { color: #1565c0; font-size: 16px; }
+  .point { display: inline-block; margin-top: 6px; background: #ffd54f; color: #4e2c00; font-weight: 800; border-radius: 999px; padding: 2px 12px; font-size: 14px; }
+  .point.p10 { background: #ff8f00; color: #fff; }
+  .pot .ctl { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+  .pot .wish { font-size: 13px; color: #6a1b9a; background: #f3e5f5; border-radius: 10px; padding: 6px 8px; margin-top: 8px; line-height: 1.4; text-align: left; }
+  .empty { background: #fff; border-radius: 16px; padding: 30px; text-align: center; color: #6d4c41; box-shadow: 0 3px 10px #0001; }
+  /* Tường lời chúc */
+  .wishes { background: #fff; border-radius: 16px; padding: 16px 18px; box-shadow: 0 4px 14px #0001; margin-top: 14px; }
+  .wishes h3 { color: #6a1b9a; margin-bottom: 10px; }
+  .wishes .wgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .wishes .wcard { background: #f3e5f5; border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.5; }
+  .wishes .wcard b { color: #6a1b9a; }
+  /* Hộp thoại */
+  .modal-bg { position: fixed; inset: 0; background: #0008; display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #fff; border-radius: 18px; padding: 22px; max-width: 620px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 10px 40px #0005; }
+  .modal h3 { color: #ad1457; margin-bottom: 10px; }
+  .modal p { line-height: 1.6; font-size: 15px; margin-bottom: 10px; }
+  .modal textarea { height: 90px; }
+  .rankrow { display: flex; gap: 10px; align-items: center; padding: 8px 4px; border-bottom: 1px solid #f3e5ec; font-size: 15px; }
+  .rankrow .medal { font-size: 20px; width: 30px; text-align: center; }
+  .rankrow .rn { flex: 1; font-weight: 700; }
+  .rankrow .rd { color: #1565c0; font-weight: 800; }
+  /* Chế độ 20/11 */
+  #ceremony { position: fixed; inset: 0; background: linear-gradient(180deg,#fff8e1,#fce4ec); z-index: 60; display: none; overflow-y: auto; padding: 22px; }
+  #ceremony.open { display: block; }
+  #ceremony h2 { text-align: center; color: #ad1457; font-size: 30px; }
+  #ceremony .csub { text-align: center; color: #6d4c41; margin: 6px 0 18px; font-size: 16px; }
+  .podium { display: flex; gap: 12px; justify-content: center; align-items: flex-end; margin: 10px 0 22px; flex-wrap: wrap; }
+  .pod { background: #fff; border-radius: 16px; padding: 16px 20px; text-align: center; box-shadow: 0 4px 16px #0002; min-width: 170px; }
+  .pod.first { border: 3px solid #ffb300; transform: scale(1.06); }
+  .pod .medal { font-size: 40px; }
+  .pod .pn { font-size: 20px; font-weight: 800; }
+  .pod .pd { color: #1565c0; font-weight: 700; }
+  #ceremony .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-width: 1300px; margin: 0 auto; }
+  #ceremony .cwishes { max-width: 1100px; margin: 22px auto 0; background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 4px 14px #0001; }
+  #ceremony .cwishes h3 { color: #6a1b9a; margin-bottom: 10px; }
+  .closebar { text-align: center; margin-top: 20px; }
+  @media (max-width: 900px) { .main { flex-direction: column; } #panel { width: 100%; flex: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🌷 Vườn Hoa Tri Ân <span class="badge">BẢN V1 — THÁNG 11</span></h1>
+    <div class="sub">Mỗi em một chậu hoa · Trả lời câu ôn bài để tưới cây · Hoa nở thành điểm · Đến 20/11 thành vườn hoa chung của lớp</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="hbtn" id="rankBtn">🏆 Bảng xếp hạng</button>
+  <button class="hbtn" id="ceremonyBtn">🎉 Chế độ 20/11</button>
+  <button class="hbtn" id="fsBtn">⛶ Toàn màn hình</button>
+</header>
+
+<div class="wrap">
+  <div class="progress-card">
+    <div class="row">
+      <h2>💐 Bó hoa tri ân của lớp</h2>
+      <div class="num"><span id="totalDrops">0</span>/<span id="targetDrops">528</span> giọt</div>
+    </div>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="stats">
+      <span class="stat">🌱 <b id="stStudents">0</b> em</span>
+      <span class="stat">🌷 Đã nở: <b id="stBloom">0</b> hoa</span>
+      <span class="stat">Điểm 8: <b id="st8">0</b> · Điểm 9: <b id="st9">0</b> · Điểm 10: <b id="st10">0</b></span>
+      <span class="stat">💧 Còn <b id="stLeft">528</b> giọt nữa là đủ bó hoa</span>
+      <span class="stat">💌 Lời chúc: <b id="stWish">0</b></span>
+    </div>
+    <p class="hint" id="ruleText">Quy tắc mặc định: mỗi câu ôn bài trả lời đúng được 1 giọt nước để tưới cây. Hoa nở ở mốc 8 giọt thành điểm 8, 12 giọt thành điểm 9, 16 giọt thành điểm 10. Lần đầu hoa nở, em viết một lời chúc gửi thầy cô. Thầy cô đổi được các mốc này ở mục Cài đặt bên dưới.</p>
+  </div>
+
+  <div class="main">
+    <aside id="panel">
+      <h3>👩‍🏫 Panel thầy cô</h3>
+      <div class="row">
+        <input type="text" id="oneName" placeholder="Gõ tên một em rồi Enter để thêm…" style="flex:1">
+        <button class="btn primary" id="addOneBtn">＋ Thêm</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="pasteBtn">📋 Dán nhiều tên</button>
+        <button class="btn" id="importFileBtn">📂 Nhập từ file</button>
+        <input type="file" id="fileInput" accept=".txt,.csv" hidden>
+      </div>
+      <div class="row">
+        <button class="btn" id="sampleBtn">↺ Danh sách mẫu 31 em</button>
+        <button class="btn warn" id="clearBtn">🗑 Xoá hết</button>
+      </div>
+      <div class="namelist" id="nameList"></div>
+
+      <h4>💧 Nhập nhanh số giọt hiện tại</h4>
+      <p style="font-size:13px;color:#6d4c41;line-height:1.5;margin-bottom:6px">Dùng khi lớp đã tưới được một thời gian ở chỗ khác. Mỗi dòng một em, dạng <b>Tên: số giọt</b>, ví dụ <b>An: 12</b>. Bấm Áp dụng là số giọt cập nhật đúng em đó.</p>
+      <textarea id="bulkDrops" placeholder="An: 12&#10;Bình: 8&#10;Châu: 16"></textarea>
+      <div class="row">
+        <button class="btn green" id="applyBulkBtn">✔ Áp dụng số giọt</button>
+        <button class="btn" id="waterAllBtn">💧 Tưới cả lớp +1</button>
+      </div>
+
+      <details>
+        <summary>⚙️ Cài đặt mốc nở hoa và mục tiêu</summary>
+        <div style="margin-top:10px" class="setgrid">
+          <label>Mục tiêu bó hoa của lớp (giọt)</label><input type="number" id="setTarget" min="1" value="528">
+          <label>Giọt để nở thành điểm 8</label><input type="number" id="setT8" min="1" value="8">
+          <label>Giọt để nở thành điểm 9</label><input type="number" id="setT9" min="1" value="12">
+          <label>Giọt để nở thành điểm 10</label><input type="number" id="setT10" min="1" value="16">
+        </div>
+        <div class="row"><button class="btn primary" id="saveSetBtn">💾 Lưu cài đặt</button></div>
+        <p style="font-size:13px;color:#6d4c41;line-height:1.5">Đổi mốc xong, hoa của các em tự xếp lại theo mốc mới. Số giọt đã tưới không mất.</p>
+      </details>
+
+      <details>
+        <summary>💾 Sao lưu dữ liệu</summary>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="exportBtn">⬇ Tải file sao lưu (.json)</button>
+          <button class="btn" id="importDataBtn">⬆ Khôi phục từ file</button>
+          <input type="file" id="dataInput" accept=".json" hidden>
+        </div>
+        <p style="font-size:13px;color:#6d4c41;line-height:1.5">Dữ liệu chỉ lưu trên máy này. Trước ngày 20/11, thầy cô tải một bản sao lưu để khỏi mất.</p>
+      </details>
+    </aside>
+
+    <section id="garden-wrap">
+      <div class="toolbar">
+        <button class="btn green" id="sortBtn">Sắp xếp: theo tên ↕</button>
+        <span style="font-size:14px;color:#6d4c41" id="gardenNote"></span>
+        <div class="spacer"></div>
+        <button class="btn" id="hidePanelBtn">Ẩn panel thầy cô</button>
+      </div>
+      <div id="garden"></div>
+      <div class="wishes" id="wishWall">
+        <h3>💌 Tường lời chúc gửi thầy cô</h3>
+        <div class="wgrid" id="wishGrid"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Hộp thoại bảng xếp hạng -->
+<div class="modal-bg" id="rankModal">
+  <div class="modal">
+    <h3>🏆 Bảng xếp hạng</h3>
+    <p id="rankSummary"></p>
+    <div id="rankList"></div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="closeRankBtn">Đóng</button></div>
+  </div>
+</div>
+
+<!-- Hộp thoại lời chúc khi hoa nở lần đầu -->
+<div class="modal-bg" id="wishModal">
+  <div class="modal">
+    <h3>🌷 Hoa của <span id="wishName"></span> vừa nở!</h3>
+    <p>Em đã tưới đủ nước để hoa nở thành điểm <b id="wishPoint"></b>. Như anh đã hẹn với lớp: lần đầu hoa nở, em viết một lời chúc gửi thầy cô nhé.</p>
+    <textarea id="wishText" placeholder="Ví dụ: Con chúc thầy cô luôn mạnh khoẻ và vui vẻ…"></textarea>
+    <div class="row">
+      <button class="btn primary" id="saveWishBtn">💌 Gửi lời chúc</button>
+      <button class="btn" id="skipWishBtn">Để sau</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hộp thoại dán nhiều tên -->
+<div class="modal-bg" id="pasteModal">
+  <div class="modal">
+    <h3>📋 Dán nhiều tên</h3>
+    <p>Dán nguyên danh sách lớp, mỗi dòng một em. Chép từ Excel hay Zalo đều được: ứng dụng tự bỏ số thứ tự và cột lớp, chỉ lấy cột họ tên, bỏ qua tên trùng.</p>
+    <textarea id="pasteText" style="height:180px" placeholder="1&#9;Nguyễn Văn An&#10;2&#9;Trần Thị Bình&#10;…"></textarea>
+    <div class="row">
+      <button class="btn primary" id="applyPasteBtn">✔ Thêm vào lớp</button>
+      <button class="btn" id="closePasteBtn">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- Chế độ 20/11 -->
+<div id="ceremony">
+  <h2>🎉 Vườn Hoa Tri Ân của lớp 🎉</h2>
+  <p class="csub">Ngày Nhà giáo Việt Nam 20/11 · Bó hoa tri ân của lớp: <b id="cTotal"></b> · <span id="cBloom"></span></p>
+  <div class="podium" id="podium"></div>
+  <div class="cgrid" id="cGarden"></div>
+  <div class="cwishes">
+    <h3>💌 Lời chúc của các em gửi thầy cô</h3>
+    <div class="wgrid" id="cWishGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px"></div>
+  </div>
+  <div class="closebar"><button class="btn primary" id="closeCeremonyBtn" style="padding:12px 26px;font-size:16px">← Quay lại vườn hoa</button></div>
+</div>
+
+<script>
+const SAMPLE = ['An','Bình','Châu','Dũng','Giang','Hà','Hải','Hùng','Khánh','Kiên','Lan','Linh','Long','Mai','Nam','Ngân','Nhi','Oanh','Phúc','Phương','Quân','Sơn','Thảo','Thư','Trang','Tú','Uyên','Vy','Yến','Đạt','Hiếu'];
+const LS = { names:'vhta.names', drops:'vhta.drops', wishes:'vhta.wishes', set:'vhta.settings' };
+let names = [], drops = {}, wishes = {};
+let settings = { target:528, t8:8, t9:12, t10:16 };
+let sortByDrops = false;
+let panelHidden = false;
+let pendingWishName = null;
+
+function loadAll(){
+  try {
+    names = JSON.parse(localStorage.getItem(LS.names) || 'null') || SAMPLE.slice();
+    drops = JSON.parse(localStorage.getItem(LS.drops) || '{}');
+    wishes = JSON.parse(localStorage.getItem(LS.wishes) || '{}');
+    const s = JSON.parse(localStorage.getItem(LS.set) || 'null');
+    if (s) settings = Object.assign(settings, s);
+  } catch(e){ names = SAMPLE.slice(); drops = {}; wishes = {}; }
+  names.forEach(n => { if (drops[n] === undefined) drops[n] = 0; });
+}
+function saveAll(){
+  localStorage.setItem(LS.names, JSON.stringify(names));
+  localStorage.setItem(LS.drops, JSON.stringify(drops));
+  localStorage.setItem(LS.wishes, JSON.stringify(wishes));
+  localStorage.setItem(LS.set, JSON.stringify(settings));
+}
+function pointOf(d){
+  if (d >= settings.t10) return 10;
+  if (d >= settings.t9) return 9;
+  if (d >= settings.t8) return 8;
+  return null;
+}
+function stageOf(d){
+  if (d <= 0) return { icon:'🫘', label:'Hạt giống — chưa tưới' };
+  if (d < Math.ceil(settings.t8/2)) return { icon:'🌱', label:'Mầm non đang lớn' };
+  if (d < settings.t8) return { icon:'🌿', label:'Nụ hoa sắp nở' };
+  if (d < settings.t9) return { icon:'🌷', label:'Hoa đã nở' };
+  if (d < settings.t10) return { icon:'🌹', label:'Hoa nở đẹp' };
+  return { icon:'🌻', label:'Hoa nở rộ' };
+}
+function totalDrops(){ return names.reduce((s,n)=> s + (drops[n]||0), 0); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function render(){
+  const total = totalDrops();
+  const pct = settings.target > 0 ? Math.min(100, Math.round(total/settings.target*100)) : 0;
+  document.getElementById('totalDrops').textContent = total;
+  document.getElementById('targetDrops').textContent = settings.target;
+  document.getElementById('barFill').style.width = pct + '%';
+  let c8=0,c9=0,c10=0; names.forEach(n=>{ const p=pointOf(drops[n]||0); if(p===8)c8++; if(p===9)c9++; if(p===10)c10++; });
+  document.getElementById('stStudents').textContent = names.length;
+  document.getElementById('stBloom').textContent = c8+c9+c10;
+  document.getElementById('st8').textContent = c8;
+  document.getElementById('st9').textContent = c9;
+  document.getElementById('st10').textContent = c10;
+  document.getElementById('stLeft').textContent = Math.max(0, settings.target - total);
+  document.getElementById('stWish').textContent = Object.keys(wishes).length;
+  document.getElementById('ruleText').textContent = 'Quy tắc mặc định: mỗi câu ôn bài trả lời đúng được 1 giọt nước để tưới cây. Hoa nở ở mốc ' + settings.t8 + ' giọt thành điểm 8, ' + settings.t9 + ' giọt thành điểm 9, ' + settings.t10 + ' giọt thành điểm 10. Lần đầu hoa nở, em viết một lời chúc gửi thầy cô. Thầy cô đổi được các mốc này ở mục Cài đặt bên dưới.';
+  document.getElementById('gardenNote').textContent = total >= settings.target
+    ? '🎉 Bó hoa của lớp đã đủ ' + settings.target + ' giọt — sẵn sàng cho 20/11!'
+    : 'Còn ' + Math.max(0, settings.target - total) + ' giọt nữa là đủ bó hoa (' + pct + '%).';
+
+  // Panel danh sách
+  const nl = document.getElementById('nameList');
+  nl.innerHTML = names.map((n,i)=>'<div class="nrow"><span>'+(i+1)+'.</span><span class="nm">'+esc(n)+'</span><span class="dp">'+(drops[n]||0)+' 💧</span><button class="x" data-del="'+i+'" title="Xoá em này">✕</button></div>').join('') || '<div style="padding:10px;font-size:14px;color:#6d4c41">Chưa có em nào. Bấm “Danh sách mẫu” hoặc dán danh sách lớp.</div>';
+  nl.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{ const i=+b.dataset.del; const nm=names[i]; if(confirm('Xoá '+nm+' khỏi vườn hoa? Số giọt và lời chúc của em cũng xoá theo.')){ names.splice(i,1); delete drops[nm]; delete wishes[nm]; saveAll(); render(); } });
+
+  // Vườn hoa
+  const order = names.slice();
+  if (sortByDrops) order.sort((a,b)=> (drops[b]||0)-(drops[a]||0) || a.localeCompare(b,'vi'));
+  const g = document.getElementById('garden');
+  if (!order.length){ g.innerHTML = '<div class="empty">🌱 Vườn hoa chưa có em nào.<br>Thầy cô thêm danh sách lớp ở panel bên trái để bắt đầu gieo hoa.</div>'; }
+  else {
+    g.innerHTML = order.map(n=>{
+      const d = drops[n]||0, st = stageOf(d), p = pointOf(d);
+      const cls = p===8?'bloom8':p===9?'bloom9':p===10?'bloom10':'';
+      const next = p===null ? 'Còn '+(settings.t8-d)+' giọt nữa là nở' : p===8 ? 'Còn '+(settings.t9-d)+' giọt nữa lên điểm 9' : p===9 ? 'Còn '+(settings.t10-d)+' giọt nữa lên điểm 10' : 'Đã nở rộ nhất';
+      return '<div class="pot '+cls+'">'
+        + '<div class="flower">'+st.icon+'</div>'
+        + '<div class="pname">'+esc(n)+'</div>'
+        + '<div class="stage">'+st.label+'</div>'
+        + '<div class="drops"><b>'+d+'</b> 💧</div>'
+        + (p ? '<div><span class="point'+(p===10?' p10':'')+'">Điểm '+p+'</span></div>' : '')
+        + '<div style="font-size:12.5px;color:#6d4c41;margin-top:4px">'+next+'</div>'
+        + '<div class="ctl"><button class="btn green small" data-water="'+esc(n)+'">💧 Tưới +1</button><button class="btn small" data-unwater="'+esc(n)+'">−1</button></div>'
+        + (wishes[n] ? '<div class="wish">💌 “'+esc(wishes[n])+'”</div>' : (p ? '<div style="margin-top:8px"><button class="btn small" data-wish="'+esc(n)+'">✍️ Viết lời chúc</button></div>' : ''))
+        + '</div>';
+    }).join('');
+    g.querySelectorAll('[data-water]').forEach(b=> b.onclick = ()=> water(b.dataset.water, 1));
+    g.querySelectorAll('[data-unwater]').forEach(b=> b.onclick = ()=> water(b.dataset.unwater, -1));
+    g.querySelectorAll('[data-wish]').forEach(b=> b.onclick = ()=> openWish(b.dataset.wish));
+  }
+
+  // Tường lời chúc
+  const wg = document.getElementById('wishGrid');
+  const wnames = Object.keys(wishes).filter(n=> wishes[n]);
+  wg.innerHTML = wnames.length ? wnames.map(n=>'<div class="wcard"><b>'+esc(n)+':</b> “'+esc(wishes[n])+'”</div>').join('')
+    : '<p style="color:#6d4c41;font-size:14px">Chưa có lời chúc nào. Lời chúc đầu tiên sẽ xuất hiện ở đây khi hoa của một em nở.</p>';
+  document.getElementById('wishWall').style.display = '';
+}
+
+function chime(){
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [523,659,784].forEach((f,i)=>{ const o=ctx.createOscillator(), gn=ctx.createGain(); o.type='sine'; o.frequency.value=f; gn.gain.value=0.12; o.connect(gn); gn.connect(ctx.destination); o.start(ctx.currentTime+i*0.12); o.stop(ctx.currentTime+i*0.12+0.35); });
+  } catch(e){}
+}
+function water(name, delta){
+  const before = drops[name]||0;
+  const after = Math.max(0, before + delta);
+  drops[name] = after; saveAll();
+  const pb = pointOf(before), pa = pointOf(after);
+  if (delta > 0 && pa && pa !== pb){
+    chime();
+    if (pb === null && !wishes[name]) openWish(name);
+    else alert('🌷 Hoa của ' + name + ' vừa nở thành điểm ' + pa + '!');
+  }
+  render();
+}
+function openWish(name){
+  pendingWishName = name;
+  document.getElementById('wishName').textContent = name;
+  document.getElementById('wishPoint').textContent = pointOf(drops[name]||0) || settings.t8;
+  document.getElementById('wishText').value = wishes[name] || '';
+  document.getElementById('wishModal').classList.add('open');
+  setTimeout(()=> document.getElementById('wishText').focus(), 50);
+}
+function parseNames(text){
+  const out = [];
+  text.split(/\r?\n/).forEach(line=>{
+    let t = line.trim(); if(!t) return;
+    const parts = t.split(/[\t;,|]+/).map(s=>s.trim()).filter(Boolean);
+    let cand = parts[parts.length-1];
+    cand = cand.replace(/^\d+[\.\)]\s*/, '').replace(/^\d+\s+/, '');
+    if (/^\d+$/.test(cand)) return;
+    if (cand && !out.includes(cand) && !names.includes(cand)) out.push(cand);
+  });
+  return out;
+}
+
+// Thêm / xoá tên
+function addOne(){
+  const inp = document.getElementById('oneName');
+  const v = inp.value.trim(); if(!v) return;
+  if (names.includes(v)){ alert('Lớp đã có tên ' + v + ' rồi.'); inp.select(); return; }
+  names.push(v); drops[v]=0; inp.value=''; saveAll(); render(); inp.focus();
+}
+document.getElementById('addOneBtn').onclick = addOne;
+document.getElementById('oneName').addEventListener('keydown', e=>{ if(e.key==='Enter') addOne(); });
+document.getElementById('pasteBtn').onclick = ()=> document.getElementById('pasteModal').classList.add('open');
+document.getElementById('closePasteBtn').onclick = ()=> document.getElementById('pasteModal').classList.remove('open');
+document.getElementById('applyPasteBtn').onclick = ()=>{
+  const add = parseNames(document.getElementById('pasteText').value);
+  add.forEach(n=>{ names.push(n); drops[n]=0; });
+  document.getElementById('pasteText').value='';
+  document.getElementById('pasteModal').classList.remove('open');
+  saveAll(); render();
+  alert(add.length ? 'Đã thêm ' + add.length + ' em vào vườn hoa.' : 'Không thêm được em nào mới (có thể tên đã có trong lớp).');
+};
+document.getElementById('importFileBtn').onclick = ()=> document.getElementById('fileInput').click();
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{ const add = parseNames(String(rd.result||'')); add.forEach(n=>{ names.push(n); drops[n]=0; }); saveAll(); render(); alert('Đã thêm ' + add.length + ' em từ file.'); };
+  rd.readAsText(f); e.target.value='';
+});
+document.getElementById('sampleBtn').onclick = ()=>{
+  if (names.length && !confirm('Thay danh sách hiện tại bằng danh sách mẫu 31 em? Số giọt đã tưới sẽ mất.')) return;
+  names = SAMPLE.slice(); drops = {}; wishes = {}; names.forEach(n=> drops[n]=0); saveAll(); render();
+};
+document.getElementById('clearBtn').onclick = ()=>{
+  if (confirm('Xoá hết danh sách lớp, số giọt và lời chúc?')){ names=[]; drops={}; wishes={}; saveAll(); render(); }
+};
+
+// Nhập nhanh số giọt
+document.getElementById('applyBulkBtn').onclick = ()=>{
+  const text = document.getElementById('bulkDrops').value;
+  let ok=0, miss=[];
+  text.split(/\r?\n/).forEach(line=>{
+    const m = line.match(/^\s*(.+?)\s*[:;,]\s*(\d+)\s*$/); if(!m) return;
+    const nm = m[1].trim(), val = parseInt(m[2],10);
+    if (names.includes(nm)){ drops[nm]=val; ok++; } else miss.push(nm);
+  });
+  saveAll(); render();
+  alert('Đã cập nhật số giọt cho ' + ok + ' em.' + (miss.length ? '\nKhông tìm thấy trong lớp: ' + miss.join(', ') + ' — thầy cô thêm tên các em trước rồi nhập lại.' : ''));
+};
+document.getElementById('waterAllBtn').onclick = ()=>{
+  if (!names.length) return;
+  names.forEach(n=> drops[n]=(drops[n]||0)+1);
+  saveAll(); render();
+};
+
+// Cài đặt
+function syncSettings(){
+  document.getElementById('setTarget').value = settings.target;
+  document.getElementById('setT8').value = settings.t8;
+  document.getElementById('setT9').value = settings.t9;
+  document.getElementById('setT10').value = settings.t10;
+}
+document.getElementById('saveSetBtn').onclick = ()=>{
+  const t = parseInt(document.getElementById('setTarget').value,10);
+  const a = parseInt(document.getElementById('setT8').value,10);
+  const b = parseInt(document.getElementById('setT9').value,10);
+  const c = parseInt(document.getElementById('setT10').value,10);
+  if (!(t>0 && a>0 && b>a && c>b)){ alert('Mốc chưa hợp lệ: cần 0 < điểm 8 < điểm 9 < điểm 10, và mục tiêu lớn hơn 0.'); return; }
+  settings = { target:t, t8:a, t9:b, t10:c };
+  saveAll(); render(); alert('Đã lưu cài đặt. Hoa của các em đã xếp lại theo mốc mới.');
+};
+
+// Sao lưu
+document.getElementById('exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify({ names, drops, wishes, settings }, null, 2)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'VuonHoaTriAn_SaoLuu.json'; a.click();
+  setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
+};
+document.getElementById('importDataBtn').onclick = ()=> document.getElementById('dataInput').click();
+document.getElementById('dataInput').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{ try {
+    const d = JSON.parse(String(rd.result||''));
+    if (!Array.isArray(d.names)) throw new Error('bad');
+    names = d.names; drops = d.drops||{}; wishes = d.wishes||{}; if (d.settings) settings = Object.assign(settings, d.settings);
+    names.forEach(n=>{ if(drops[n]===undefined) drops[n]=0; });
+    saveAll(); syncSettings(); render(); alert('Đã khôi phục dữ liệu vườn hoa.');
+  } catch(err){ alert('File sao lưu không đúng định dạng.'); } };
+  rd.readAsText(f); e.target.value='';
+});
+
+// Sắp xếp, ẩn panel, toàn màn hình
+document.getElementById('sortBtn').onclick = function(){ sortByDrops = !sortByDrops; this.textContent = sortByDrops ? 'Sắp xếp: nhiều giọt nhất ↕' : 'Sắp xếp: theo tên ↕'; render(); };
+document.getElementById('hidePanelBtn').onclick = function(){
+  panelHidden = !panelHidden;
+  document.getElementById('panel').style.display = panelHidden ? 'none' : '';
+  this.textContent = panelHidden ? 'Hiện panel thầy cô' : 'Ẩn panel thầy cô';
+};
+document.getElementById('fsBtn').onclick = ()=>{ if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(()=>{}); };
+
+// Bảng xếp hạng
+document.getElementById('rankBtn').onclick = ()=>{
+  const order = names.slice().sort((a,b)=> (drops[b]||0)-(drops[a]||0) || a.localeCompare(b,'vi'));
+  const total = totalDrops();
+  document.getElementById('rankSummary').textContent = 'Cả lớp đã tưới ' + total + ' trên ' + settings.target + ' giọt (' + (settings.target>0?Math.round(total/settings.target*100):0) + '%). ' + order.filter(n=>pointOf(drops[n]||0)).length + ' em đã có hoa nở.';
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('rankList').innerHTML = order.map((n,i)=>'<div class="rankrow"><span class="medal">'+(medals[i]||(i+1))+'</span><span class="rn">'+esc(n)+(pointOf(drops[n]||0)?' · Điểm '+pointOf(drops[n]||0):'')+'</span><span class="rd">'+(drops[n]||0)+' 💧</span></div>').join('') || '<p>Chưa có em nào trong lớp.</p>';
+  document.getElementById('rankModal').classList.add('open');
+};
+document.getElementById('closeRankBtn').onclick = ()=> document.getElementById('rankModal').classList.remove('open');
+
+// Lời chúc
+document.getElementById('saveWishBtn').onclick = ()=>{
+  const t = document.getElementById('wishText').value.trim();
+  if (!t){ alert('Em viết một lời chúc rồi bấm Gửi nhé.'); return; }
+  wishes[pendingWishName] = t; saveAll(); render();
+  document.getElementById('wishModal').classList.remove('open');
+  alert('💌 Đã lưu lời chúc của ' + pendingWishName + ' lên tường lời chúc.');
+};
+document.getElementById('skipWishBtn').onclick = ()=> document.getElementById('wishModal').classList.remove('open');
+
+// Chế độ 20/11
+document.getElementById('ceremonyBtn').onclick = ()=>{
+  const order = names.slice().sort((a,b)=> (drops[b]||0)-(drops[a]||0) || a.localeCompare(b,'vi'));
+  const total = totalDrops();
+  const bloomed = order.filter(n=>pointOf(drops[n]||0)).length;
+  document.getElementById('cTotal').textContent = total + '/' + settings.target + ' giọt';
+  document.getElementById('cBloom').textContent = bloomed + ' hoa đã nở · ' + Object.keys(wishes).filter(n=>wishes[n]).length + ' lời chúc';
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('podium').innerHTML = order.slice(0,3).map((n,i)=>'<div class="pod'+(i===0?' first':'')+'"><div class="medal">'+medals[i]+'</div><div class="pn">'+esc(n)+'</div><div class="pd">'+(drops[n]||0)+' giọt'+(pointOf(drops[n]||0)?' · Điểm '+pointOf(drops[n]||0):'')+'</div></div>').join('') || '<p>Chưa có dữ liệu vinh danh.</p>';
+  document.getElementById('cGarden').innerHTML = order.map(n=>{
+    const d=drops[n]||0, st=stageOf(d), p=pointOf(d);
+    return '<div class="pot'+(p?' bloom'+p:'')+'"><div class="flower">'+st.icon+'</div><div class="pname">'+esc(n)+'</div><div class="drops"><b>'+d+'</b> 💧</div>'+(p?'<div><span class="point'+(p===10?' p10':'')+'">Điểm '+p+'</span></div>':'')+'</div>';
+  }).join('');
+  const wnames = Object.keys(wishes).filter(n=>wishes[n]);
+  document.getElementById('cWishGrid').innerHTML = wnames.length ? wnames.map(n=>'<div class="wcard" style="background:#f3e5f5;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.5"><b>'+esc(n)+':</b> “'+esc(wishes[n])+'”</div>').join('') : '<p style="color:#6d4c41">Chưa có lời chúc nào.</p>';
+  document.getElementById('ceremony').classList.add('open');
+  window.scrollTo(0,0);
+};
+document.getElementById('closeCeremonyBtn').onclick = ()=> document.getElementById('ceremony').classList.remove('open');
+
+loadAll(); syncSettings(); render();
+</script>
+</body>
+</html>

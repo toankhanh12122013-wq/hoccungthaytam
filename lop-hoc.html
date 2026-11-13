@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản lý lớp học — Điểm thưởng · Điểm phạt | Học Toán Cùng Thầy Tâm</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: #f2f6fd; color: #1c2b45; }
+  a { text-decoration: none; }
+  header.top { position: sticky; top: 0; z-index: 60; background: #ffffffee; backdrop-filter: blur(8px); border-bottom: 1px solid #dde6f5; }
+  .top-in { max-width: 1180px; margin: auto; display: flex; align-items: center; gap: 14px; padding: 10px 16px; flex-wrap: wrap; }
+  .logo { font-size: 20px; font-weight: 900; color: #0e9f6e; }
+  .logo small { display: block; font-size: 11px; font-weight: 600; color: #7286a3; }
+  .top-in nav { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .top-in nav a { padding: 8px 13px; border-radius: 999px; font-weight: 700; font-size: 14px; color: #31507e; }
+  .top-in nav a:hover { background: #e7f0ff; }
+  .wrap { max-width: 1180px; margin: auto; padding: 20px 16px 60px; }
+  h1.page { font-size: clamp(24px, 3.6vw, 34px); font-weight: 1000; }
+  .sub { color: #5d718e; margin-top: 6px; font-size: 15px; line-height: 1.55; max-width: 860px; }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 20px; }
+  .sum { background: #fff; border: 1px solid #e2eaf6; border-radius: 16px; padding: 15px 17px; box-shadow: 0 3px 10px #1c2b450d; }
+  .sum .n { font-size: 27px; font-weight: 1000; }
+  .sum .l { font-size: 13px; color: #7286a3; font-weight: 700; margin-top: 2px; }
+  .toolbar { margin-top: 22px; background: #fff; border: 1px solid #e2eaf6; border-radius: 16px; padding: 16px; box-shadow: 0 3px 10px #1c2b450d; }
+  .toolbar h2 { font-size: 16px; font-weight: 900; margin-bottom: 10px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  input[type=text], textarea, select { padding: 11px 13px; border-radius: 11px; border: 1.5px solid #ccd9ee; font-size: 14.5px; outline: none; background: #fff; font-family: inherit; }
+  input[type=text]:focus, textarea:focus { border-color: #0b7ea4; }
+  textarea { width: 100%; min-height: 110px; resize: vertical; }
+  .btn { padding: 11px 17px; border-radius: 11px; border: 0; font-weight: 800; font-size: 14px; cursor: pointer; background: #0e9f6e; color: #fff; }
+  .btn:hover { background: #0b8459; }
+  .btn.sec { background: #e7f0ff; color: #274b9f; }
+  .btn.sec:hover { background: #d5e5ff; }
+  .btn.warn { background: #fff1d6; color: #9a6206; }
+  .btn.danger { background: #fde8e6; color: #b3372f; }
+  .small { font-size: 12.5px; color: #7286a3; }
+  .pastebox { display: none; margin-top: 12px; }
+  .pastebox.open { display: block; }
+  .board-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
+  .board-head h2 { font-size: 21px; font-weight: 1000; }
+  .board-head .sp { flex: 1; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 14px; margin-top: 16px; }
+  .stu { position: relative; background: #fff; border: 2px solid #e2eaf6; border-radius: 18px; padding: 16px 12px 13px; text-align: center; box-shadow: 0 3px 10px #1c2b450d; transition: transform .12s, border-color .12s; }
+  .stu:hover { transform: translateY(-3px); }
+  .stu.top1 { border-color: #f5b301; background: linear-gradient(180deg, #fffbe9, #fff); }
+  .stu.top2 { border-color: #b9c6d8; }
+  .stu.top3 { border-color: #e0a878; }
+  .stu .rank { position: absolute; top: 8px; left: 10px; font-size: 13px; font-weight: 1000; color: #98a9c4; }
+  .stu .del { position: absolute; top: 6px; right: 8px; border: 0; background: transparent; color: #c3cfe0; font-size: 16px; cursor: pointer; padding: 2px 5px; }
+  .stu .del:hover { color: #e2483d; }
+  .avatar { font-size: 52px; line-height: 1.1; cursor: pointer; display: inline-block; }
+  .stu .name { font-weight: 900; font-size: 16px; margin-top: 5px; line-height: 1.25; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+  .stu .pts { font-size: 24px; font-weight: 1000; color: #0e9f6e; }
+  .stu .pts.neg { color: #e2483d; }
+  .stu .pts small { font-size: 12px; color: #7286a3; font-weight: 700; }
+  .stu .week { font-size: 12.5px; color: #7286a3; font-weight: 700; }
+  .stu .week b { color: #0b7ea4; }
+  .stu .badge { font-size: 17px; }
+  .quick { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+  .quick button { border: 0; cursor: pointer; font-weight: 900; font-size: 13.5px; padding: 8px 0; flex: 1; border-radius: 10px; }
+  .quick .plus { background: #e5f8ef; color: #0b8459; }
+  .quick .plus:hover { background: #c9f2dc; }
+  .quick .minus { background: #fdecea; color: #b3372f; }
+  .quick .minus:hover { background: #fbd9d5; }
+  .quick .detail { background: #e7f0ff; color: #274b9f; flex: 1.2; }
+  .quick .detail:hover { background: #d5e5ff; }
+  .burst { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 1000; color: #0b8459; pointer-events: none; animation: rise 1s ease-out forwards; text-shadow: 0 2px 8px #fff; z-index: 5; }
+  .burst.neg { color: #e2483d; }
+  @keyframes rise { from { opacity: 0; transform: translate(-50%, -30%); } 25% { opacity: 1; } to { opacity: 0; transform: translate(-50%, -190%); } }
+  .empty { margin-top: 18px; border: 1.5px dashed #c3d2ea; border-radius: 16px; padding: 30px 20px; text-align: center; color: #7286a3; background: #fbfdff; line-height: 1.7; }
+  /* Modal */
+  .overlay { position: fixed; inset: 0; background: #0c1a30b8; display: none; align-items: flex-start; justify-content: center; padding: 22px 14px; z-index: 100; overflow: auto; }
+  .overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 20px; width: min(620px, 96vw); padding: 22px; box-shadow: 0 24px 60px #0006; }
+  .modal h3 { font-size: 20px; font-weight: 1000; display: flex; align-items: center; gap: 10px; }
+  .modal h3 .avatar { font-size: 40px; cursor: default; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip { border: 1.5px solid #cfe3d8; background: #f2fbf6; color: #0b6e4f; font-weight: 800; font-size: 13.5px; padding: 9px 12px; border-radius: 999px; cursor: pointer; }
+  .chip:hover { background: #dcf5e7; border-color: #0e9f6e; }
+  .chip.neg { border-color: #f3cfcc; background: #fdf3f2; color: #b3372f; }
+  .chip.neg:hover { background: #fbe3e0; border-color: #e2483d; }
+  .secttl { font-weight: 900; font-size: 14px; margin-top: 18px; color: #43597a; }
+  .hist { margin-top: 10px; max-height: 220px; overflow: auto; border: 1px solid #e2eaf6; border-radius: 12px; }
+  .hist div { display: flex; gap: 8px; padding: 8px 12px; font-size: 13.5px; border-bottom: 1px solid #eef3fa; align-items: baseline; }
+  .hist div:last-child { border-bottom: 0; }
+  .hist .d { font-weight: 1000; min-width: 38px; text-align: right; }
+  .hist .d.p { color: #0b8459; } .hist .d.n { color: #e2483d; }
+  .hist .t { margin-left: auto; color: #98a9c4; font-size: 12px; white-space: nowrap; }
+  .avpick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .avpick button { font-size: 26px; background: #f2f6fd; border: 2px solid transparent; border-radius: 12px; padding: 4px 7px; cursor: pointer; }
+  .avpick button:hover { border-color: #0b7ea4; }
+  .modal .foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  body.present .del, body.present .toolbar, body.present #editTools { display: none !important; }
+  body.present .stu .name { font-size: 19px; }
+  body.present .avatar { font-size: 64px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">🏫 Quản lý lớp học<small>Điểm thưởng · Điểm phạt · Học Toán Cùng Thầy Tâm</small></div>
+    <nav>
+      <a href="index.html">🏠 Trang chủ</a>
+      <a href="index.html#tro-choi">🎮 Trò chơi</a>
+      <a href="index.html#tai-lieu">📚 Tài liệu</a>
+      <a href="index.html#thi-thu">📝 Thi thử</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1 class="page">🏫 Danh sách lớp &amp; tích điểm thưởng phạt</h1>
+  <p class="sub">Cộng điểm ngay khi học sinh làm tốt để cả lớp cùng nhìn thấy và noi theo; trừ điểm khi cần nhắc nhở, luôn kèm lý do rõ ràng. Mọi thay đổi đều được ghi lại trong lịch sử của từng em và lưu ngay trên máy này.</p>
+
+  <div class="summary">
+    <div class="sum"><div class="n" id="sumCount">0</div><div class="l">👩‍🎓 Sĩ số lớp</div></div>
+    <div class="sum"><div class="n" id="sumPlus" style="color:#0b8459">0</div><div class="l">⭐ Tổng điểm thưởng tuần này</div></div>
+    <div class="sum"><div class="n" id="sumMinus" style="color:#e2483d">0</div><div class="l">⚠️ Tổng điểm trừ tuần này</div></div>
+    <div class="sum"><div class="n" id="sumTop" style="font-size:19px">—</div><div class="l">🏆 Đang dẫn đầu</div></div>
+  </div>
+
+  <div class="toolbar" id="editTools">
+    <h2>➕ Thêm học sinh</h2>
+    <div class="row">
+      <input type="text" id="oneName" placeholder="Nhập họ tên học sinh rồi bấm Enter" style="flex:1; min-width:220px">
+      <button class="btn" id="addOne" type="button">Thêm</button>
+      <button class="btn sec" id="togglePaste" type="button">📋 Dán danh sách cả lớp</button>
+      <button class="btn sec" id="loadSample" type="button">Thử danh sách mẫu</button>
+    </div>
+    <div class="pastebox" id="pasteBox">
+      <textarea id="pasteText" placeholder="Dán danh sách lớp vào đây, mỗi dòng một học sinh. Sao chép từ Excel hoặc Zalo đều được, cột số thứ tự sẽ tự được bỏ qua."></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="applyPaste" type="button">Thêm tất cả</button>
+        <span class="small">Tên trùng sẽ tự bỏ qua.</span>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn sec" id="exportBtn" type="button">⬇ Xuất dữ liệu (JSON)</button>
+      <label class="btn sec" style="cursor:pointer">⬆ Nhập dữ liệu<input type="file" id="importFile" accept=".json" style="display:none"></label>
+      <button class="btn warn" id="weekBtn" type="button">📅 Tổng kết tuần</button>
+      <button class="btn danger" id="clearBtn" type="button">🗑 Xoá toàn bộ lớp</button>
+    </div>
+  </div>
+
+  <div class="board-head">
+    <h2>🌟 Bảng điểm của lớp</h2>
+    <div class="sp"></div>
+    <select id="sortSel">
+      <option value="points">Sắp xếp: điểm cao đến thấp</option>
+      <option value="name">Sắp xếp: theo tên</option>
+      <option value="added">Sắp xếp: thứ tự danh sách</option>
+    </select>
+    <button class="btn sec" id="presentBtn" type="button">🖥 Chế độ chiếu lớp</button>
+  </div>
+  <div id="board"></div>
+  <p class="small" style="margin-top:14px">Huy hiệu theo mốc điểm tích luỹ: 🌱 từ 10 điểm · 🌿 từ 25 điểm · 🌟 từ 50 điểm · 🏆 từ 100 điểm. Bấm vào ảnh đại diện của một em để đổi hình khác.</p>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+  const LS = 'gocHocToan.roster.v1';
+  const AVATARS = ['🐰','🐼','🦊','🐸','🐵','🐯','🐨','🐶','🐱','🦉','🐷','🐥','🦁','🐢','🐙','🦄','🐳','🦋','🐞','🐺','🦝','🐹','🦩','🐧'];
+  const REWARDS = [
+    ['Trả lời đúng câu hỏi', 2], ['Phát biểu xây dựng bài', 2], ['Làm bài tập đầy đủ, cẩn thận', 3],
+    ['Giúp đỡ bạn học', 3], ['Tiến bộ rõ rệt', 5], ['Đạt điểm cao', 5],
+    ['Thắng trò chơi ôn tập', 3], ['Giữ nề nếp tốt cả tuần', 5], ['Việc tốt bất ngờ', 4]
+  ];
+  const PENALTIES = [
+    ['Quên bài, quên vở', -2], ['Nói chuyện riêng trong giờ', -1], ['Đi muộn', -2],
+    ['Chưa làm bài tập về nhà', -3], ['Làm ồn khi lớp đang học', -2], ['Chưa giữ vệ sinh lớp học', -1]
+  ];
+  let DB = { students: [] };
+  try { DB = JSON.parse(localStorage.getItem(LS) || '{"students":[]}'); if (!Array.isArray(DB.students)) DB = { students: [] }; } catch(e) { DB = { students: [] }; }
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify(DB)); } catch(e){} };
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const badgeOf = p => p >= 100 ? '🏆' : p >= 50 ? '🌟' : p >= 25 ? '🌿' : p >= 10 ? '🌱' : '';
+  const fmtTime = t => { const d = new Date(t); return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}); };
+
+  function sortedStudents() {
+    const mode = $('sortSel').value;
+    const arr = [...DB.students];
+    if (mode === 'points') arr.sort((a,b) => b.points - a.points || a.name.localeCompare(b.name, 'vi'));
+    else if (mode === 'name') arr.sort((a,b) => a.name.localeCompare(b.name, 'vi'));
+    return arr;
+  }
+  function updateSummary() {
+    const weekPlus = DB.students.reduce((s,x) => s + x.history.filter(h => isThisWeek(h.t) && h.delta > 0).reduce((a,h) => a + h.delta, 0), 0);
+    const weekMinus = DB.students.reduce((s,x) => s + x.history.filter(h => isThisWeek(h.t) && h.delta < 0).reduce((a,h) => a - h.delta, 0), 0);
+    $('sumCount').textContent = DB.students.length;
+    $('sumPlus').textContent = weekPlus;
+    $('sumMinus').textContent = weekMinus;
+    const top = [...DB.students].sort((a,b) => b.points - a.points)[0];
+    $('sumTop').textContent = top && DB.students.length ? top.name + ' · ' + top.points + ' điểm' : '—';
+  }
+  let renderTimer = null;
+  function scheduleRender(){ clearTimeout(renderTimer); renderTimer = setTimeout(render, 1200); }
+  function render() {
+    const arr = sortedStudents();
+    updateSummary();
+    if (!arr.length) {
+      $('board').innerHTML = '<div class="empty">Chưa có học sinh nào trong danh sách.<br>Hãy thêm từng em ở ô phía trên, hoặc dán danh sách cả lớp một lần.</div>';
+      return;
+    }
+    const ranked = [...DB.students].sort((a,b) => b.points - a.points);
+    const rankOf = id => ranked.findIndex(x => x.id === id) + 1;
+    $('board').innerHTML = '<div class="grid">' + arr.map(s => {
+      const wk = s.history.filter(h => isThisWeek(h.t)).reduce((a,h) => a + h.delta, 0);
+      const rk = rankOf(s.id);
+      const medal = rk === 1 ? '🥇' : rk === 2 ? '🥈' : rk === 3 ? '🥉' : '';
+      return '<div class="stu' + (rk <= 3 && s.points > 0 ? ' top' + rk : '') + '" data-id="' + s.id + '">'
+        + '<span class="rank">' + (medal || ('#' + rk)) + '</span>'
+        + '<button class="del" data-act="del" title="Xoá khỏi danh sách">✕</button>'
+        + '<span class="avatar" data-act="avatar" title="Đổi ảnh đại diện">' + s.avatar + '</span>'
+        + '<div class="name">' + esc(s.name) + '</div>'
+        + '<div class="pts' + (s.points < 0 ? ' neg' : '') + '">' + s.points + ' <small>điểm</small> <span class="badge">' + badgeOf(s.points) + '</span></div>'
+        + '<div class="week">Tuần này: <b>' + (wk > 0 ? '+' + wk : wk) + '</b></div>'
+        + '<div class="quick">'
+        + '<button class="plus" data-act="plus">+1 ⭐</button>'
+        + '<button class="minus" data-act="minus">−1</button>'
+        + '<button class="detail" data-act="open">Chi tiết</button>'
+        + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function isThisWeek(t) {
+    const d = new Date(t), now = new Date();
+    const monday = new Date(now); monday.setHours(0,0,0,0); monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    return d >= monday;
+  }
+  function addPoints(s, delta, reason, light) {
+    s.points += delta;
+    s.history.unshift({ t: Date.now(), delta, reason });
+    if (s.history.length > 300) s.history.length = 300;
+    save();
+    if (light) {
+      const card = document.querySelector('.stu[data-id="' + s.id + '"]');
+      if (card) {
+        const wk = s.history.filter(h => isThisWeek(h.t)).reduce((a,h) => a + h.delta, 0);
+        const ptsEl = card.querySelector('.pts');
+        ptsEl.className = 'pts' + (s.points < 0 ? ' neg' : '');
+        ptsEl.innerHTML = s.points + ' <small>điểm</small> <span class="badge">' + badgeOf(s.points) + '</span>';
+        card.querySelector('.week').innerHTML = 'Tuần này: <b>' + (wk > 0 ? '+' + wk : wk) + '</b>';
+        const b = document.createElement('div');
+        b.className = 'burst' + (delta < 0 ? ' neg' : '');
+        b.textContent = (delta > 0 ? '+' + delta + ' ⭐' : delta + ' ⚠️');
+        card.appendChild(b);
+        setTimeout(() => b.remove(), 1050);
+      }
+      updateSummary();
+      scheduleRender();
+    } else {
+      render();
+    }
+  }
+  function addStudent(name) {
+    name = (name || '').replace(/\s+/g, ' ').trim();
+    if (!name) return false;
+    if (DB.students.some(s => s.name.toLowerCase() === name.toLowerCase())) return false;
+    DB.students.push({ id: 's' + Date.now().toString(36) + Math.floor(Math.random() * 1e4), name, avatar: AVATARS[DB.students.length % AVATARS.length], points: 0, history: [] });
+    return true;
+  }
+
+  $('addOne').onclick = () => { if (addStudent($('oneName').value)) { $('oneName').value = ''; save(); render(); } $('oneName').focus(); };
+  $('oneName').addEventListener('keydown', e => { if (e.key === 'Enter') $('addOne').click(); });
+  $('togglePaste').onclick = () => $('pasteBox').classList.toggle('open');
+  $('applyPaste').onclick = () => {
+    const lines = $('pasteText').value.split(/\r?\n/).map(x => x.replace(/^\s*\d+\s*[.)\-]?\s*/, '').trim()).filter(Boolean);
+    let n = 0; lines.forEach(l => { if (addStudent(l)) n++; });
+    save(); render();
+    if (n) { $('pasteText').value = ''; $('pasteBox').classList.remove('open'); }
+    alert(n ? 'Đã thêm ' + n + ' học sinh vào danh sách.' : 'Chưa thêm được học sinh nào, anh kiểm tra lại danh sách nhé.');
+  };
+  $('loadSample').onclick = () => {
+    ['Minh Anh','Ngọc Anh','Hoàng Anh','Gia Huy','Đức Huy','Quang Huy','Minh Khang','Đăng Khoa','Minh Khôi','Nhật Minh','Bảo Long','Thanh Quý','Quốc Bảo','Khánh Linh','Thảo Linh','Quỳnh Anh','Bảo Ngọc','Phương Thảo','Gia Hân','Khánh Vy'].forEach(addStudent);
+    save(); render();
+  };
+  $('sortSel').onchange = render;
+  $('presentBtn').onclick = () => { document.body.classList.toggle('present'); $('presentBtn').textContent = document.body.classList.contains('present') ? '✖ Thoát chế độ chiếu' : '🖥 Chế độ chiếu lớp'; };
+  $('clearBtn').onclick = () => { if (confirm('Xoá toàn bộ danh sách lớp và điểm số? Hành động này không hoàn tác được. Anh nên xuất dữ liệu trước khi xoá.')) { DB = { students: [] }; save(); render(); } };
+  $('exportBtn').onclick = () => {
+    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'du-lieu-lop-hoc.json'; a.click(); URL.revokeObjectURL(a.href);
+  };
+  $('importFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { try { const d = JSON.parse(r.result); if (d && Array.isArray(d.students)) { DB = d; save(); render(); alert('Đã nhập dữ liệu lớp học.'); } else alert('File không đúng định dạng.'); } catch(err) { alert('Không đọc được file.'); } };
+    r.readAsText(f); e.target.value = '';
+  });
+  $('weekBtn').onclick = () => {
+    if (!DB.students.length) { alert('Chưa có học sinh nào trong danh sách.'); return; }
+    const rows = DB.students.map(s => ({ s, wk: s.history.filter(h => isThisWeek(h.t)).reduce((a,h) => a + h.delta, 0) })).sort((a,b) => b.wk - a.wk);
+    const top = rows.filter(r => r.wk > 0).slice(0, 5);
+    let html = '<h3>📅 Tổng kết tuần này</h3>';
+    html += top.length ? '<p style="margin-top:10px;line-height:2">' + top.map((r,i) => (i+1) + '. <b>' + esc(r.s.name) + '</b> — +' + r.wk + ' điểm').join('<br>') + '</p>' : '<p style="margin-top:10px">Tuần này chưa có điểm thưởng nào được ghi.</p>';
+    html += '<div class="foot"><button class="btn warn" id="resetWeek" type="button">Bắt đầu tuần mới (chỉ xoá lịch sử tuần, giữ điểm tích luỹ)</button><button class="btn sec" id="closeModal" type="button">Đóng</button></div>';
+    openModal(html);
+    $('resetWeek').onclick = () => { if (confirm('Xoá toàn bộ lịch sử cộng trừ điểm để bắt đầu tuần mới? Điểm tích luỹ của các em vẫn giữ nguyên.')) { DB.students.forEach(s => s.history = []); save(); render(); closeModalFn(); } };
+    $('closeModal').onclick = closeModalFn;
+  };
+
+  $('board').addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]'); if (!btn) return;
+    const card = e.target.closest('.stu'); if (!card) return;
+    const s = DB.students.find(x => x.id === card.dataset.id); if (!s) return;
+    const act = btn.dataset.act;
+    if (act === 'plus') addPoints(s, 1, 'Cộng nhanh +1', true);
+    else if (act === 'minus') addPoints(s, -1, 'Trừ nhanh −1', true);
+    else if (act === 'del') { if (confirm('Xoá ' + s.name + ' khỏi danh sách lớp?')) { DB.students = DB.students.filter(x => x.id !== s.id); save(); render(); } }
+    else if (act === 'open' || act === 'avatar') openStudent(s, act === 'avatar');
+  });
+
+  function openModal(html) { $('modal').innerHTML = html; $('overlay').classList.add('open'); }
+  function closeModalFn() { $('overlay').classList.remove('open'); }
+  $('overlay').addEventListener('click', e => { if (e.target === $('overlay')) closeModalFn(); });
+
+  function openStudent(s, focusAvatar) {
+    const chipsR = REWARDS.map(r => '<button class="chip" data-d="' + r[1] + '" data-r="' + esc(r[0]) + '">' + esc(r[0]) + ' · +' + r[1] + '</button>').join('');
+    const chipsP = PENALTIES.map(r => '<button class="chip neg" data-d="' + r[1] + '" data-r="' + esc(r[0]) + '">' + esc(r[0]) + ' · ' + r[1] + '</button>').join('');
+    const hist = s.history.length ? s.history.slice(0, 30).map(h => '<div><span class="d ' + (h.delta > 0 ? 'p' : 'n') + '">' + (h.delta > 0 ? '+' + h.delta : h.delta) + '</span><span>' + esc(h.reason) + '</span><span class="t">' + fmtTime(h.t) + '</span></div>').join('') : '<div><span>Chưa có lịch sử cộng trừ điểm.</span></div>';
+    openModal(
+      '<h3><span class="avatar">' + s.avatar + '</span> ' + esc(s.name) + '</h3>'
+      + '<p class="small" style="margin-top:4px">Điểm tích luỹ hiện tại: <b style="color:#0b8459;font-size:16px">' + s.points + ' điểm</b> ' + badgeOf(s.points) + '</p>'
+      + '<div class="secttl">⭐ Cộng điểm thưởng</div><div class="chips">' + chipsR + '</div>'
+      + '<div class="secttl">⚠️ Trừ điểm</div><div class="chips">' + chipsP + '</div>'
+      + '<div class="secttl">✏️ Cộng hoặc trừ tuỳ ý</div>'
+      + '<div class="row" style="margin-top:8px"><input type="text" id="customDelta" placeholder="Số điểm, ví dụ 3 hoặc -3" style="width:170px"><input type="text" id="customReason" placeholder="Lý do" style="flex:1;min-width:180px"><button class="btn" id="customApply" type="button">Ghi điểm</button></div>'
+      + '<div class="secttl">🎨 Đổi ảnh đại diện</div><div class="avpick">' + AVATARS.map(a => '<button data-av="' + a + '" type="button">' + a + '</button>').join('') + '</div>'
+      + '<div class="secttl">🕘 Lịch sử gần đây</div><div class="hist">' + hist + '</div>'
+      + '<div class="foot"><button class="btn warn" id="undoBtn" type="button">↩ Hoàn tác lần ghi gần nhất</button><button class="btn sec" id="closeModal2" type="button">Đóng</button></div>'
+    );
+    $('modal').querySelectorAll('.chip').forEach(ch => ch.onclick = () => { addPoints(s, +ch.dataset.d, ch.dataset.r); openStudent(s, false); });
+    $('customApply').onclick = () => {
+      const d = parseInt($('customDelta').value, 10);
+      if (!d) { alert('Anh nhập số điểm trước nhé, ví dụ 3 hoặc -3.'); return; }
+      addPoints(s, d, $('customReason').value.trim() || 'Ghi điểm tuỳ ý');
+      openStudent(s, false);
+    };
+    $('modal').querySelectorAll('[data-av]').forEach(b => b.onclick = () => { s.avatar = b.dataset.av; save(); render(); openStudent(s, true); });
+    $('undoBtn').onclick = () => {
+      const last = s.history.shift();
+      if (!last) { alert('Chưa có lần ghi điểm nào để hoàn tác.'); return; }
+      s.points -= last.delta; save(); render(); openStudent(s, false);
+    };
+    $('closeModal2').onclick = closeModalFn;
+    if (focusAvatar) { const el = $('modal').querySelector('.avpick'); if (el) el.scrollIntoView({ block: 'center' }); }
+  }
+
+  render();
+</script>
+</body>
+</html>

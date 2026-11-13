@@ -1,0 +1,1415 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<script id="vtk-config" type="application/json" data-id="giai-cuu-vuong-quoc-huu-ti">{}</script>
+<script id="vtk-kit">
+/* =====================================================================
+   VTK – Bộ tính năng thi đội dùng chung cho game Vọc AI cùng Nam
+   - VTK.spin(teams)            : vòng quay chọn đội đi trước → Promise<chỉ số đội>
+   - VTK.tie(teams, tied)       : câu hỏi phụ khi bằng điểm   → Promise<chỉ số đội thắng | null>
+   - VTK.music(mode)            : nhạc nền 'vui' | 'hoi' (đếm giờ) | null (tắt)
+   - VTK.musicButton(cls)       : HTML nút 🎶 NHẠC để chèn vào thanh công cụ của game
+   - VTK.settingsHTML()/VTK.readSettings(root) : khối "🏆 Thi đội" chèn vào màn Soạn/Cài đặt
+   - VTK.cfg                    : { spin:true, music:true, tie:'câu | A | B | C | D | đáp án | lời giải' }
+   Cấu hình mặc định lấy từ <script id="vtk-config" type="application/json">, sửa thì lưu localStorage.
+   teams: mảng { name, color } (hoặc chuỗi tên).
+   ===================================================================== */
+(function () {
+  if (window.VTK) return;
+  const GID = (document.getElementById('vtk-config')?.dataset.id) || location.pathname.split('/').filter(Boolean).slice(-2).join('/') || document.title;
+  const LS = 'vtk:' + GID;
+  const DEF = { spin: true, music: true, tie: '' };
+  let cfg = Object.assign({}, DEF);
+  try { Object.assign(cfg, JSON.parse(document.getElementById('vtk-config')?.textContent || '{}')); } catch (e) {}
+  try { Object.assign(cfg, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) {}
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify(cfg)); } catch (e) {} };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const COLORS = ['#e5484d', '#1f6fd1', '#f5a524', '#1f9d55', '#8e4ec6', '#e5609a'];
+  const norm = teams => (teams || []).map((t, i) => typeof t === 'string' ? { name: t, color: COLORS[i % 6] } : { name: t.name ?? t.n ?? t.ten ?? ('Đội ' + (i + 1)), color: t.color ?? t.c ?? t.mau ?? COLORS[i % 6] });
+
+  /* ---------- CSS riêng, tiền tố vtk- để không đụng game ---------- */
+  const css = `
+.vtk-ov{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:rgba(10,8,30,.78);font-family:inherit;animation:vtk-in .25s}
+@keyframes vtk-in{from{opacity:0}}
+.vtk-card{width:min(92vw,980px);max-height:94vh;overflow:auto;background:#fffdf6;border-radius:28px;border:6px solid #ffcd00;box-shadow:0 20px 60px rgba(0,0,0,.5);padding:22px 28px;text-align:center;color:#24182a}
+.vtk-card h2{margin:4px 0 10px;font-size:clamp(24px,3.4vw,40px);color:#c8102e}
+.vtk-card p{margin:6px 0;font-size:clamp(16px,1.8vw,22px)}
+.vtk-wheel{position:relative;width:min(62vh,80vw);height:min(62vh,80vw);margin:6px auto}
+.vtk-wheel svg{width:100%;height:100%;transition:transform 4.6s cubic-bezier(.12,.8,.22,1);filter:drop-shadow(0 10px 18px rgba(0,0,0,.3))}
+.vtk-ptr{position:absolute;left:50%;top:-12px;transform:translateX(-50%);border-left:24px solid transparent;border-right:24px solid transparent;border-top:46px solid #7a0a14;z-index:2}
+.vtk-hub{position:absolute;left:50%;top:50%;width:18%;height:18%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff4a8,#ffcd00);border:5px solid #c8102e;display:grid;place-items:center;font-size:clamp(22px,4vh,44px)}
+.vtk-msg{min-height:1.4em;font-size:clamp(22px,3vw,38px)!important;font-weight:800;color:#c8102e}
+.vtk-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.vtk-btn{font:inherit;font-weight:800;font-size:clamp(16px,1.9vw,24px);padding:10px 26px;border-radius:999px;border:4px solid #fff;background:#c8102e;color:#fff;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.25)}
+.vtk-btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.vtk-btn.ok{background:#1f9d55}.vtk-btn.gray{background:#6b6b80}.vtk-btn.big{font-size:clamp(20px,2.6vw,32px);padding:12px 40px}
+.vtk-pulse{animation:vtk-p 1s infinite}@keyframes vtk-p{50%{transform:scale(1.06)}}
+.vtk-q{font-size:clamp(20px,2.6vw,32px)!important;font-weight:800;margin:10px 0!important}
+.vtk-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.vtk-opt{padding:10px 14px;border-radius:16px;background:#fff;border:3px solid #e9dfc9;font-size:clamp(16px,1.9vw,24px);text-align:left}
+.vtk-opt b{color:#c8102e;margin-right:6px}.vtk-opt.right{border-color:#1f9d55;background:#e7f8ee}
+.vtk-ans{filter:blur(8px);cursor:pointer;transition:filter .2s}.vtk-ans:hover{filter:none}
+.vtk-set{border:2px dashed #d7b65c;border-radius:16px;padding:12px 14px;margin:12px 0;background:#fffaf0;text-align:left;color:#24182a;font-size:15px}
+.vtk-set h4{margin:0 0 8px;font-size:17px;color:#b07a00}
+.vtk-set label{display:flex;gap:8px;align-items:center;margin:6px 0;cursor:pointer;color:#24182a!important;font-weight:normal}
+.vtk-set input[type=checkbox]{width:auto!important;height:auto;margin:0}
+.vtk-set textarea{width:100%;box-sizing:border-box;min-height:64px;font:inherit;font-size:14px;padding:8px;border-radius:10px;border:2px solid #e6d9b8}
+.vtk-set small{color:#7a6a50}
+.vtk-mbtn{cursor:pointer}`;
+  const st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st);
+
+  /* ---------- âm thanh ---------- */
+  let AC, NOISE;
+  const ac = () => { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; };
+  addEventListener('pointerdown', () => { try { ac(); if (MUS.want && !MUS.id) music(MUS.want); } catch (e) {} }, true);
+  const nb = c => { if (!NOISE) { NOISE = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = NOISE.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } return NOISE; };
+  function hiss(t, d, vol, ft, fq, out) { const c = AC, s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); s.buffer = nb(c); s.loop = true; f.type = ft; f.frequency.value = fq; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + d); s.connect(f).connect(g).connect(out); s.start(t); s.stop(t + d + .05); }
+  function kick(t, out, vol) { const c = AC, o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + .14); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + .32); o.connect(g).connect(out); o.start(t); o.stop(t + .35); }
+  function note(t, f, d, type, vol, out, cut) { const c = AC, o = c.createOscillator(), g = c.createGain(); let n = o; o.type = type; o.frequency.setValueAtTime(f, t); if (cut) { const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = cut; o.connect(lp); n = lp; } g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .008); g.gain.exponentialRampToValueAtTime(.001, t + d); n.connect(g).connect(out); o.start(t); o.stop(t + d + .02); }
+  const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+  function blip(f, d, type = 'triangle', vol = .15, at = 0) { try { const c = ac(), t = c.currentTime + at; note(t, f, d, type, vol, c.destination); } catch (e) {} }
+
+  const MUS = { mode: null, want: null, bus: null, t: 0, step: 0, id: null, vol: .32 };
+  const PROG = [[48, 64, 67, 72], [43, 62, 67, 71], [45, 64, 69, 72], [41, 65, 69, 72]];
+  const MEL = [[76, 0, 79, 81, 79, 76, 74, 0], [74, 0, 74, 76, 79, 0, 76, 0], [72, 0, 76, 79, 81, 79, 76, 0], [77, 76, 74, 72, 74, 0, 79, 0]];
+  function tick() {
+    if (!AC || AC.state !== 'running') { if (AC) MUS.t = AC.currentTime + .08; return; }
+    const out = MUS.bus, hot = MUS.mode === 'hoi', s16 = 60 / (hot ? 140 : 122) / 4;
+    while (MUS.t < AC.currentTime + .15) {
+      const s = MUS.step % 16, bar = (MUS.step >> 4) % 4, t = MUS.t, ch = PROG[hot ? [0, 0, 2, 2][bar] : bar];
+      if (s % 4 === 0) kick(t, out, hot ? .8 : .7);
+      if (s % 8 === 4) hiss(t, .18, hot ? .3 : .25, 'bandpass', 1900, out);
+      if (s % 2 === 0 || hot) hiss(t, .035, s % 4 === 2 ? .16 : .08, 'highpass', 8000, out);
+      if (hot) { note(t, mf(ch[0] - 12 + (s % 2 ? 12 : 0)), .12, 'sawtooth', .16, out, 900); if (s % 4 === 0) note(t, mf(81 + (bar % 2) + ((MUS.step >> 6) % 4)), .1, 'square', .045, out); }
+      else {
+        if ([0, 3, 6, 8, 11, 14].includes(s)) note(t, mf(ch[0] - 12 + (s === 14 ? 12 : 0)), .2, 'sawtooth', .17, out, 700);
+        if (s === 2 || s === 6 || s === 10 || s === 14) ch.slice(1).forEach(m => note(t, mf(m), .12, 'square', .022, out, 2800));
+        if (s % 2 === 0) { const m = MEL[bar][s >> 1]; if (m) note(t, mf(m), .22, 'triangle', .085, out); }
+      }
+      MUS.t += s16; MUS.step++;
+    }
+  }
+  /** mode: 'vui' (nhạc nền) | 'hoi' (đang đếm giờ) | null (tắt) */
+  function music(mode) {
+    MUS.want = mode;
+    if (!cfg.music) mode = null;
+    if (mode === MUS.mode && (MUS.id || !mode)) return;
+    MUS.mode = mode; clearInterval(MUS.id); MUS.id = null;
+    if (!mode || !AC) return;
+    const c = ac();
+    if (!MUS.bus) { MUS.bus = c.createGain(); MUS.bus.gain.value = MUS.vol; const comp = c.createDynamicsCompressor(); MUS.bus.connect(comp).connect(c.destination); }
+    MUS.t = c.currentTime + .08; MUS.step = 0; MUS.id = setInterval(tick, 25);
+  }
+  /** nhỏ nhạc lại khi đọc/đọc to, on=false để trả lại */
+  function duck(on) { if (!MUS.bus || !AC) return; const g = MUS.bus.gain, t = AC.currentTime; g.cancelScheduledValues(t); g.setTargetAtTime(on ? MUS.vol * .3 : MUS.vol, t, on ? .05 : .4); }
+  function musicLabel() { return (cfg.music ? '🎶' : '🎵') + `<small>${cfg.music ? 'NHẠC' : 'TẮT'}</small>`; }
+  function toggleMusic() { cfg.music = !cfg.music; save(); ac(); const w = MUS.want; MUS.mode = undefined; music(w); document.querySelectorAll('.vtk-mbtn').forEach(b => b.innerHTML = b.dataset.plain ? (cfg.music ? '🎶 Nhạc: bật' : '🎵 Nhạc: tắt') : musicLabel()); }
+  /** cls: class nút của game để nút nhạc cùng kiểu; plain=true thì hiện chữ thường "🎶 Nhạc: bật" */
+  function musicButton(cls = '', plain = false) { return `<button type="button" class="${cls} vtk-mbtn" ${plain ? 'data-plain="1"' : ''} title="Bật/tắt nhạc nền" onclick="VTK.toggleMusic()">${plain ? (cfg.music ? '🎶 Nhạc: bật' : '🎵 Nhạc: tắt') : musicLabel()}</button>`; }
+
+  /* ---------- vòng quay chọn đội đi trước ---------- */
+  function overlay(html) { close(); const d = document.createElement('div'); d.className = 'vtk-ov'; d.id = 'vtk-ov'; d.innerHTML = `<div class="vtk-card">${html}</div>`; document.body.appendChild(d); return d; }
+  function close() { document.getElementById('vtk-ov')?.remove(); }
+  /** Promise<index>. Không bật vòng quay hoặc < 2 đội thì trả 0 ngay (đội đầu tiên). */
+  function spin(teamsIn, opts = {}) {
+    const teams = norm(teamsIn);
+    if ((!cfg.spin && !opts.force) || teams.length < 2) return Promise.resolve(0);
+    return new Promise(res => {
+      const n = teams.length, segN = n * 2, deg = 360 / segN;
+      const seg = i => { const a0 = (i * deg - 90) * Math.PI / 180, a1 = ((i + 1) * deg - 90) * Math.PI / 180, r = 100, t = teams[i % n], mid = (i + .5) * deg;
+        return `<path d="M0 0 L${r * Math.cos(a0)} ${r * Math.sin(a0)} A${r} ${r} 0 0 1 ${r * Math.cos(a1)} ${r * Math.sin(a1)}Z" fill="${t.color}" stroke="#fff" stroke-width="2"/>
+          <text transform="rotate(${mid}) translate(0 -62) rotate(90)" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800" font-size="${Math.max(7, Math.min(13, 70 / Math.max(4, t.name.length)))}" style="paint-order:stroke" stroke="rgba(0,0,0,.35)" stroke-width="1.5">${esc(t.name)}</text>`; };
+      overlay(`<h2>🎡 Vòng quay may mắn · Đội nào đi trước?</h2>
+        <div class="vtk-wheel"><div class="vtk-ptr"></div><svg id="vtk-wh" viewBox="-108 -108 216 216"><circle r="106" fill="#ffcd00" stroke="#c8102e" stroke-width="5"/>${Array.from({ length: segN }, (_, i) => seg(i)).join('')}</svg><div class="vtk-hub">⭐</div></div>
+        <p class="vtk-msg" id="vtk-msg"></p>
+        <div class="vtk-row"><button class="vtk-btn big vtk-pulse" id="vtk-go">QUAY! 🎡</button></div>`);
+      const go = document.getElementById('vtk-go');
+      go.onclick = () => {
+        if (go.dataset.done) { close(); return res(+go.dataset.first); }
+        go.disabled = true; go.classList.remove('vtk-pulse'); ac();
+        const pick = Math.floor(Math.random() * segN), first = pick % n;
+        const turn = 360 * 6 + (360 - (pick + .5) * deg) + (Math.random() - .5) * deg * .6;
+        document.getElementById('vtk-wh').style.transform = `rotate(${turn}deg)`;
+        let k = 0; const tk = setInterval(() => { blip(1100 + (k++ % 3) * 120, .04, 'square', .06); }, 120);
+        setTimeout(() => clearInterval(tk), 3900);
+        setTimeout(() => {
+          [523, 659, 784, 1047].forEach((f, i) => blip(f, .3, 'square', .1, i * .09));
+          document.getElementById('vtk-msg').innerHTML = `🎉 <span style="color:${teams[first].color}">${esc(teams[first].name)}</span> được đi trước!`;
+          go.disabled = false; go.textContent = 'BẮT ĐẦU ▶'; go.dataset.done = 1; go.dataset.first = first; go.classList.add('vtk-pulse');
+        }, 4700);
+      };
+    });
+  }
+
+  /* ---------- câu hỏi phụ khi bằng điểm ---------- */
+  /** Đọc câu hỏi phụ: "câu | A | B | (C) | (D) | đáp án (A/B/C/D) | (lời giải)". Thiếu thì null. */
+  function tieQ() {
+    const p = String(cfg.tie || '').split('|').map(s => s.trim());
+    if (p.length < 4 || !p[0]) return null;
+    const ai = p.findIndex((s, i) => i >= 3 && /^[A-Da-d]$/.test(s));
+    if (ai < 0) return null;
+    const opts = p.slice(1, ai).filter(Boolean), a = 'ABCD'.indexOf(p[ai].toUpperCase());
+    if (opts.length < 2 || a < 0 || a >= opts.length) return null;
+    return { q: p[0], o: opts, a, s: p[ai + 1] || '' };
+  }
+  /** Tìm các đội đang bằng điểm cao nhất (scores: mảng số). Trả mảng chỉ số, < 2 phần tử nghĩa là không hòa. */
+  function tiedTop(scores) { const m = Math.max(...scores); return scores.map((s, i) => s === m ? i : -1).filter(i => i >= 0); }
+  /** Promise<chỉ số đội thắng | null>. Không có câu hỏi phụ hoặc không hòa thì trả null ngay. Game tự cộng điểm cho đội thắng. */
+  function tie(teamsIn, tied) {
+    const teams = norm(teamsIn), q = tieQ();
+    if (!q || !tied || tied.length < 2) return Promise.resolve(null);
+    return new Promise(res => {
+      const tried = [];
+      const optHTML = (show) => `<div class="vtk-opts">${q.o.map((o, i) => `<div class="vtk-opt ${show && i === q.a ? 'right' : ''}"><b>${'ABCD'[i]}.</b>${esc(o)}</div>`).join('')}</div>`;
+      const ask = () => {
+        const left = tied.filter(k => !tried.includes(k));
+        overlay(`<h2>⚡ Câu hỏi phụ phân thắng thua</h2>
+          <p><b>${tied.map(k => `<span style="color:${teams[k].color}">${esc(teams[k].name)}</span>`).join(', ')}</b> đang bằng điểm! Đội nào <b>giơ tay trước</b> được trả lời. Sai thì đội còn lại giành quyền.</p>
+          <p class="vtk-q">${esc(q.q)}</p>${optHTML(false)}
+          <p>✋ Đội nào giơ tay trước?</p>
+          <div class="vtk-row">${left.map(k => `<button class="vtk-btn" style="background:${teams[k].color}" data-k="${k}">${esc(teams[k].name)}</button>`).join('')}</div>`);
+        blip(880, .15, 'square', .08); blip(1175, .15, 'square', .08, .07); blip(1568, .2, 'square', .08, .14);
+        document.querySelectorAll('#vtk-ov [data-k]').forEach(b => b.onclick = () => judge(+b.dataset.k));
+      };
+      const judge = k => {
+        overlay(`<h2>⚡ <span style="color:${teams[k].color}">${esc(teams[k].name)}</span> trả lời</h2>
+          <p class="vtk-q">${esc(q.q)}</p>${optHTML(false)}
+          <p style="font-size:16px;color:#7a6a50">Đáp án (rê chuột để xem): <span class="vtk-ans">${'ABCD'[q.a]}</span></p>
+          <div class="vtk-row"><button class="vtk-btn ok" id="vtk-y">✅ ĐÚNG</button><button class="vtk-btn" id="vtk-n">❌ SAI</button></div>`);
+        document.getElementById('vtk-y').onclick = () => done(k);
+        document.getElementById('vtk-n').onclick = () => {
+          tried.push(k); blip(220, .4, 'sawtooth', .1);
+          const left = tied.filter(x => !tried.includes(x));
+          if (left.length === 1) return done(left[0], true);
+          if (!left.length) return finish(null);
+          ask();
+        };
+      };
+      const done = (k, byDefault) => {
+        [523, 659, 784, 1047, 1319].forEach((f, i) => blip(f, .25, 'square', .1, i * .08));
+        overlay(`<h2>🏆 ${esc(teams[k].name)} chiến thắng!</h2>
+          <p>${byDefault ? 'Đội bạn trả lời chưa đúng, ' + esc(teams[k].name) + ' giành quyền.' : 'Trả lời chính xác câu hỏi phụ!'}</p>
+          <p class="vtk-q">${esc(q.q)}</p>${optHTML(true)}${q.s ? `<p>💡 ${esc(q.s)}</p>` : ''}
+          <div class="vtk-row"><button class="vtk-btn ok big" id="vtk-end">XEM KẾT QUẢ 🏆</button></div>`);
+        document.getElementById('vtk-end').onclick = () => finish(k);
+      };
+      const finish = k => { close(); res(k); };
+      ask();
+    });
+  }
+
+  /* ---------- khối cài đặt chèn vào màn Soạn/Cài đặt của game ---------- */
+  /** opts.teams=false: game không chia đội → chỉ hiện ô nhạc nền; opts.spin=false: ẩn ô vòng quay */
+  function settingsHTML(opts = {}) {
+    const T = opts.teams !== false, SP = T && opts.spin !== false;
+    return `<div class="vtk-set" id="vtk-set"><h4>${T ? '🏆 Thi đội' : '🎶 Âm nhạc'}</h4>
+      <label ${SP ? '' : 'style="display:none!important"'}><input type="checkbox" id="vtk-s-spin" ${cfg.spin ? 'checked' : ''}> Quay vòng chọn đội đi trước khi bắt đầu</label>
+      <label><input type="checkbox" id="vtk-s-music" ${cfg.music ? 'checked' : ''}> Nhạc nền sôi động (nhạc dồn dập khi đếm giờ)</label>
+      <div ${T ? '' : 'hidden'}><div style="margin-top:8px"><b>Câu hỏi phụ khi bằng điểm</b> <small>– cuối game các đội bằng điểm thì đội giơ tay trước được trả lời. Để trống nếu không dùng.</small></div>
+      <textarea id="vtk-s-tie" placeholder="Câu hỏi | Đáp án A | Đáp án B | Đáp án C | Đáp án D | Đáp án đúng (A/B/C/D) | Lời giải (nếu có)">${esc(cfg.tie)}</textarea>
+      <small>Có thể chỉ 2 đáp án: Câu hỏi | A | B | A. Ví dụ: 7 × 8 = ? | 54 | 56 | 58 | 64 | B | 7 × 8 = 56</small>
+      <div id="vtk-s-warn" style="color:#c8102e;font-weight:700"></div></div></div>`;
+  }
+  /** Đọc khối cài đặt (gọi khi bấm Lưu). Trả chuỗi lỗi nếu câu hỏi phụ sai định dạng, '' nếu ổn. */
+  function readSettings(root = document) {
+    const g = id => root.querySelector('#' + id);
+    if (!g('vtk-s-spin')) return '';
+    cfg.spin = g('vtk-s-spin').checked; cfg.tie = g('vtk-s-tie').value.trim();
+    const m = g('vtk-s-music').checked; if (m !== cfg.music) { cfg.music = !m; toggleMusic(); }
+    save();
+    const err = cfg.tie && !tieQ() ? 'Câu hỏi phụ chưa đúng mẫu: Câu hỏi | A | B | (C) | (D) | Đáp án đúng | (Lời giải)' : '';
+    const w = g('vtk-s-warn'); if (w) w.textContent = err;
+    return err;
+  }
+  /** Ghi cấu hình hiện tại vào thẻ <script id="vtk-config"> trong chuỗi HTML (dùng khi game xuất/tải file mới). */
+  function embed(html) {
+    const tag = `<script id="vtk-config" type="application/json" data-id="${esc(GID)}">${JSON.stringify(cfg).replace(/</g, '\\u003c')}<\/script>`;
+    return /<script id="vtk-config"[^>]*>[\s\S]*?<\/script>/.test(html) ? html.replace(/<script id="vtk-config"[^>]*>[\s\S]*?<\/script>/, () => tag) : html.replace(/<\/head>/i, () => tag + '\n</head>');
+  }
+
+  window.VTK = { spin, tie, tieQ, tiedTop, music, duck, toggleMusic, musicButton, settingsHTML, readSettings, embed, close, get cfg() { return cfg; } };
+})();
+
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Giải cứu Vương quốc Hữu Tỉ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#e6f1ff;--bg2:#f1e9ff;--ink:#1f2340;--mut:#5d6385;--card:#fff;--pri:#6d3fd1;--pri2:#8b5cf6;--blue:#2f7de1;--gold:#f5b301;--green:#1f9d55;--red:#e5484d;--line:#e3e6f2;--sh:0 10px 30px rgba(60,40,140,.12)}
+*{box-sizing:border-box}
+html{font-size:clamp(15px,1.12vw,22px)}
+body{margin:0;font-family:'Baloo 2','Segoe UI',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+  background:radial-gradient(circle at 12% 8%,#fff6d8 0,transparent 28%),radial-gradient(circle at 90% 90%,#ffe3f3 0,transparent 30%),linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed}
+button{font-family:inherit}
+.hidden{display:none!important}
+
+/* thanh trên cùng */
+#bar{position:sticky;top:0;z-index:20;display:flex;gap:.6rem;align-items:center;padding:.45rem 1rem;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font-weight:800;color:var(--pri);cursor:pointer;font-size:1.1rem;white-space:nowrap;border:0;background:none}
+#teams{display:flex;gap:.5rem;flex:1;justify-content:center;flex-wrap:wrap}
+.team{--c:#888;display:flex;align-items:center;gap:.4rem;padding:.2rem .4rem .2rem .7rem;border-radius:999px;background:#fff;border:2px solid var(--line);cursor:pointer;transition:.2s;user-select:none}
+.team.on{border-color:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 22%,transparent)}
+.team .tn{font-weight:700;color:var(--c)}
+.team.on .tn::before{content:'▶ '}
+.team .sc{min-width:2.3em;text-align:center;font-size:1.15rem;font-weight:800;background:var(--c);color:#fff;border-radius:999px;padding:0 .45em}
+.team .pm{display:flex;gap:.15rem}
+.team .pm button{border:0;background:#f1f2f8;width:1.6em;height:1.6em;border-radius:50%;cursor:pointer;font-weight:800;color:var(--ink)}
+.bump{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.4)}}
+.tools{display:flex;gap:.35rem;flex-wrap:wrap}
+.tool{border:0;background:#f1edff;color:var(--pri);border-radius:.7rem;padding:.3rem .6rem;font-weight:700;cursor:pointer;font-size:.95rem;white-space:nowrap}
+.tool:hover{background:#e4dbff}
+
+#app{max-width:1400px;margin:0 auto;padding:1rem 1.2rem 2.5rem}
+.screen{animation:in .45s ease}
+@keyframes in{from{opacity:0;transform:translateY(12px)}}
+.stagehead{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;margin:.3rem 0 1rem}
+.stagehead h2{margin:0;font-size:2rem;line-height:1.1}
+.tag{display:inline-block;background:var(--pri);color:#fff;border-radius:999px;padding:.15rem .8rem;font-weight:700;font-size:.85rem}
+.prog{color:var(--mut);font-weight:700}
+.timer{margin-left:auto;border:0;border-radius:999px;padding:.35rem 1rem;font-size:1.25rem;font-weight:800;background:#fff;color:var(--pri);box-shadow:var(--sh);cursor:pointer;min-width:7.5rem}
+.timer.run{background:var(--gold);color:#3a2a00}
+.timer.low{background:var(--red);color:#fff;animation:bump .9s infinite}
+.timer.up{background:var(--red);color:#fff}
+.card{background:var(--card);border-radius:1.4rem;box-shadow:var(--sh);padding:1.4rem;border:1px solid var(--line)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.3fr);gap:1.4rem;align-items:start}
+.char{display:flex;flex-direction:column;align-items:center;gap:.7rem;position:sticky;top:5rem}
+.char svg{width:min(100%,250px);height:auto;filter:drop-shadow(0 12px 18px rgba(0,0,0,.12))}
+.bubble{background:#fff;border:3px solid var(--blue);border-radius:1.2rem;padding:.7rem 1rem;font-weight:600;font-size:1.05rem;box-shadow:var(--sh);text-align:center}
+.bubble.purple{border-color:var(--pri)}
+.who{color:var(--mut);font-weight:600;text-align:center}
+.who b{font-size:1.1rem}
+
+/* phân số */
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .1em;font-size:.82em;line-height:1.05}
+.frac>span:first-child{border-bottom:.08em solid currentColor;padding:0 .18em}
+.frac>span:last-child{padding:0 .18em}
+sup{font-size:.6em}
+
+/* trắc nghiệm */
+.lv{display:inline-block;background:#fff3cf;color:#8a5a00;border-radius:.5rem;padding:.05rem .6rem;font-weight:700;font-size:.85rem}
+.q{font-size:2.3rem;font-weight:700;text-align:center;margin:.5rem 0 1.2rem;line-height:1.5}
+.q.long{font-size:1.7rem}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.8rem}
+.opt{display:flex;align-items:center;gap:.7rem;justify-content:center;font-size:1.6rem;font-weight:700;padding:.8rem;border-radius:1rem;border:3px solid var(--line);background:#fafbff;cursor:pointer;transition:.15s;color:var(--ink);min-height:4.5rem}
+.opt b{background:var(--pri);color:#fff;border-radius:.6rem;width:1.6em;height:1.6em;display:grid;place-items:center;font-size:.8em;flex:none}
+.opt:hover:not(:disabled){transform:translateY(-3px);border-color:var(--pri2)}
+.opt.right{border-color:var(--green);background:#e7f8ee}
+.opt.right b{background:var(--green)}
+.opt.wrong{border-color:var(--red);background:#fdecec;animation:shake .4s}
+.opt.wrong b{background:var(--red)}
+.opt:disabled{cursor:default}
+.opt:disabled:not(.right):not(.wrong){opacity:.5}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.verdict{font-size:1.35rem;font-weight:800;margin:1rem 0 .4rem}
+.verdict.ok{color:var(--green)}.verdict.no{color:var(--red)}
+.sol{background:#f6f3ff;border-left:5px solid var(--pri);padding:.7rem 1rem;border-radius:.7rem;font-size:1.35rem;margin:.5rem 0 1rem;line-height:1.9}
+.note{color:var(--mut);font-size:1rem;margin:-.4rem 0 1rem}
+.btn{font-weight:800;border:0;border-radius:1rem;padding:.65rem 1.3rem;background:var(--pri);color:#fff;cursor:pointer;box-shadow:0 5px 0 #4b25a3;transition:.1s;font-size:1.1rem}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #4b25a3}
+.btn.gold{background:var(--gold);color:#3a2a00;box-shadow:0 5px 0 #b98500}
+.btn.ghost{background:#fff;color:var(--pri);box-shadow:0 5px 0 #d9d0f5;border:2px solid #d9d0f5}
+.btn.big{font-size:1.35rem;padding:.85rem 1.8rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center}
+.steps{display:flex;gap:.4rem;margin-bottom:1rem}
+.steps i{flex:1;height:.55rem;border-radius:9px;background:#dfe2ef}
+.steps i.ok{background:var(--green)}.steps i.cur{background:var(--gold)}
+.lead-q{background:#fff8e1;border-radius:1rem;padding:1rem 1.2rem;font-size:1.3rem;font-weight:600;margin:1rem 0}
+.lead-q ul{margin:.4rem 0 0;padding-left:1.3rem}
+
+/* trang bìa */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:2rem;align-items:center;min-height:70vh}
+.heroChars{display:flex;justify-content:center;align-items:flex-end;gap:0}
+.heroChars svg{width:min(48%,260px);height:auto;filter:drop-shadow(0 14px 20px rgba(0,0,0,.14))}
+.heroChars .ch:first-child svg{animation:float 3s ease-in-out infinite}
+.heroChars .ch{display:contents}
+@keyframes float{50%{transform:translateY(-10px)}}
+.hero h1{font-size:3.6rem;line-height:1.05;margin:.5rem 0}
+.hero h1 span{background:linear-gradient(90deg,var(--pri),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:1.3rem;font-weight:700;color:var(--mut);margin:.2rem 0 1rem}
+.story{font-size:1.2rem;line-height:1.6;background:#fff;border-radius:1.2rem;padding:1rem 1.2rem;box-shadow:var(--sh);margin:0 0 1.4rem}
+.guide{margin-top:1.2rem}
+.guide h3{margin-top:0}
+.guide li{margin:.3rem 0;font-size:1.05rem}
+
+/* bản đồ */
+.mapwrap{position:relative;height:64vh;min-height:430px;border-radius:2rem;background:linear-gradient(180deg,#bfe3ff 0%,#e5f5ff 42%,#c4ebb9 43%,#93d38a 100%);overflow:hidden;box-shadow:var(--sh)}
+.mapwrap svg.path{position:absolute;inset:0;width:100%;height:100%}
+.path polyline{fill:none;stroke:#fff;stroke-width:7;stroke-dasharray:3 16;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.deco{position:absolute;font-size:3rem;opacity:.9;pointer-events:none}
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:.05rem;width:12rem;background:#fff;border:0;border-radius:1.3rem;padding:.8rem .6rem;cursor:pointer;box-shadow:0 8px 0 #c9bff0,var(--sh);transition:transform .2s;color:var(--ink)}
+.node:hover{transform:translate(-50%,-57%)}
+.node .ic{font-size:2.6rem;line-height:1.2}
+.node b{font-size:1.15rem}
+.node small{color:var(--mut);font-size:.85rem}
+.node .num{position:absolute;top:-.7rem;left:-.7rem;background:var(--pri);color:#fff;width:2.1rem;height:2.1rem;border-radius:50%;display:grid;place-items:center;font-weight:800}
+.node.done{box-shadow:0 8px 0 #9bd8b0,var(--sh)}
+.node.done .num{background:var(--green)}
+.node .star{position:absolute;top:-.9rem;right:-.6rem;font-style:normal;font-size:1.7rem}
+.mapfoot{display:flex;justify-content:center;margin-top:1.2rem}
+
+/* ngôi đền */
+.rooms{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1rem}
+.room{font-weight:800;font-size:1.1rem;padding:.6rem;border-radius:1rem;border:3px solid var(--line);background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;color:var(--ink)}
+.room small{font-weight:600;color:var(--mut)}
+.room.on{border-color:var(--pri);background:#f4efff}
+.room.done:not(.on){border-color:#9bd8b0}
+.temple{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1fr);gap:1.2rem;align-items:start}
+.roomcard h3{margin:0 0 .4rem;font-size:1.7rem}
+.hint{color:var(--mut);font-size:1.05rem;margin:.2rem 0 .8rem}
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.door{border-radius:5rem 5rem .8rem .8rem;padding:1.6rem 1rem 1rem;background:linear-gradient(#8b5a2b,#6b4220);color:#fff;cursor:pointer;min-height:13rem;display:flex;flex-direction:column;gap:.6rem;text-align:center;border:5px solid #4a2c12;transition:.35s;justify-content:center}
+.door:hover{filter:brightness(1.08)}
+.door .de{font-size:1.7rem;font-weight:700}
+.door .ds{font-size:1.5rem;line-height:1.9}
+.door.open{background:#fffbe9;color:var(--ink);border-color:var(--gold)}
+.expr{font-size:2.2rem;font-weight:700;text-align:center;padding:.8rem;background:#f7f8ff;border-radius:1rem;margin:.4rem 0}
+.expr.small{font-size:1.9rem}
+.cards{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin:.6rem 0}
+.tcard{font-weight:700;font-size:1.3rem;padding:1rem 1.3rem;border-radius:1rem;border:3px dashed #b9a7ef;background:#fff;cursor:pointer;position:relative;min-width:11rem;color:var(--ink)}
+.tcard.set{border-style:solid;border-color:var(--green);background:#ebf9f0;cursor:default}
+.tcard b{position:absolute;top:-.85rem;left:-.85rem;background:var(--green);color:#fff;border-radius:50%;width:2rem;height:2rem;display:grid;place-items:center}
+.tcard.shake{animation:shake .4s;border-color:var(--red)}
+.solsteps{font-size:1.55rem;background:#f6f3ff;border-radius:1rem;padding:.8rem 1.3rem;margin-top:1rem;line-height:2.1;font-weight:600}
+.ask{margin:1rem 0;background:#fff8e1;border-radius:1rem;padding:.8rem 1.2rem;font-size:1.1rem}
+.ask ol{margin:.3rem 0 0;padding-left:1.4rem}
+.rulebox{position:sticky;top:5rem}
+.rulebox h3{margin:0 0 .7rem;font-size:1.4rem}
+.piece{border:2px dashed #cfd3e6;border-radius:1rem;padding:.8rem;margin-bottom:.7rem;color:var(--mut);font-weight:600}
+.piece.got{border:2px solid var(--gold);background:#fff8dd;color:var(--ink);animation:pop .5s}
+@keyframes pop{50%{transform:scale(1.06)}}
+.unlocked{background:#e9f9ef;border-radius:1rem;padding:.8rem 1rem;margin:.6rem 0 1rem;font-weight:600;font-size:1.1rem}
+
+/* hộp thoại */
+.modal{position:fixed;inset:0;background:rgba(20,10,50,.55);display:grid;place-items:center;z-index:50;padding:1rem;animation:in .3s}
+.modal .card{max-width:860px;width:100%;max-height:92vh;overflow:auto}
+.modal h2{margin-top:0;font-size:2rem;text-align:center}
+.board{display:grid;gap:.7rem;margin-bottom:1.2rem}
+.bstep{display:flex;gap:1rem;align-items:center;font-size:1.45rem;padding:.8rem 1rem;border-radius:1rem;background:#f6f3ff;animation:in .5s both;font-weight:600}
+.bstep b{background:var(--pri);color:#fff;width:2.5rem;height:2.5rem;border-radius:50%;display:grid;place-items:center;flex:none}
+
+/* thám tử */
+.casehead{font-weight:800;letter-spacing:.08em;color:#8a5a00;background:#fff3cf;display:inline-block;padding:.2rem .8rem;border-radius:.5rem}
+.lines{display:grid;gap:.6rem;margin:1rem 0}
+.line{display:flex;align-items:center;gap:1rem;font-size:1.75rem;font-weight:700;text-align:left;padding:.6rem 1rem;border:3px solid var(--line);border-radius:1rem;background:#fff;cursor:pointer;color:var(--ink)}
+.line .ln{font-size:.9rem;color:var(--mut);min-width:4.5rem}
+.line:hover{border-color:var(--pri2)}
+.line.bad{border-color:var(--red);background:#fdecec}
+.line.bad .ln{color:var(--red);font-weight:800}
+.line.fine{border-color:#bfe6cc;background:#f2fbf5;opacity:.7}
+.btn.ghost.crossed{opacity:.5;text-decoration:line-through}
+.stamp{display:inline-block;border:5px solid var(--red);color:var(--red);font-weight:900;font-size:1.8rem;padding:.1rem 1rem;border-radius:.6rem;transform:rotate(-5deg);animation:stamp .4s;margin:.4rem 0}
+.stamp.ok{border-color:var(--green);color:var(--green)}
+@keyframes stamp{from{transform:scale(2.4) rotate(-5deg);opacity:0}}
+.why{font-size:1.2rem;margin:.4rem 0 1rem;font-weight:600}
+
+/* kho báu */
+.tre{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1.2rem;align-items:start}
+.tre h3{margin:0 0 .3rem;font-size:1.5rem}
+.task{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem;font-size:1.75rem;font-weight:700;padding:.7rem 1rem;border-radius:1rem;background:#f7f8ff;margin-bottom:.7rem}
+.tk{background:var(--gold);color:#3a2a00;min-width:2.4rem;height:2.4rem;padding:0 .4rem;border-radius:.7rem;display:grid;place-items:center;font-size:1.2rem;flex:none}
+.ts{width:100%;font-size:1.35rem;color:var(--green)}
+.chestcard{display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center}
+.chestcard svg{width:min(100%,300px);height:auto}
+.chest.shake{animation:shake .45s}
+.dials{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.dial{display:flex;flex-direction:column;align-items:center;background:#2b2147;color:#fff;border-radius:1rem;padding:.4rem;border:4px solid #2b2147}
+.dial button{border:0;background:#4a3a7a;color:#fff;border-radius:.6rem;width:3.2rem;height:2.1rem;cursor:pointer;font-size:1rem}
+.dial button:hover{background:#6a56a8}
+.dial .dv{font-size:2.7rem;font-weight:800;line-height:1.25;width:3.6rem;text-align:center;background:#fff;color:var(--ink);border-radius:.6rem;margin:.3rem 0}
+.dial small{font-weight:700}
+.dial.g{border-color:#38d17a}.dial.r{border-color:var(--red)}
+.mini{border:0;background:none;color:var(--mut);cursor:pointer;font-size:.9rem;text-decoration:underline}
+.keyhint{font-weight:800;color:var(--pri)}
+
+/* chiến thắng */
+.rank{display:grid;gap:.6rem;margin:1rem 0 1.4rem}
+.rk{--c:#888;display:flex;align-items:center;gap:1rem;padding:.6rem 1rem;border-radius:1rem;background:#fafbff;border:3px solid var(--c);font-size:1.4rem}
+.rk .pts{margin-left:auto;font-weight:800;color:var(--c)}
+.rk .medal{font-size:1.8rem}
+.mem{display:grid;gap:.4rem;margin:.6rem 0 1.4rem;font-size:1.2rem}
+
+/* soạn câu hỏi */
+.ed .edcard{max-width:1150px;height:94vh;max-height:94vh;display:flex;flex-direction:column;padding:1rem 1.2rem;overflow:hidden}
+.edhead{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.ed .edhead h2{margin:0;font-size:1.6rem;text-align:left}
+.x{border:0;background:#f1f2f8;border-radius:50%;width:2.2rem;height:2.2rem;cursor:pointer;font-size:1.1rem;flex:none}
+.edtabs{display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0}
+.edtabs button{border:2px solid var(--line);background:#fff;border-radius:.8rem;padding:.3rem .8rem;font-weight:700;cursor:pointer;font-size:.95rem;color:var(--ink)}
+.edtabs button.on{border-color:var(--pri);background:#f4efff;color:var(--pri)}
+.edtabs button.bad::after{content:' ⚠️'}
+.edbody{flex:1;overflow:auto;padding:0 .3rem .5rem 0}
+.edfoot{display:flex;gap:.7rem;align-items:center;justify-content:flex-end;border-top:1px solid var(--line);padding-top:.7rem;margin-top:.4rem;flex-wrap:wrap}
+#edstat{margin-right:auto;font-weight:700}
+#edstat.bad{color:var(--red)}#edstat.ok{color:var(--green)}
+.fmt{background:#f6f3ff;border-radius:.8rem;padding:.6rem .9rem;font-size:.98rem;margin-bottom:.4rem;line-height:1.55}
+.fmt code{background:#fff;padding:.05rem .4rem;border-radius:.4rem;font-weight:700;color:var(--pri);font-family:Consolas,'Courier New',monospace;font-size:.92em}
+.sym{display:flex;gap:.3rem;flex-wrap:wrap;margin:.4rem 0;align-items:center;font-size:.9rem;color:var(--mut)}
+.sym button{border:1px solid var(--line);background:#fff;border-radius:.5rem;padding:.1rem .6rem;cursor:pointer;font-weight:700;font-size:1.05rem;color:var(--ink)}
+.sym button:hover{border-color:var(--pri2)}
+.edgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1rem;align-items:start}
+.ed textarea.src{width:100%;min-height:52vh;font-family:Consolas,'Courier New',monospace;font-size:.95rem;line-height:1.6;border:2px solid var(--line);border-radius:.8rem;padding:.7rem;resize:vertical;color:var(--ink)}
+.ed textarea.src:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--pri2)}
+.prevh{font-weight:800;margin:0 0 .3rem}
+.prev{background:#fafbff;border:2px solid var(--line);border-radius:.8rem;padding:.7rem 1rem;max-height:56vh;overflow:auto;font-size:1.02rem;line-height:1.6}
+.prev ol{padding-left:1.3rem;margin:.2rem 0}
+.prev li{margin-bottom:.6rem}
+.prev .okk{color:var(--green);font-weight:800}
+.prev .bad{color:var(--red);font-weight:800}
+.prev .muted{color:var(--mut)}
+.errs{color:var(--red);font-weight:600;margin:0 0 .6rem;padding-left:1.1rem}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:.8rem 1rem}
+.field{display:flex;flex-direction:column;gap:.2rem;font-weight:700}
+.field.wide{grid-column:1/-1}
+.field small{font-weight:500;color:var(--mut)}
+.field input,.field textarea{font:inherit;font-weight:500;border:2px solid var(--line);border-radius:.6rem;padding:.4rem .6rem;color:var(--ink)}
+.field textarea{min-height:4.2rem;resize:vertical}
+.iobox{border:2px solid var(--line);border-radius:1rem;padding:.8rem 1rem;margin-bottom:.9rem}
+.iobox h3{margin:0 0 .3rem;font-size:1.2rem}
+.iobox p{margin:.2rem 0 .6rem;color:var(--mut)}
+.iobox ol{margin:.2rem 0 .6rem;padding-left:1.3rem}
+.iobox textarea{width:100%;min-height:8rem;font-family:Consolas,'Courier New',monospace;font-size:.9rem;border:2px solid var(--line);border-radius:.7rem;padding:.6rem;margin:.4rem 0}
+.btn.sm{font-size:.95rem;padding:.45rem .9rem;box-shadow:0 3px 0 #4b25a3}
+.btn.sm.ghost{box-shadow:0 3px 0 #d9d0f5}
+.btn.sm.gold{box-shadow:0 3px 0 #b98500}
+
+.toast{position:fixed;left:50%;bottom:2rem;transform:translateX(-50%);background:var(--ink);color:#fff;padding:.7rem 1.4rem;border-radius:999px;font-weight:700;font-size:1.15rem;z-index:80;animation:in .3s;box-shadow:var(--sh);max-width:90vw;text-align:center}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:70}
+
+@media(max-width:900px){.temple,.rooms,.tre,.hero,.edgrid,.fields{grid-template-columns:1fr!important}.rulebox,.char{position:static}.hero h1{font-size:2.6rem}}
+@media(max-width:820px){.two{grid-template-columns:1fr}.char svg{width:160px}}
+@media(max-width:760px){
+  #app{padding:1rem}
+  .mapwrap{height:auto;display:flex;flex-direction:column;gap:1.2rem;padding:1.5rem}
+  .mapwrap svg.path,.deco{display:none}
+  .node{position:relative;left:auto!important;top:auto!important;transform:none;width:100%}
+  .node:hover{transform:none}
+  .doors{grid-template-columns:1fr}
+  .q{font-size:1.8rem}.expr{font-size:1.6rem}.line{font-size:1.35rem}
+}
+</style>
+</head>
+<body>
+<header id="bar">
+  <button class="brand" id="brand" onclick="go('map')">👑</button>
+  <div id="teams"></div>
+  <div class="tools">
+    <button class="tool" onclick="go('map')" title="Về bản đồ">🗺️ Bản đồ</button>
+    <button class="tool" onclick="bonus()" title="Thưởng 5 điểm cho đội đang trả lời khi giải thích đúng">⭐ +5 giải thích</button>
+    <button class="tool" onclick="openEditor()" title="Soạn, nhập, xuất bộ câu hỏi">⚙️ Soạn câu hỏi</button>
+    <button class="tool" id="snd" onclick="toggleSound()" title="Bật/tắt âm thanh">🔊</button>
+    <button class="tool" onclick="toggleFull()" title="Toàn màn hình">⛶</button>
+  </div>
+</header>
+<main id="app"></main>
+<canvas id="fx"></canvas>
+
+<!-- =====================================================================
+     BỘ CÂU HỎI GỐC CỦA FILE.
+     Nên sửa ngay trong game: nút ⚙️ Soạn câu hỏi.
+     ===================================================================== -->
+<script id="bank" type="text/plain" data-id="vqht-toan11-v2">
+# Bộ câu hỏi của game. Sửa ngay trong game bằng nút ⚙️ Soạn câu hỏi.
+[THÔNG TIN]
+Tiêu đề dòng 1: Giải cứu
+Tiêu đề dòng 2: Vương quốc Lũy Thừa
+Môn/lớp: Toán 11 · Kết nối tri thức
+Bài: Phép tính lũy thừa với số mũ thực · Thứ tự thực hiện phép tính
+Cốt truyện: Phù thủy Sai Số đã làm đảo lộn trật tự các phép tính, khóa hết cánh cổng tri thức và ru Robot Toán học vào giấc ngủ sâu. Các nhà thám hiểm lớp 11 ơi, hãy vượt qua 5 thử thách để giải cứu vương quốc!
+Câu hỏi dẫn dắt: Vì sao trong một biểu thức có lũy thừa, căn thức và logarit, chúng ta không thể tính theo thứ tự tùy ý? Hãy vào Ngôi đền Tri thức để tìm câu trả lời!
+Tên đội: Rồng Xanh | Phượng Lửa | Kỳ Lân | Hổ Vàng
+Giây khởi động: 20
+Giây ngôi đền: 120
+Giây luyện tập: 45
+Giây thám tử: 60
+Giây kho báu: 180
+
+[KHỞI ĐỘNG]
+2³ + 3 × 2 = ? | 22 | 14 | 16 | B | Tính lũy thừa trước: 8 + 6 = 14
+(12 − 2²) × 3 = ? | 24 | 30 | 12 | A | Trong ngoặc: 12 − 4 = 8, rồi 8 × 3 = 24
+10 − √9 × 2 = ? | 14 | 4 | 16 | B | √9 = 3, nhân trước cộng trừ: 10 − 6 = 4
+
+[PHÒNG 1]
+Tên: Bí mật cánh cửa Ngoặc
+Biểu tượng: 🚪
+Kiểu: so sánh
+A: 3 + 2 × 2² | = 3 + 2 × 4 | = 3 + 8 = 11
+B: (3 + 2) × 2² | = 5 × 4 | = 20
+Thảo luận: Hai biểu thức A và B khác nhau ở điểm nào? | Vì sao kết quả của A và B khác nhau? | Khi biểu thức có dấu ngoặc, ta làm phép tính nào trước?
+Mảnh quy tắc: Bước 1. Có dấu ngoặc: tính trong ngoặc trước ( ) → [ ] → { }
+
+[PHÒNG 2]
+Tên: Thử thách Tháp Lũy thừa
+Biểu tượng: 🗼
+Kiểu: sắp xếp
+Biểu thức: 2³ + √16 × 3
+Thẻ (đúng thứ tự): Tính lũy thừa và căn thức | Thực hiện phép nhân | Thực hiện phép cộng
+Lời giải: = 8 + 4 × 3 | = 8 + 12 | = 20
+Thảo luận: Biểu thức có những phép tính nào? | Lũy thừa và căn thức làm trước hay sau phép nhân? | Vì sao phải tính 2³ và √16 trước?
+Mảnh quy tắc: Bước 2. Tính lũy thừa, căn thức, logarit trước rồi mới nhân, chia, cộng, trừ
+
+[PHÒNG 3]
+Tên: Mê cung Nhân chia – Cộng trừ
+Biểu tượng: 🌀
+Kiểu: sắp xếp
+Biểu thức: log₂ 8 + 3 × 2 − 1
+Thẻ (đúng thứ tự): Tính logarit | Phép nhân | Cộng và trừ từ trái sang phải
+Lời giải: = 3 + 3 × 2 − 1 | = 3 + 6 − 1 | = 8
+Thảo luận: log₂ 8 bằng bao nhiêu và được tính ở bước nào? | Phép nhân và phép cộng, phép nào làm trước? | Cộng và trừ cùng mức ưu tiên thì làm theo thứ tự nào?
+Mảnh quy tắc: Bước 3–4. Nhân, chia trước; cộng, trừ sau. Các phép tính cùng mức: làm từ trái sang phải.
+
+[QUY TẮC]
+Tính trong ngoặc trước: ( ) → [ ] → { }
+Tính lũy thừa, căn thức, logarit
+Nhân và chia (từ trái sang phải)
+Cộng và trừ (từ trái sang phải)
+
+[LUYỆN TẬP]
+Tính: 2² + 3 × (5 − 3) | 14 | 10 | 20 | B | = 4 + 3 × 2 = 4 + 6 = 10 | Nhận biết
+Tính: (3 + 1)² : 4 | 4 | 7 | 16 | A | = 4² : 4 = 16 : 4 = 4 | Nhận biết | Phương án C là lỗi hay gặp: lũy thừa xong quên chia cho 4.
+Tính: √25 + log₂ 4 × 3 | 11 | 21 | 9 | A | = 5 + 2 × 3 = 5 + 6 = 11 | Thông hiểu
+Tính: 2 × 3² − (8 − 3) | 31 | 13 | 23 | B | = 2 × 9 − 5 = 18 − 5 = 13 | Thông hiểu
+Tính: (√16 + 2²) × (10 − 2 × 3) | 24 | 40 | 32 | C | = (4 + 4) × (10 − 6) = 8 × 4 = 32 | Vận dụng
+Bạn An tính 2 + 3 × 2² và được kết quả 20. Bạn An làm đúng hay sai? | Đúng | Sai, vì phải cộng trước | Sai, vì phải tính lũy thừa và phép nhân trước phép cộng | C | Đúng phải là 2 + 3 × 4 = 2 + 12 = 14. Bạn An đã cộng trước: (2 + 3) × 2² = 20. | Vận dụng
+
+[THÁM TỬ]
+(2 + 3)² | = 2² + 3² ; = 4 + 9 = 13 | 1 | = 5² = 25 | Không được lũy thừa từng số hạng: phải tính trong ngoặc trước rồi mới lũy thừa. | Lũy thừa từng số cho nhanh, ha ha!
+2^(2 + 3) | = 2^2 + 2^3 ; = 4 + 8 = 12 | 1 | = 2^5 = 32 | Phải cộng số mũ trong ngoặc trước: 2^(2 + 3) = 2^5, không tách thành tổng hai lũy thừa. | Tách ra cộng cho dễ, hí hí!
+√36 + 2 × 3 | = 6 + 6 ; = 12 | 0 | = 6 + 6 = 12 | Lời giải đúng: tính căn thức trước, phép nhân trước phép cộng. | Lần này ta có gian lận không nhỉ? Đoán xem!
+(−3)² + 2 | = −9 + 2 ; = −7 | 1 | = 9 + 2 = 11 | Bình phương của một số âm là số dương: (−3)² = 9. | Bình phương thì vẫn giữ dấu trừ chứ!
+log₂ (4 + 4) | = log₂ 4 + log₂ 4 ; = 2 + 2 = 4 | 1 | = log₂ 8 = 3 | Logarit của một tổng không bằng tổng các logarit: phải tính trong ngoặc trước. | Logarit tách ra cộng, dễ ợt!
+18 : 3 × 2 | = 18 : 6 ; = 3 | 1 | = 6 × 2 = 12 | Nhân và chia cùng mức ưu tiên nên làm từ trái sang phải. | Nhân trước hay chia trước thì có sao đâu, ha ha!
+
+[KHO BÁU]
+Gợi ý: Mỗi ổ khóa nhận kết quả cuối cùng của biểu thức (một số nguyên).
+A | 2³ + 3 × (5 − 2) | = 8 + 3 × 3 = 8 + 9 = 17 | 17
+B | √81 + log₃ 9 × 2 | = 9 + 2 × 2 = 9 + 4 = 13 | 13
+C | (2² + 1) × (10 − 3 × 2) | = 5 × 4 = 20 | 20
+</script>
+
+<script>
+const $ = s => document.querySelector(s);
+const app = $('#app');
+/* Bản gốc của file, dùng để tạo file game mới khi tải về */
+const SRC = '<!doctype html>\n' + document.documentElement.outerHTML;
+const BANK_EL = $('#bank');
+const KEY = 'vqht:' + BANK_EL.dataset.id;
+const DEFAULT_TXT = BANK_EL.textContent.trim();
+const COLORS = ['#2f7de1', '#e5484d', '#8b5cf6', '#d18b00', '#1f9d55', '#e0559b'];
+
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const M = s => esc(s)
+  .replace(/\{([^{}\/]+)\/([^{}\/]+)\}/g, '<span class="frac"><span>$1</span><span>$2</span></span>')
+  .replace(/\^([0-9a-zA-Z]+)/g, '<sup>$1</sup>');
+const nrm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'D').toUpperCase().replace(/\s+/g, ' ').trim();
+const slug = s => nrm(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'game';
+const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+function lsGet(k) { try { return localStorage.getItem(KEY + ':' + k); } catch (e) { return null; } }
+function lsSet(k, v) { try { v == null ? localStorage.removeItem(KEY + ':' + k) : localStorage.setItem(KEY + ':' + k, v); } catch (e) {} }
+
+/* =====================================================================
+   ĐỌC BỘ CÂU HỎI (định dạng TXT, mỗi phần mở đầu bằng [TÊN PHẦN])
+   ===================================================================== */
+const INFO_FIELDS = [
+  ['Tiêu đề dòng 1', 'Giải cứu'], ['Tiêu đề dòng 2', 'Vương quốc'], ['Môn/lớp', ''], ['Bài', ''],
+  ['Cốt truyện', '', 'area'], ['Câu hỏi dẫn dắt', '', 'area'],
+  ['Tên đội', 'Đội 1 | Đội 2 | Đội 3 | Đội 4', '', 'Ngăn cách bằng dấu |, từ 2 đến 6 đội'],
+  ['Giây khởi động', '20'], ['Giây ngôi đền', '120'], ['Giây luyện tập', '45'], ['Giây thám tử', '60'], ['Giây kho báu', '180']
+];
+function kv(t) { const i = t.indexOf(':'); return i < 0 ? [null, t] : [t.slice(0, i).trim(), t.slice(i + 1).trim()]; }
+const bars = v => String(v || '').split('|').map(x => x.trim()).filter(Boolean);
+function splitSecs(txt) {
+  const out = [{ name: '', lines: [] }];
+  String(txt).replace(/^﻿/, '').split(/\r?\n/).forEach(raw => {
+    const m = raw.trim().match(/^\[(.+)\]$/);
+    if (m) out.push({ name: m[1].trim(), lines: [] }); else out[out.length - 1].lines.push(raw);
+  });
+  return out;
+}
+function parseMC(t) {
+  const f = t.split('|').map(x => x.trim());
+  if (f.length < 4) return { err: 'cần ít nhất "Câu hỏi | A | B | Đáp án"' };
+  if (!f[0]) return { err: 'thiếu nội dung câu hỏi' };
+  let o, a, rest;
+  for (let i = 3; i <= Math.min(5, f.length - 1); i++) if (/^[A-D]$/i.test(f[i])) { o = f.slice(1, i); a = 'ABCD'.indexOf(f[i].toUpperCase()); rest = f.slice(i + 1); break; }
+  if (!o) for (let i = 3; i <= Math.min(5, f.length - 1); i++) { const j = f.slice(1, i).indexOf(f[i]); if (j >= 0) { o = f.slice(1, i); a = j; rest = f.slice(i + 1); break; } }
+  if (!o) return { err: 'không thấy đáp án đúng (ghi A, B, C hoặc D ngay sau các phương án)' };
+  if (a >= o.length) return { err: `đáp án là ${'ABCD'[a]} nhưng chỉ có ${o.length} phương án` };
+  if (o.some(x => !x)) return { err: 'có phương án bị bỏ trống' };
+  return { q: f[0], o, a, s: rest[0] || '', lv: rest[1] || '', n: rest[2] || '' };
+}
+function mix(n, seed) {
+  let h = hash(seed) || 1; const a = [...Array(n).keys()];
+  for (let i = n - 1; i > 0; i--) { h = (h * 1103515245 + 12345) >>> 0; const j = h % (i + 1); [a[i], a[j]] = [a[j], a[i]]; }
+  if (a.every((x, i) => x === i)) a.push(a.shift());
+  return a;
+}
+function roomKey(k) {
+  const n = nrm(k);
+  for (const [c, p] of [['icon', 'BIEU TUONG'], ['expr', 'BIEU THUC'], ['cards', 'THE'], ['steps', 'LOI GIAI'], ['ask', 'THAO LUAN'], ['rule', 'MANH QUY TAC'], ['rule', 'QUY TAC'], ['type', 'KIEU'], ['name', 'TEN'], ['A', 'A'], ['B', 'B']])
+    if (n === p || n.startsWith(p + ' ') || n.startsWith(p + '(')) return c;
+  return null;
+}
+function parseRoom(L) {
+  const R = {};
+  for (const t of L) { const [k, v] = kv(t); const c = k == null ? null : roomKey(k); if (!c) return { err: `không hiểu dòng "${t.slice(0, 40)}"` }; R[c] = v; }
+  const room = { name: R.name || 'Phòng bí mật', icon: R.icon || '🚪', ask: bars(R.ask), rule: R.rule || '' };
+  const isOrder = R.type ? nrm(R.type).includes('SAP') : !(R.A && R.B);
+  if (!isOrder) {
+    const a = bars(R.A), b = bars(R.B);
+    if (!a.length || !b.length) return { err: 'kiểu so sánh cần 2 dòng "A:" và "B:"' };
+    return { ...room, type: 'doors', doors: [{ e: a[0], s: a.slice(1) }, { e: b[0], s: b.slice(1) }] };
+  }
+  const cards = bars(R.cards);
+  if (!R.expr) return { err: 'kiểu sắp xếp cần dòng "Biểu thức:"' };
+  if (cards.length < 2) return { err: 'kiểu sắp xếp cần ít nhất 2 thẻ ở dòng "Thẻ (đúng thứ tự):"' };
+  return { ...room, type: 'order', e: R.expr, s: bars(R.steps), cards: mix(cards.length, cards.join()).map(j => ({ t: cards[j], o: j })) };
+}
+function parseCase(t) {
+  const f = t.split('|').map(x => x.trim());
+  if (f.length < 4) return { err: 'cần ít nhất "Đề | Các dòng | Dòng sai | Sửa lại"' };
+  const l = f[1].split(';').map(x => x.trim()).filter(Boolean);
+  if (!f[0] || !l.length) return { err: 'thiếu đề hoặc các dòng lời giải' };
+  const w = Number(f[2]);
+  if (!Number.isInteger(w) || w < 0 || w > l.length) return { err: `"Dòng sai" phải là số từ 0 đến ${l.length} (0 = lời giải không có lỗi)` };
+  return { e: f[0], l, w: w - 1, f: f[3], y: f[4] || '', boast: f[5] || 'Lời giải của ta hoàn hảo, ha ha!' };
+}
+function parseLock(t) {
+  const f = t.split('|').map(x => x.trim());
+  if (f.length < 4) return { err: 'cần "Tên | Biểu thức | Lời giải | Số mã"' };
+  if (!/^\d$/.test(f[3])) return { err: 'Số mã phải là 1 chữ số từ 0 đến 9' };
+  return { k: f[0] || '?', e: f[1], s: f[2], v: +f[3] };
+}
+function parseBank(txt) {
+  const E = [], err = (sec, msg) => E.push({ sec: nrm(sec), msg: `[${sec}] ${msg}` });
+  const B = { info: {}, s1: [], s3: [], rooms: [], rules: [], cases: [], tre: { hint: '', items: [] } };
+  splitSecs(txt).forEach(s => {
+    const N = nrm(s.name), L = s.lines.map(t => t.trim()).filter(t => t && !t.startsWith('#'));
+    if (!s.name) return;
+    if (N === 'THONG TIN') L.forEach(t => { const [k, v] = kv(t); if (k == null) err(s.name, `dòng "${t.slice(0, 40)}" thiếu dấu ":"`); else B.info[nrm(k)] = v; });
+    else if (N === 'KHOI DONG' || N === 'LUYEN TAP') L.forEach((t, i) => { const r = parseMC(t); r.err ? err(s.name, `Câu ${i + 1}: ${r.err}`) : (N === 'KHOI DONG' ? B.s1 : B.s3).push(r); });
+    else if (/^PHONG\b/.test(N)) { const r = parseRoom(L); r.err ? err(s.name, r.err) : B.rooms.push(r); }
+    else if (N === 'QUY TAC') B.rules = L;
+    else if (N === 'THAM TU') L.forEach((t, i) => { const r = parseCase(t); r.err ? err(s.name, `Hồ sơ ${i + 1}: ${r.err}`) : B.cases.push(r); });
+    else if (N === 'KHO BAU') { let n = 0; L.forEach(t => { if (/^GOI Y ?:/.test(nrm(t))) B.tre.hint = kv(t)[1]; else { n++; const r = parseLock(t); r.err ? err(s.name, `Ổ khóa ${n}: ${r.err}`) : B.tre.items.push(r); } }); }
+    else err(s.name, 'không nhận ra phần này, kiểm tra lại tên trong ngoặc vuông');
+  });
+  if (!B.s1.length) err('KHỞI ĐỘNG', 'cần ít nhất 1 câu hỏi');
+  if (!B.s3.length) err('LUYỆN TẬP', 'cần ít nhất 1 câu hỏi');
+  if (!B.rooms.length) err('PHÒNG 1', 'cần ít nhất 1 phòng khám phá');
+  if (B.rooms.length > 4) err('PHÒNG 5', 'tối đa 4 phòng');
+  if (!B.cases.length) err('THÁM TỬ', 'cần ít nhất 1 hồ sơ');
+  if (!B.tre.items.length) err('KHO BÁU', 'cần ít nhất 1 ổ khóa');
+  if (B.tre.items.length > 5) err('KHO BÁU', 'tối đa 5 ổ khóa');
+  const I = k => { const f = INFO_FIELDS.find(x => x[0] === k); return B.info[nrm(k)] ?? f[1]; };
+  const teams = bars(I('Tên đội'));
+  if (teams.length < 2 || teams.length > 6) err('THÔNG TIN', 'Tên đội: cần từ 2 đến 6 đội, ngăn cách bằng dấu |');
+  const sec = (k) => Math.max(5, parseInt(I(k)) || parseInt(INFO_FIELDS.find(x => x[0] === k)[1]));
+  B.meta = {
+    t1: I('Tiêu đề dòng 1'), t2: I('Tiêu đề dòng 2'), tag: I('Môn/lớp'), lesson: I('Bài'), story: I('Cốt truyện'), lead: I('Câu hỏi dẫn dắt'),
+    teams: teams.length >= 2 ? teams.slice(0, 6) : bars(INFO_FIELDS[6][1]),
+    sec: { s1: sec('Giây khởi động'), s2: sec('Giây ngôi đền'), s3: sec('Giây luyện tập'), det: sec('Giây thám tử'), tre: sec('Giây kho báu') }
+  };
+  return { B, E };
+}
+
+let INFO, QUIZ, ROOMS, RULES, CASES, TREASURE, BANK_TXT;
+function applyBank(txt, B) {
+  BANK_TXT = txt; INFO = B.meta;
+  QUIZ = {
+    s1: { tag: 'Chặng 1 · Khởi động', title: 'Đánh thức Robot', sec: INFO.sec.s1, data: B.s1 },
+    s3: { tag: 'Chặng 3 · Luyện tập', title: 'Vượt chướng ngại vật', sec: INFO.sec.s3, data: B.s3 }
+  };
+  ROOMS = B.rooms; RULES = B.rules.length ? B.rules : B.rooms.map(r => r.rule).filter(Boolean);
+  CASES = B.cases; TREASURE = B.tre;
+  document.title = INFO.t1 + ' ' + INFO.t2;
+  $('#brand').textContent = '👑 ' + INFO.t2;
+}
+{
+  let txt = lsGet('bank') || DEFAULT_TXT, P = parseBank(txt);
+  if (P.E.length && txt !== DEFAULT_TXT) { txt = DEFAULT_TXT; P = parseBank(txt); }
+  applyBank(txt, P.B);
+}
+
+const STAGES = [
+  { id: 's1', icon: '🤖', name: 'Đánh thức Robot', sub: 'Khởi động · 5 phút' },
+  { id: 's2', icon: '🏛️', name: 'Ngôi đền Tri thức', sub: 'Hình thành kiến thức · 18 phút' },
+  { id: 's3', icon: '🏰', name: 'Vượt chướng ngại vật', sub: 'Luyện tập · 8 phút' },
+  { id: 'det', icon: '🔍', name: 'Thám tử bắt lỗi sai', sub: 'Luyện tập · 6 phút' },
+  { id: 'tre', icon: '💎', name: 'Mở khóa Kho báu', sub: 'Vận dụng · 5 phút' }
+];
+const POS = [[11, 70], [30, 32], [50, 68], [70, 32], [89, 68]];
+
+/* =====================================================================
+   TIẾN ĐỘ CHƠI
+   ===================================================================== */
+function fresh() {
+  return {
+    sig: hash(BANK_TXT), teams: INFO.teams.map((n, i) => ({ n, c: COLORS[i % COLORS.length], s: 0 })),
+    active: 0, done: {}, sound: true, screen: 'home',
+    q: { s1: { i: 0, lit: QUIZ.s1.data.map(() => 0) }, s3: { i: 0 } },
+    t: { room: 0, doors: ROOMS.map(() => [0, 0]), ord: ROOMS.map(() => []), rules: ROOMS.map(() => 0) },
+    d: { i: 0, found: false, tried: [], pts: 0 },
+    r: { code: TREASURE.items.map(() => 0), st: null, open: false, key: false }
+  };
+}
+let S = fresh();
+try { const saved = JSON.parse(lsGet('state')); if (saved && saved.sig === S.sig) S = Object.assign(fresh(), saved); else if (saved) S.sound = saved.sound !== false; } catch (e) {}
+function save() { lsSet('state', JSON.stringify(S)); }
+
+/* ---------- đội & điểm ---------- */
+function rTeams() {
+  $('#teams').innerHTML = S.teams.map((t, i) => `
+    <div class="team ${i === S.active ? 'on' : ''}" style="--c:${t.c}" onclick="setActive(${i})" title="Bấm để chọn đội trả lời · Bấm đúp vào tên để đổi tên">
+      <span class="tn" ondblclick="rename(${i})">${esc(t.n)}</span>
+      <b class="sc" id="sc${i}">${t.s}</b>
+      <span class="pm"><button onclick="event.stopPropagation();add(${i},-5)" aria-label="Trừ 5 điểm">−</button><button onclick="event.stopPropagation();add(${i},5)" aria-label="Cộng 5 điểm">+</button></span>
+    </div>`).join('');
+}
+function setActive(i) { S.active = i; rTeams(); updWho(); save(); }
+function rename(i) { const n = prompt('Tên đội:', S.teams[i].n); if (n && n.trim()) { S.teams[i].n = n.trim(); rTeams(); updWho(); save(); } }
+function add(i, v) {
+  S.teams[i].s = Math.max(0, S.teams[i].s + v); rTeams(); save();
+  const el = $('#sc' + i); if (el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+}
+/* ---------- Thi đội (VTK): vòng quay, câu hỏi phụ, nhạc nền ---------- */
+let BGM = 'vui';
+function bgm(m) { if (m !== undefined) BGM = m; VTK.music(S.sound ? BGM : null); }
+const vtkTeams = () => S.teams.map(t => ({ name: t.n, color: t.c }));
+async function spinFirst() {
+  if (S.spun) return;
+  S.spun = true; save();
+  const started = Object.values(S.done).some(Boolean) || S.teams.some(t => t.s);
+  if (started || S.teams.length < 2) return;
+  setActive(await VTK.spin(vtkTeams()));
+}
+async function startJourney() { await spinFirst(); go('map'); }
+async function tieBreak(pts) {
+  if (S.tieDone || S.teams.length < 2 || !VTK.tieQ()) return;
+  const tied = VTK.tiedTop(S.teams.map(t => t.s)); if (tied.length < 2) return;
+  S.tieDone = true; save();
+  const w = await VTK.tie(vtkTeams(), tied);
+  if (w != null) add(w, pts);
+}
+/* khối "🏆 Thi đội" trong tab Thông tin của màn Soạn câu hỏi */
+function vtkKeep() { if (ED && $('#vtk-set')) ED.vtk = { spin: $('#vtk-s-spin').checked, music: $('#vtk-s-music').checked, tie: $('#vtk-s-tie').value }; }
+function vtkFill(root) { const v = ED && ED.vtk; if (!v || !root) return; root.querySelector('#vtk-s-spin').checked = v.spin; root.querySelector('#vtk-s-music').checked = v.music; root.querySelector('#vtk-s-tie').value = v.tie; }
+function vtkApply() {
+  let root = $('#vtk-set');
+  if (!root) { if (!ED || !ED.vtk) return ''; root = document.createElement('div'); root.innerHTML = VTK.settingsHTML(); vtkFill(root); }
+  return VTK.readSettings(root);
+}
+function bonus() { add(S.active, 5); sfx('ok'); toast('⭐ +5 điểm giải thích cho đội ' + esc(S.teams[S.active].n)); }
+function whoHTML() { const t = S.teams[S.active]; return `<div class="who" id="who">Đội đang trả lời: <b style="color:${t.c}">${esc(t.n)}</b></div>`; }
+function updWho() { const w = $('#who'); if (w) w.outerHTML = whoHTML(); }
+
+/* ---------- tiện ích ---------- */
+let AC;
+function sfx(k) {
+  if (!S.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const seq = {
+      ok: [[523, .11], [659, .11], [784, .22]], bad: [[200, .3, 'sawtooth']], click: [[880, .06]],
+      unlock: [[392, .1], [523, .1], [659, .1], [1047, .32]], end: [[880, .15], [660, .15], [440, .4]],
+      win: [[523, .14], [659, .14], [784, .14], [1047, .16], [784, .12], [1047, .45]]
+    }[k];
+    let t = AC.currentTime;
+    seq.forEach(([f, d, type]) => {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = type || 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(.2, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d); t += d * .9;
+    });
+  } catch (e) {}
+}
+function toggleSound() { S.sound = !S.sound; $('#snd').textContent = S.sound ? '🔊' : '🔇'; save(); bgm(); }
+function toggleFull() { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+function toast(msg) {
+  document.querySelectorAll('.toast').forEach(x => x.remove());
+  const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = msg; document.body.appendChild(d);
+  setTimeout(() => d.remove(), 2800);
+}
+function burst(n = 160) {
+  const c = $('#fx'), x = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
+  const cols = ['#f5b301', '#6d3fd1', '#2f7de1', '#1f9d55', '#e5484d', '#ff8fd1'];
+  const P = Array.from({ length: n }, () => ({ x: innerWidth / 2, y: innerHeight * .42, vx: (Math.random() - .5) * 18, vy: -Math.random() * 15 - 4, s: Math.random() * 8 + 6, c: cols[Math.random() * 6 | 0], r: Math.random() * 6, vr: (Math.random() - .5) * .3 }));
+  let f = 0;
+  (function loop() {
+    x.clearRect(0, 0, c.width, c.height);
+    P.forEach(p => { p.vy += .35; p.x += p.vx; p.y += p.vy; p.r += p.vr; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); });
+    if (++f < 170) requestAnimationFrame(loop); else x.clearRect(0, 0, c.width, c.height);
+  })();
+}
+function shake(el) { if (!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ---------- đồng hồ ---------- */
+let T = { id: null, left: 0, sec: 0 };
+function timerHTML(sec) {
+  const run = T.id && T.sec === sec;
+  return `<button class="timer ${run ? 'run' : ''}" id="timer" onclick="startTimer(${sec})" title="Bấm để bắt đầu đếm giờ">⏱ ${run ? T.left : sec} giây</button>`;
+}
+function startTimer(sec) {
+  clearInterval(T.id); bgm('hoi'); T.sec = sec; T.left = sec; tick();
+  T.id = setInterval(() => {
+    T.left--; tick();
+    if (T.left <= 0) { stopTimer(); sfx('end'); const el = $('#timer'); if (el) { el.className = 'timer up'; el.textContent = '⏰ Hết giờ!'; } }
+  }, 1000);
+}
+function tick() { const el = $('#timer'); if (el) { el.classList.add('run'); el.classList.toggle('low', T.left <= 5); el.textContent = '⏱ ' + T.left + ' giây'; } }
+function stopTimer() { clearInterval(T.id); T.id = null; bgm('vui'); }
+function head(tag, title, prog, sec) {
+  return `<div class="stagehead"><span class="tag">${tag}</span><h2>${title}</h2>${prog ? `<span class="prog">${prog}</span>` : ''}${sec ? timerHTML(sec) : ''}</div>`;
+}
+
+/* ---------- nhân vật ---------- */
+function robotSVG(lit, awake, crown) {
+  const n = lit.length, r = n <= 3 ? 9 : n <= 5 ? 7 : 5;
+  const bulbs = lit.map((on, i) => { const x = n === 1 ? 100 : 74 + i * 52 / (n - 1); return `<circle cx="${x}" cy="150" r="${r}" fill="${on ? '#ffd23f' : '#c4cad8'}" ${on ? 'filter="url(#glow)"' : ''}/>`; }).join('');
+  return `<svg viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Robot">
+  <defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <linearGradient id="rb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc4ff"/><stop offset="1" stop-color="#3d8be6"/></linearGradient></defs>
+  <ellipse cx="100" cy="222" rx="60" ry="7" fill="#000" opacity=".1"/>
+  ${crown ? '<path d="M66 44 L72 16 L87 32 L100 8 L113 32 L128 16 L134 44Z" fill="#f5b301" stroke="#b98500" stroke-width="3" stroke-linejoin="round"/>'
+          : `<line x1="100" y1="40" x2="100" y2="22" stroke="#5a6b8c" stroke-width="4"/><circle cx="100" cy="18" r="7" fill="${awake ? '#ff5d8f' : '#9aa5bd'}" ${awake ? 'filter="url(#glow)"' : ''}/>`}
+  <rect x="45" y="40" width="110" height="78" rx="24" fill="url(#rb)" stroke="#2a5fa8" stroke-width="3"/>
+  <rect x="58" y="55" width="84" height="46" rx="16" fill="#1d2b4a"/>
+  ${awake ? '<circle cx="82" cy="75" r="9" fill="#5ef0ff" filter="url(#glow)"/><circle cx="118" cy="75" r="9" fill="#5ef0ff" filter="url(#glow)"/><path d="M86 90 Q100 100 114 90" stroke="#5ef0ff" stroke-width="4" fill="none" stroke-linecap="round"/>'
+          : '<path d="M73 77 q9 6 18 0 M109 77 q9 6 18 0" stroke="#7d8fb3" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M92 92 h16" stroke="#7d8fb3" stroke-width="4" stroke-linecap="round"/>'}
+  <rect x="37" y="66" width="9" height="26" rx="4" fill="#2a5fa8"/><rect x="154" y="66" width="9" height="26" rx="4" fill="#2a5fa8"/>
+  <rect x="85" y="117" width="30" height="11" fill="#2a5fa8"/>
+  <rect x="30" y="132" width="22" height="50" rx="11" fill="#3d8be6" stroke="#2a5fa8" stroke-width="3" ${awake ? 'transform="rotate(140 41 138)"' : ''}/>
+  <rect x="148" y="132" width="22" height="50" rx="11" fill="#3d8be6" stroke="#2a5fa8" stroke-width="3" ${awake ? 'transform="rotate(-140 159 138)"' : ''}/>
+  <rect x="68" y="194" width="20" height="22" rx="6" fill="#2a5fa8"/><rect x="112" y="194" width="20" height="22" rx="6" fill="#2a5fa8"/>
+  <rect x="55" y="126" width="90" height="72" rx="18" fill="url(#rb)" stroke="#2a5fa8" stroke-width="3"/>
+  <rect x="64" y="138" width="72" height="24" rx="12" fill="#1d2b4a"/>${bulbs}
+  <text x="100" y="189" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">★</text>
+  ${awake ? '' : '<text x="148" y="42" font-size="22" fill="#7d8fb3" font-weight="800">z<tspan font-size="16" dy="-10">z</tspan><tspan font-size="12" dy="-8">z</tspan></text>'}
+  </svg>`;
+}
+function witchSVG() {
+  return `<svg viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Phù thủy Sai Số">
+  <ellipse cx="100" cy="222" rx="60" ry="7" fill="#000" opacity=".1"/>
+  <text x="14" y="70" font-size="26" fill="#c08bff" font-weight="800">≠</text><text x="170" y="96" font-size="24" fill="#c08bff" font-weight="800">?</text>
+  <path d="M38 222 Q48 142 100 132 Q152 142 162 222Z" fill="#5b2a86"/>
+  <path d="M84 138 L100 170 L116 138Z" fill="#f5b301"/>
+  <path d="M64 88 Q58 140 46 154 Q72 144 72 108Z" fill="#3a1f5c"/><path d="M136 88 Q142 140 154 154 Q128 144 128 108Z" fill="#3a1f5c"/>
+  <circle cx="100" cy="102" r="37" fill="#a8e07a"/>
+  <ellipse cx="100" cy="68" rx="70" ry="12" fill="#3d1a63"/>
+  <path d="M64 66 Q90 42 94 4 Q112 34 136 66Z" fill="#4b2178"/>
+  <path d="M71 55 Q100 48 129 55 L132 63 Q100 56 68 63Z" fill="#f5b301"/>
+  <text x="98" y="38" font-size="16" fill="#f5b301">✦</text>
+  <path d="M76 88 L94 95 M124 88 L106 95" stroke="#2a1540" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="86" cy="101" rx="5" ry="6" fill="#222"/><ellipse cx="114" cy="101" rx="5" ry="6" fill="#222"/>
+  <path d="M100 104 L109 115 L99 116" fill="#86c45a"/>
+  <path d="M83 123 Q100 136 117 123" stroke="#2a1540" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <line x1="158" y1="205" x2="182" y2="138" stroke="#6b4220" stroke-width="5" stroke-linecap="round"/><text x="171" y="138" font-size="24" fill="#f5b301">✦</text>
+  </svg>`;
+}
+function chestSVG(open) {
+  let rays = '';
+  if (open) for (let i = 0; i < 9; i++) {
+    const a1 = -Math.PI * (i + .6) / 10, a2 = -Math.PI * (i + 1.1) / 10;
+    rays += `<polygon points="120,90 ${120 + Math.cos(a1) * 160},${90 + Math.sin(a1) * 160} ${120 + Math.cos(a2) * 160},${90 + Math.sin(a2) * 160}" fill="#ffe27a" opacity=".55"/>`;
+  }
+  const base = `<rect x="30" y="92" width="180" height="96" rx="12" fill="#a0612a" stroke="#5e3511" stroke-width="4"/>
+    <rect x="58" y="92" width="14" height="96" fill="#f5b301"/><rect x="168" y="92" width="14" height="96" fill="#f5b301"/>`;
+  return `<svg class="chest" id="chest" viewBox="0 -40 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rương kho báu">
+  ${rays}<ellipse cx="120" cy="192" rx="95" ry="8" fill="#000" opacity=".12"/>
+  ${open
+    ? `<path d="M36 94 L50 26 Q120 -2 190 26 L204 94Z" fill="#7a431a" stroke="#5e3511" stroke-width="4"/>
+       <circle cx="80" cy="92" r="16" fill="#f5b301"/><circle cx="104" cy="86" r="14" fill="#ffd23f"/><polygon points="132,66 148,84 132,104 116,84" fill="#2fd3ff"/><circle cx="160" cy="90" r="15" fill="#ff5d8f"/><polygon points="184,76 194,92 184,106 174,92" fill="#38d17a"/>
+       ${base}`
+    : `${base}<path d="M30 96 V72 Q120 18 210 72 V96Z" fill="#b8722f" stroke="#5e3511" stroke-width="4"/>
+       <path d="M58 92 V58 Q65 54 72 52 V92Z M168 52 Q175 54 182 58 V92 H168Z" fill="#f5b301"/>
+       <rect x="102" y="80" width="36" height="38" rx="7" fill="#f5b301" stroke="#8a5a00" stroke-width="3"/><circle cx="120" cy="95" r="5" fill="#5e3511"/><rect x="118" y="97" width="4" height="11" fill="#5e3511"/>`}
+  </svg>`;
+}
+
+/* =====================================================================
+   MÀN HÌNH CHƠI
+   ===================================================================== */
+const R = { home: rHome, map: rMap, s1: () => rQuiz('s1'), s2: rTemple, s3: () => rQuiz('s3'), det: rDet, tre: rTre, win: rWin };
+function go(k) { stopTimer(); S.screen = k; R[k](); window.scrollTo(0, 0); save(); }
+
+function rHome() {
+  app.innerHTML = `<section class="screen">
+  <div class="hero">
+    <div class="heroChars"><div class="ch">${robotSVG(QUIZ.s1.data.map(() => 0), false)}</div><div class="ch">${witchSVG()}</div></div>
+    <div>
+      ${INFO.tag ? `<span class="tag">${esc(INFO.tag)}</span>` : ''}
+      <h1>${esc(INFO.t1)}<br><span>${esc(INFO.t2)}</span></h1>
+      ${INFO.lesson ? `<p class="lead">Bài: ${M(INFO.lesson)}</p>` : ''}
+      ${INFO.story ? `<p class="story">${M(INFO.story)}</p>` : ''}
+      <div class="row">
+        <button class="btn big" onclick="startJourney()">Bắt đầu hành trình ➜</button>
+        <button class="btn ghost" onclick="$('#guide').classList.toggle('hidden')">Hướng dẫn giáo viên</button>
+        <button class="btn ghost" onclick="openEditor()">⚙️ Soạn câu hỏi</button>
+        <button class="btn ghost" onclick="resetAll()">Chơi lại từ đầu</button>
+      </div>
+    </div>
+  </div>
+  <div id="guide" class="card guide hidden">
+    <h3>📘 Hướng dẫn tổ chức (dành cho giáo viên)</h3>
+    <ol>
+      <li>Trình chiếu toàn màn hình (nút ⛶). Chia lớp thành các đội. <b>Bấm đúp vào tên đội</b> để đổi tên.</li>
+      <li><b>Bấm vào thẻ đội</b> trên thanh trên cùng để chọn đội đang trả lời. Đội đó chọn đúng sẽ tự động được cộng 10 điểm.</li>
+      <li>Học sinh trả lời bằng bảng nhóm. Giáo viên bấm đáp án mà đội đưa ra.</li>
+      <li>Nút <b>⭐ +5 giải thích</b>: thưởng khi đội giải thích đúng cách làm. Nút −/+ trên mỗi đội dùng để chỉnh điểm.</li>
+      <li>Nút <b>⏱</b> ở góc phải mỗi chặng: bấm để bắt đầu đếm giờ.</li>
+      <li>Chặng 2: cho học sinh thảo luận, trình bày xong rồi mới bấm <b>Mở khóa kiến thức</b>.</li>
+      <li>Các chặng có thể chơi theo thứ tự trên bản đồ hoặc chọn riêng từng trò.</li>
+      <li>Điểm và tiến độ được lưu tự động trên máy này. Muốn dạy lớp khác, bấm <b>Chơi lại từ đầu</b>.</li>
+      <li>Đổi câu hỏi, đổi bài: bấm <b>⚙️ Soạn câu hỏi</b>. Có sẵn câu lệnh để nhờ ChatGPT soạn cả bộ.</li>
+    </ol>
+  </div></section>`;
+}
+
+function rMap() {
+  const all = STAGES.every(s => S.done[s.id]);
+  app.innerHTML = `<section class="screen">
+  ${head('Hành trình', 'Bản đồ ' + esc(INFO.t2), 'Chọn chặng để tiếp tục', 0)}
+  <div class="mapwrap">
+    <span class="deco" style="left:3%;top:6%">☁️</span><span class="deco" style="left:44%;top:3%">☁️</span><span class="deco" style="right:4%;top:8%">🏰</span><span class="deco" style="left:20%;bottom:4%">🌳</span><span class="deco" style="left:60%;bottom:6%">🌲</span>
+    <svg class="path" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${POS.map(p => p.join(',')).join(' ')}"/></svg>
+    ${STAGES.map((s, i) => `<button class="node ${S.done[s.id] ? 'done' : ''}" style="left:${POS[i][0]}%;top:${POS[i][1]}%" onclick="go('${s.id}')">
+      <span class="num">${i + 1}</span><span class="ic">${s.icon}</span><b>${s.name}</b><small>${s.sub}</small>${S.done[s.id] ? '<i class="star">⭐</i>' : ''}</button>`).join('')}
+  </div>
+  <div class="mapfoot">${all ? `<button class="btn gold big" onclick="go('win')">🏆 Lễ mừng chiến thắng</button>` : ''}</div>
+  </section>`;
+}
+
+/* --- Chặng 1 & 3: trắc nghiệm --- */
+function rQuiz(key) {
+  const C = QUIZ[key], st = S.q[key];
+  if (st.i >= C.data.length) return rQuizEnd(key);
+  const q = C.data[st.i];
+  st.locked = false;
+  const side = key === 's1'
+    ? `<div class="char" id="side">${robotSVG(st.lit, false)}<div class="bubble">Hãy giúp tôi bật sáng ${C.data.length} bóng đèn năng lượng!</div>${whoHTML()}</div>`
+    : `<div class="char" id="side">${witchSVG()}<div class="bubble purple">Ha ha! Muốn vào lâu đài thì hãy mở được ${C.data.length} cánh cửa của ta!</div>${whoHTML()}</div>`;
+  app.innerHTML = `<section class="screen">
+  ${head(C.tag, C.title, `Câu ${st.i + 1}/${C.data.length}`, C.sec)}
+  <div class="steps">${C.data.map((_, j) => `<i class="${j < st.i ? 'ok' : j === st.i ? 'cur' : ''}"></i>`).join('')}</div>
+  <div class="two">${side}
+    <div class="card">
+      ${q.lv ? `<span class="lv">${esc(q.lv)}</span>` : ''}
+      <div class="q ${q.q.length > 38 ? 'long' : ''}">${M(q.q)}</div>
+      <div class="opts">${q.o.map((o, k) => `<button class="opt" onclick="pick('${key}',${k})"><b>${'ABCD'[k]}</b><span>${M(o)}</span></button>`).join('')}</div>
+      <div id="fb"></div>
+    </div>
+  </div></section>`;
+}
+function pick(key, k) {
+  const st = S.q[key]; if (st.locked) return; st.locked = true; stopTimer();
+  const C = QUIZ[key], q = C.data[st.i], ok = k === q.a;
+  document.querySelectorAll('.opt').forEach((b, j) => { b.disabled = true; if (j === q.a) b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
+  if (ok) { sfx('ok'); add(S.active, 10); } else sfx('bad');
+  if (key === 's1') { st.lit[st.i] = 1; $('#side svg').outerHTML = robotSVG(st.lit, false); }
+  const last = st.i === C.data.length - 1;
+  $('#fb').innerHTML = `<div class="verdict ${ok ? 'ok' : 'no'}">${ok ? '🎉 Chính xác! +10 điểm cho đội ' + esc(S.teams[S.active].n) : '😅 Chưa đúng rồi! Đáp án đúng là ' + 'ABCD'[q.a]}</div>
+    ${q.s ? `<div class="sol"><b>Lời giải:</b> ${M(q.s)}</div>` : ''}${q.n ? `<p class="note">💡 ${M(q.n)}</p>` : ''}
+    <button class="btn" onclick="nextQ('${key}')">${last ? 'Hoàn thành chặng ➜' : 'Câu tiếp theo ➜'}</button>`;
+  save();
+}
+function nextQ(key) { stopTimer(); S.q[key].i++; save(); rQuiz(key); window.scrollTo(0, 0); }
+function replay(key) { S.q[key] = key === 's1' ? { i: 0, lit: QUIZ.s1.data.map(() => 0) } : { i: 0 }; save(); rQuiz(key); }
+function rQuizEnd(key) {
+  const first = !S.done[key]; S.done[key] = true; save();
+  if (first) { sfx('win'); burst(); }
+  const s1 = key === 's1';
+  app.innerHTML = `<section class="screen">
+  ${head(QUIZ[key].tag, QUIZ[key].title, 'Hoàn thành!', 0)}
+  <div class="two">
+    <div class="char">${s1 ? robotSVG(QUIZ.s1.data.map(() => 1), true) : witchSVG()}<div class="bubble ${s1 ? '' : 'purple'}">${s1 ? 'Cảm ơn các nhà thám hiểm! Tôi đã tỉnh dậy rồi!' : 'Hừ! Các ngươi đã mở hết cửa lâu đài... nhưng ta vẫn còn những lời giải sai!'}</div></div>
+    <div class="card">
+      <h2 style="margin-top:0">${s1 ? '🤖 Robot đã thức tỉnh!' : '🏰 Lâu đài đã mở cửa!'}</h2>
+      ${s1 ? (INFO.lead ? `<div class="lead-q">❓ <b>Câu hỏi dẫn dắt:</b> ${M(INFO.lead)}</div>` : '')
+           : `<div class="lead-q">🔍 Phù thủy Sai Số đã để lại những lời giải sai khắp vương quốc. Các thám tử hãy tìm và sửa chúng!</div>`}
+      <div class="row">
+        <button class="btn big" onclick="go('${s1 ? 's2' : 'det'}')">${s1 ? 'Vào Ngôi đền Tri thức ➜' : 'Trở thành thám tử ➜'}</button>
+        <button class="btn ghost" onclick="replay('${key}')">Chơi lại chặng này</button>
+      </div>
+    </div>
+  </div></section>`;
+}
+
+/* --- Chặng 2: Ngôi đền tri thức --- */
+function rTemple() {
+  const t = S.t, n = ROOMS.length;
+  app.innerHTML = `<section class="screen">
+  ${head('Chặng 2 · Hình thành kiến thức', 'Khám phá Ngôi đền Tri thức', 'Phòng ' + (t.room + 1) + '/' + n, INFO.sec.s2)}
+  <div class="rooms" style="grid-template-columns:repeat(${n},1fr)">${ROOMS.map((x, i) => `<button class="room ${i === t.room ? 'on' : ''} ${t.rules[i] ? 'done' : ''}" onclick="S.t.room=${i};rTemple()">${esc(x.icon)} Phòng ${i + 1}${t.rules[i] ? ' ✅' : ''}<small>${esc(x.name)}</small></button>`).join('')}</div>
+  <div class="temple">
+    <div class="card roomcard">${roomBody(t.room)}</div>
+    <aside class="card rulebox"><h3>📜 Mảnh quy tắc</h3>
+      ${ROOMS.map((x, i) => `<div class="piece ${t.rules[i] ? 'got' : ''}">${t.rules[i] ? M(x.rule || 'Đã mở khóa') : '🔒 Mảnh ' + (i + 1) + ' còn khóa'}</div>`).join('')}
+      ${t.rules.every(Boolean) ? `<button class="btn gold" onclick="showBoard()">Ghép bảng quy tắc ✨</button>` : ''}
+    </aside>
+  </div></section>`;
+}
+function roomBody(i) {
+  const r = ROOMS[i], t = S.t; let h = `<h3>${esc(r.icon)} ${esc(r.name)}</h3>`, ready;
+  if (r.type === 'doors') {
+    h += `<p class="hint">Bấm vào từng cánh cửa để mở lời giải, rồi so sánh hai kết quả.</p>
+      <div class="doors">${r.doors.map((d, j) => `<div class="door ${t.doors[i][j] ? 'open' : ''}" onclick="openDoor(${i},${j})">
+        <div class="de">${'AB'[j]} = ${M(d.e)}</div>
+        <div class="ds">${t.doors[i][j] ? d.s.map(M).join('<br>') : '🚪 Bấm để mở cửa'}</div></div>`).join('')}</div>`;
+    ready = t.doors[i].every(Boolean);
+  } else {
+    const ord = t.ord[i]; ready = ord.length === r.cards.length;
+    h += `<div class="expr">${M(r.e)}</div>
+      <p class="hint">Bấm các thẻ theo đúng <b>thứ tự thực hiện</b>.</p>
+      <div class="cards">${r.cards.map((c, j) => { const p = ord.indexOf(j); return `<button class="tcard ${p >= 0 ? 'set' : ''}" id="c${j}" onclick="tapCard(${i},${j})">${p >= 0 ? `<b>${p + 1}</b>` : ''}${M(c.t)}</button>`; }).join('')}</div>
+      ${ready && r.s.length ? `<div class="solsteps">${M(r.e)}<br>${r.s.map(M).join('<br>')}</div>` : ''}`;
+  }
+  if (r.ask.length) h += `<div class="ask"><b>💬 Thảo luận nhóm:</b><ol>${r.ask.map(a => `<li>${M(a)}</li>`).join('')}</ol></div>`;
+  h += t.rules[i]
+    ? `<div class="unlocked">🔓 Đã mở khóa: ${M(r.rule)}</div>${i < ROOMS.length - 1 ? `<button class="btn" onclick="S.t.room=${i + 1};rTemple()">Sang phòng ${i + 2} ➜</button>` : ''}`
+    : `<button class="btn gold" ${ready ? '' : 'disabled'} onclick="unlockRule(${i})">🔓 Mở khóa kiến thức ${i + 1}</button>`;
+  return h;
+}
+function openDoor(i, j) { if (S.t.doors[i][j]) return; S.t.doors[i][j] = 1; sfx('click'); save(); rTemple(); }
+function tapCard(i, j) {
+  const r = ROOMS[i], ord = S.t.ord[i];
+  if (ord.includes(j)) return;
+  if (r.cards[j].o === ord.length) { ord.push(j); sfx(ord.length === r.cards.length ? 'ok' : 'click'); save(); rTemple(); }
+  else { sfx('bad'); shake($('#c' + j)); toast('Chưa đúng thứ tự! Thảo luận lại nhé.'); }
+}
+function unlockRule(i) { S.t.rules[i] = 1; sfx('unlock'); burst(90); save(); rTemple(); }
+function showBoard() {
+  sfx('win'); burst(200);
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="card"><h2>📜 Ghi nhớ kiến thức</h2>
+    <div class="board">${RULES.map((x, i) => `<div class="bstep" style="animation-delay:${i * .25}s"><b>${i + 1}</b>${M(x)}</div>`).join('')}</div>
+    <div class="row" style="justify-content:center"><button class="btn big" onclick="this.closest('.modal').remove();S.done.s2=true;go('s3')">Tiến vào Lâu đài ➜</button>
+    <button class="btn ghost" onclick="this.closest('.modal').remove();S.done.s2=true;save()">Đóng</button></div></div>`;
+  document.body.appendChild(m);
+}
+
+/* --- Thám tử bắt lỗi sai --- */
+function rDet() {
+  const d = S.d;
+  if (d.i >= CASES.length) return rDetEnd();
+  const c = CASES[d.i];
+  app.innerHTML = `<section class="screen">
+  ${head('Luyện tập · Phản biện', 'Thám tử bắt lỗi sai', 'Hồ sơ ' + (d.i + 1) + '/' + CASES.length, INFO.sec.det)}
+  <div class="steps">${CASES.map((_, j) => `<i class="${j < d.i ? 'ok' : j === d.i ? 'cur' : ''}"></i>`).join('')}</div>
+  <div class="two">
+    <div class="char">${witchSVG()}<div class="bubble purple">${M(c.boast)}</div>${whoHTML()}</div>
+    <div class="card">
+      <span class="casehead">📁 HỒ SƠ VỤ ÁN #${d.i + 1}</span>
+      <p class="hint">Lời giải của phù thủy Sai Số. Bấm vào <b>dòng bị sai</b>, hoặc bấm nút bên dưới nếu lời giải không có lỗi.</p>
+      <div class="expr small">${M(c.e)}</div>
+      <div class="lines">${c.l.map((x, j) => `<button class="line ${d.found && j === c.w ? 'bad' : ''} ${d.tried.includes(j) ? 'fine' : ''}" onclick="accuse(${j})"><span class="ln">Dòng ${j + 1}</span><span>${M(x)}</span></button>`).join('')}</div>
+      ${d.found ? detFb(c) : `<button class="btn ghost ${d.tried.includes(-1) ? 'crossed' : ''}" onclick="accuse(-1)">✔ Lời giải này không có lỗi</button>`}
+    </div>
+  </div></section>`;
+}
+function detFb(c) {
+  const d = S.d, last = d.i === CASES.length - 1;
+  return `<div class="stamp ${c.w < 0 ? 'ok' : ''}">${c.w < 0 ? 'CHÍNH XÁC, KHÔNG CÓ LỖI!' : 'BẮT ĐƯỢC LỖI!'}</div>
+    <div class="verdict ok">${d.pts ? '+' + d.pts + ' điểm cho đội ' + esc(S.teams[d.team].n) : 'Đã tìm ra, nhưng không được điểm vì đoán sai trước đó.'}</div>
+    ${c.f ? `<div class="sol"><b>${c.w < 0 ? 'Lời giải:' : 'Sửa lại:'}</b> ${M(c.e)} ${M(c.f)}</div>` : ''}
+    ${c.y ? `<div class="why">💡 ${M(c.y)}</div>` : ''}
+    <button class="btn" onclick="nextCase()">${last ? 'Kết thúc điều tra ➜' : 'Hồ sơ tiếp theo ➜'}</button>`;
+}
+function accuse(j) {
+  const d = S.d, c = CASES[d.i];
+  if (d.found || d.tried.includes(j)) return;
+  if (j === c.w) {
+    stopTimer(); d.found = true; d.team = S.active; d.pts = d.tried.length ? 0 : 10;
+    if (d.pts) add(S.active, d.pts);
+    sfx('ok'); save(); rDet();
+  } else {
+    d.tried.push(j); sfx('bad'); save(); rDet();
+    toast(j < 0 ? '🕵️ Lời giải này có lỗi đấy! Tìm tiếp nhé.' : '🕵️ Dòng ' + (j + 1) + ' không sai! Thám tử xem lại nhé.');
+  }
+}
+function nextCase() { stopTimer(); const d = S.d; d.i++; d.found = false; d.tried = []; d.pts = 0; save(); rDet(); window.scrollTo(0, 0); }
+function rDetEnd() {
+  const first = !S.done.det; S.done.det = true; save();
+  if (first) { sfx('win'); burst(); }
+  const notes = CASES.filter(c => c.w >= 0 && c.y).map(c => `<li>${M(c.y)}</li>`).join('');
+  app.innerHTML = `<section class="screen">
+  ${head('Luyện tập · Phản biện', 'Thám tử bắt lỗi sai', 'Hoàn thành!', 0)}
+  <div class="two">
+    <div class="char">${witchSVG()}<div class="bubble purple">Hừ! Mọi mánh khóe của ta đều bị các thám tử vạch trần rồi!</div></div>
+    <div class="card"><h2 style="margin-top:0">🕵️ Phù thủy Sai Số đã bị vạch trần!</h2>
+      ${notes ? `<div class="lead-q">Những lỗi cần tránh:<ul>${notes}</ul></div>` : ''}
+      <div class="row"><button class="btn big gold" onclick="go('tre')">Đi tìm Kho báu ➜</button>
+      <button class="btn ghost" onclick="S.d={i:0,found:false,tried:[],pts:0};save();rDet()">Chơi lại trò này</button></div>
+    </div>
+  </div></section>`;
+}
+
+/* --- Mở khóa kho báu --- */
+function rTre() {
+  const r = S.r, L = TREASURE.items;
+  app.innerHTML = `<section class="screen">
+  ${head('Vận dụng', 'Mở khóa Kho báu', 'Rương có ' + L.length + ' ổ khóa', INFO.sec.tre)}
+  <div class="tre">
+    <div class="card"><h3>🗝️ Phiếu nhiệm vụ</h3>
+      ${TREASURE.hint ? `<p class="hint">${M(TREASURE.hint)}</p>` : ''}
+      ${L.map(t => `<div class="task"><span class="tk">${esc(t.k)}</span><span>${M(t.e)}</span>${r.open && t.s ? `<div class="ts">${M(t.s)}</div>` : ''}</div>`).join('')}
+      ${whoHTML()}
+    </div>
+    <div class="card chestcard">
+      ${chestSVG(r.open)}
+      <div class="dials">${r.code.map((v, i) => `<div class="dial ${r.st ? r.st[i] : ''}"><button onclick="dial(${i},1)" aria-label="Tăng">▲</button><div class="dv">${v}</div><button onclick="dial(${i},-1)" aria-label="Giảm">▼</button><small>Ổ ${esc(L[i].k)}</small></div>`).join('')}</div>
+      ${r.open
+        ? `<div class="verdict ok">💎 Kho báu đã mở! +20 điểm cho đội ${esc(S.teams[r.team].n)}</div><button class="btn gold big" onclick="S.done.tre=true;go('win')">🏆 Lễ mừng chiến thắng</button>`
+        : `<button class="btn gold big" onclick="tryOpen()">🔓 Mở rương</button>`}
+      <div><button class="mini" onclick="S.r.key=!S.r.key;rTre()">👁 Đáp án (giáo viên)</button> ${r.key ? `<span class="keyhint">Mã: ${L.map(t => t.v).join(' – ')}</span>` : ''}</div>
+    </div>
+  </div></section>`;
+}
+function dial(i, v) { if (S.r.open) return; S.r.code[i] = (S.r.code[i] + v + 10) % 10; S.r.st = null; sfx('click'); save(); rTre(); }
+function tryOpen() {
+  const r = S.r; r.st = r.code.map((v, i) => v === TREASURE.items[i].v ? 'g' : 'r');
+  const wrong = r.st.filter(x => x === 'r').length;
+  if (!wrong) { stopTimer(); r.open = true; r.team = S.active; add(S.active, 20); sfx('win'); burst(220); save(); rTre(); }
+  else { sfx('bad'); save(); rTre(); shake($('#chest')); toast(`🔒 Còn ${wrong} ổ khóa chưa đúng!`); }
+}
+
+/* --- Chiến thắng --- */
+async function rWin() {
+  bgm(null);
+  await tieBreak(10);
+  if (S.screen !== 'win') return;
+  const rank = [...S.teams].sort((a, b) => b.s - a.s);
+  sfx('win'); burst(240);
+  app.innerHTML = `<section class="screen">
+  <div class="two">
+    <div class="char">${robotSVG(QUIZ.s1.data.map(() => 1), true, true)}<div class="bubble">Chúng ta đã giải cứu ${esc(INFO.t2)}! Cảm ơn các nhà thám hiểm!</div></div>
+    <div class="card">
+      <h2 style="margin-top:0;font-size:2.2rem">🏆 Bảng vàng nhà thám hiểm</h2>
+      <div class="rank">${rank.map((t, i) => `<div class="rk" style="--c:${t.c}"><span class="medal">${['🥇', '🥈', '🥉'][i] || '🎖️'}</span><b>${esc(t.n)}</b><span class="pts">${t.s} điểm</span></div>`).join('')}</div>
+      ${RULES.length ? `<h3>📜 Ghi nhớ</h3><div class="mem">${RULES.map((x, i) => `<div><b>${i + 1}.</b> ${M(x)}</div>`).join('')}</div>` : ''}
+      <div class="row"><button class="btn" onclick="go('map')">Về bản đồ</button><button class="btn ghost" onclick="resetAll()">Chơi lại từ đầu</button></div>
+    </div>
+  </div></section>`;
+}
+
+function resetAll() {
+  if (!confirm('Xóa toàn bộ điểm và tiến độ để chơi lại từ đầu?')) return;
+  const names = S.teams.map(t => t.n), snd = S.sound;
+  S = fresh(); S.teams.forEach((t, i) => { if (names[i]) t.n = names[i]; }); S.sound = snd;
+  rTeams(); go('home');
+}
+
+/* =====================================================================
+   SOẠN CÂU HỎI
+   ===================================================================== */
+const TABS = [
+  { id: 'info', icon: 'ℹ️', name: 'Thông tin', secs: ['THONG TIN'] },
+  { id: 's1', icon: '🤖', name: 'Khởi động', secs: ['KHOI DONG'], head: 'KHỞI ĐỘNG',
+    fmt: 'Mỗi dòng một câu: <code>Câu hỏi | A | B | C | D | Đáp án | Lời giải</code>. Có thể chỉ có 2–3 phương án. Đáp án ghi <code>A</code>, <code>B</code>, <code>C</code> hoặc <code>D</code>. Lời giải có thể bỏ trống.' },
+  { id: 's2', icon: '🏛️', name: 'Ngôi đền', secs: ['PHONG', 'QUY TAC'],
+    fmt: 'Mỗi phòng bắt đầu bằng <code>[PHÒNG 1]</code>, <code>[PHÒNG 2]</code>... (tối đa 4 phòng). Có 2 kiểu:<br>• <code>Kiểu: so sánh</code> → 2 dòng <code>A: biểu thức | bước 1 | bước 2</code> và <code>B: ...</code><br>• <code>Kiểu: sắp xếp</code> → <code>Biểu thức:</code>, <code>Thẻ (đúng thứ tự): thẻ 1 | thẻ 2 | thẻ 3</code> (game tự xáo thẻ), <code>Lời giải: bước 1 | bước 2</code><br>Thêm <code>Thảo luận: câu 1 | câu 2</code> và <code>Mảnh quy tắc:</code>. Phần <code>[QUY TẮC]</code>: mỗi dòng một ý ghi nhớ.' },
+  { id: 's3', icon: '🏰', name: 'Luyện tập', secs: ['LUYEN TAP'], head: 'LUYỆN TẬP',
+    fmt: 'Mỗi dòng một câu: <code>Câu hỏi | A | B | C | D | Đáp án | Lời giải | Mức độ | Ghi chú</code>. Mức độ ví dụ: Nhận biết, Thông hiểu, Vận dụng. Các cột sau đáp án có thể bỏ trống.' },
+  { id: 'det', icon: '🔍', name: 'Thám tử', secs: ['THAM TU'], head: 'THÁM TỬ',
+    fmt: 'Mỗi dòng một hồ sơ: <code>Đề | Dòng 1 ; Dòng 2 ; Dòng 3 | Dòng sai | Sửa lại | Vì sao | Lời phù thủy</code>. Các dòng lời giải ngăn bằng dấu <code>;</code>. "Dòng sai" ghi số thứ tự dòng sai, ghi <code>0</code> nếu lời giải không có lỗi.' },
+  { id: 'tre', icon: '💎', name: 'Kho báu', secs: ['KHO BAU'], head: 'KHO BÁU',
+    fmt: 'Dòng đầu: <code>Gợi ý: cách lấy số mã</code>. Mỗi ổ khóa một dòng: <code>Tên | Biểu thức | Lời giải | Số mã</code>. Số mã là 1 chữ số từ 0 đến 9. Từ 1 đến 5 ổ khóa.' },
+  { id: 'io', icon: '📦', name: 'ChatGPT · Nhập / Xuất' }
+];
+let ED = null, LASTF = null;
+function fromTxt(t, base) {
+  const ed = base ? { ...base, info: { ...base.info }, parts: { ...base.parts } } : { tab: 'info', info: {}, parts: { s1: '', s2: '', s3: '', det: '', tre: '' } };
+  const rooms = [];
+  splitSecs(t).forEach(s => {
+    if (!s.name) return;
+    const N = nrm(s.name), body = s.lines.join('\n').trim();
+    if (N === 'THONG TIN') s.lines.forEach(l => { const [k, v] = kv(l.trim()); if (k == null) return; const f = INFO_FIELDS.find(([lab]) => nrm(lab) === nrm(k)); if (f) ed.info[f[0]] = v; });
+    else if (N === 'KHOI DONG') ed.parts.s1 = body;
+    else if (N === 'LUYEN TAP') ed.parts.s3 = body;
+    else if (N === 'THAM TU') ed.parts.det = body;
+    else if (N === 'KHO BAU') ed.parts.tre = body;
+    else rooms.push('[' + s.name + ']\n' + body);
+  });
+  if (rooms.length) ed.parts.s2 = rooms.join('\n\n');
+  return ed;
+}
+function assemble() {
+  const P = ED.parts;
+  return '# Bộ câu hỏi của game. Sửa ngay trong game bằng nút ⚙️ Soạn câu hỏi.\n[THÔNG TIN]\n'
+    + INFO_FIELDS.map(([k]) => k + ': ' + String(ED.info[k] ?? '').replace(/\s*\n\s*/g, ' ').trim()).join('\n')
+    + '\n\n[KHỞI ĐỘNG]\n' + P.s1.trim() + '\n\n' + P.s2.trim() + '\n\n[LUYỆN TẬP]\n' + P.s3.trim()
+    + '\n\n[THÁM TỬ]\n' + P.det.trim() + '\n\n[KHO BÁU]\n' + P.tre.trim() + '\n';
+}
+function openEditor() {
+  stopTimer(); ED = fromTxt(BANK_TXT); ED.dirty = false;
+  const m = document.createElement('div'); m.id = 'editor'; m.className = 'modal ed'; document.body.appendChild(m);
+  m.addEventListener('input', e => { if (ED && /^vtk-s-/.test(e.target.id || '')) ED.dirty = true; });
+  renderEditor();
+}
+function closeEditor(force) {
+  if (!force && ED && ED.dirty && !confirm('Các thay đổi chưa được lưu. Vẫn đóng?')) return;
+  $('#editor')?.remove(); ED = null;
+}
+function edTab(id) { ED.tab = id; renderEditor(); }
+function renderEditor() {
+  vtkKeep();
+  $('#editor').innerHTML = `<div class="card edcard">
+    <div class="edhead"><h2>⚙️ Soạn câu hỏi</h2><button class="x" onclick="closeEditor()" aria-label="Đóng">✕</button></div>
+    <div class="edtabs">${TABS.map(t => `<button id="tb-${t.id}" class="${t.id === ED.tab ? 'on' : ''}" onclick="edTab('${t.id}')">${t.icon} ${t.name}</button>`).join('')}</div>
+    <div class="edbody">${edBody()}</div>
+    <div class="edfoot"><span id="edstat"></span><button class="btn ghost sm" onclick="closeEditor()">Đóng</button><button class="btn sm" onclick="saveEditor()">💾 Lưu và chơi ván mới</button></div>
+  </div>`;
+  vtkFill($('#vtk-set'));
+  edCheck();
+}
+const SYM = [['×'], ['−'], [':'], ['Phân số', '{/}', 2], ['Mũ 2', '^2'], ['→'], ['≠'], ['≤'], ['≥'], ['√'], ['π'], ['| cột', ' | '], ['; dòng', ' ; ']];
+function symBar() { return `<div class="sym">Chèn: ${SYM.map(([l, v, b]) => `<button onmousedown="event.preventDefault()" onclick="ins(${JSON.stringify(v || l).replace(/"/g, '&quot;')},${b || 0})">${l}</button>`).join('')}</div>`; }
+function ins(s, back) {
+  const el = LASTF; if (!el || !document.contains(el)) return toast('Bấm vào ô cần chèn trước');
+  el.setRangeText(s, el.selectionStart, el.selectionEnd, 'end');
+  if (back) el.selectionStart = el.selectionEnd = el.selectionEnd - back;
+  el.focus(); el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+document.addEventListener('focusin', e => { if (e.target.closest && e.target.closest('#editor') && /TEXTAREA|INPUT/.test(e.target.tagName) && !e.target.readOnly) LASTF = e.target; });
+function edBody() {
+  const tab = TABS.find(t => t.id === ED.tab);
+  if (tab.id === 'info') return `<div class="fmt">Thông tin chung của game. Các ô thời gian tính bằng giây.</div>${symBar()}
+    <div class="fields">${INFO_FIELDS.map(([k, def, kind, tip]) => `<label class="field ${kind === 'area' || k === 'Tên đội' ? 'wide' : ''}">${k}${tip ? ` <small>${tip}</small>` : ''}
+      ${kind === 'area' ? `<textarea data-k="${k}" oninput="edInfo(this)">${esc(ED.info[k] ?? '')}</textarea>` : `<input data-k="${k}" value="${esc(ED.info[k] ?? '')}" placeholder="${esc(def)}" oninput="edInfo(this)">`}</label>`).join('')}</div>
+    ${VTK.settingsHTML()}`;
+  if (tab.id === 'io') return `
+    <div class="iobox"><h3>🤖 Nhờ ChatGPT soạn cả bộ câu hỏi cho bài mới</h3>
+      <ol><li>Điền tên bài, bấm <b>Copy câu lệnh</b>.</li><li>Dán vào ChatGPT (hoặc Gemini), chờ trả lời.</li><li>Copy khối kết quả, dán vào ô bên dưới, bấm <b>Nạp vào game</b>.</li><li>Xem lại từng mục (máy có thể sai đáp án), rồi bấm <b>Lưu</b>.</li></ol>
+      <div class="fields"><label class="field">Tên bài<input id="gpBai" placeholder="Ví dụ: Lũy thừa của một số hữu tỉ"></label><label class="field">Môn/lớp<input id="gpLop" value="${esc(ED.info['Môn/lớp'] ?? '')}"></label></div>
+      <div class="row" style="margin:.7rem 0"><button class="btn sm gold" onclick="copyPrompt()">📋 Copy câu lệnh</button></div>
+      <textarea id="gpOut" placeholder="Dán kết quả từ ChatGPT vào đây..."></textarea>
+      <button class="btn sm" onclick="loadTxt($('#gpOut').value)">⬆ Nạp vào game</button>
+    </div>
+    <div class="iobox"><h3>📄 File câu hỏi (.txt)</h3>
+      <p>Lưu bộ câu hỏi ra file để cất giữ, gửi đồng nghiệp hoặc nạp lại sau. Nhập được cả file TXT của các trò chơi trên aicungnam.asia (nạp vào mục Luyện tập).</p>
+      <div class="row"><button class="btn sm ghost" onclick="exportTxt()">⬇ Xuất TXT</button><button class="btn sm ghost" onclick="$('#txtIn').click()">⬆ Nhập TXT</button><input type="file" id="txtIn" accept=".txt,text/plain" class="hidden" onchange="importFile(this)"></div>
+    </div>
+    <div class="iobox"><h3>🎮 Tải file game có sẵn bộ câu hỏi này</h3>
+      <p>Tạo một file game mới (.html) chứa sẵn bộ câu hỏi đang soạn. Gửi file cho đồng nghiệp hoặc khách, mở bằng Chrome/Edge là chơi được, không cần soạn lại.</p>
+      <button class="btn sm gold" onclick="exportHtml()">⬇ Tải file game</button>
+    </div>
+    <div class="iobox"><h3>↺ Khôi phục</h3>
+      <p>Bỏ hết các thay đổi trên máy này, quay về bộ câu hỏi gốc có sẵn trong file.</p>
+      <button class="btn sm ghost" onclick="restoreDefault()">Khôi phục bộ câu hỏi gốc</button>
+    </div>`;
+  return `<div class="fmt">${tab.fmt}</div>${symBar()}
+    <div class="edgrid">
+      <textarea class="src" spellcheck="false" wrap="off" oninput="edSet('${tab.id}',this.value)">${esc(ED.parts[tab.id])}</textarea>
+      <div><p class="prevh">👀 Xem trước</p><div class="prev" id="prev"></div></div>
+    </div>`;
+}
+function edInfo(el) { ED.info[el.dataset.k] = el.value; edDirty(); }
+function edSet(k, v) { ED.parts[k] = v; edDirty(); }
+function edDirty() { ED.dirty = true; clearTimeout(ED.tm); ED.tm = setTimeout(edCheck, 250); }
+function edCheck() {
+  if (!ED) return;
+  const { B, E } = parseBank(assemble());
+  const st = $('#edstat');
+  st.className = E.length ? 'bad' : 'ok';
+  st.textContent = E.length ? `⚠️ Còn ${E.length} lỗi (mục có dấu ⚠️)` : '✅ Không có lỗi';
+  TABS.forEach(t => { const b = $('#tb-' + t.id); if (b && t.secs) b.classList.toggle('bad', E.some(e => t.secs.some(s => e.sec.startsWith(s)))); });
+  const pv = $('#prev'); if (!pv) return;
+  const tab = TABS.find(t => t.id === ED.tab);
+  const errs = E.filter(e => tab.secs.some(s => e.sec.startsWith(s)));
+  pv.innerHTML = (errs.length ? `<ul class="errs">${errs.map(e => `<li>${esc(e.msg)}</li>`).join('')}</ul>` : '') + preview(tab.id, B);
+}
+function preview(id, B) {
+  const mc = list => `<ol>${list.map(q => `<li>${q.lv ? `<span class="muted">[${esc(q.lv)}]</span> ` : ''}<b>${M(q.q)}</b><br>${q.o.map((o, j) => `<span class="${j === q.a ? 'okk' : ''}">${'ABCD'[j]}. ${M(o)}${j === q.a ? ' ✔' : ''}</span>`).join(' &nbsp; ')}${q.s ? `<br><span class="muted">Lời giải: ${M(q.s)}</span>` : ''}</li>`).join('')}</ol>`;
+  if (id === 's1') return mc(B.s1);
+  if (id === 's3') return mc(B.s3);
+  if (id === 's2') return B.rooms.map((r, i) => `<p><b>${esc(r.icon)} Phòng ${i + 1}: ${esc(r.name)}</b> <span class="muted">(${r.type === 'doors' ? 'so sánh' : 'sắp xếp'})</span><br>
+      ${r.type === 'doors' ? r.doors.map((d, j) => `${'AB'[j]} = ${M(d.e)} ${d.s.map(M).join(' ')}`).join('<br>') : `${M(r.e)}<br>Thứ tự đúng: ${[...r.cards].sort((a, b) => a.o - b.o).map(c => M(c.t)).join(' → ')}`}
+      ${r.rule ? `<br><span class="okk">🔓 ${M(r.rule)}</span>` : ''}</p>`).join('')
+    + (B.rules.length ? `<p><b>📜 Quy tắc:</b></p><ol>${B.rules.map(x => `<li>${M(x)}</li>`).join('')}</ol>` : '');
+  if (id === 'det') return `<ol>${B.cases.map(c => `<li><b>${M(c.e)}</b><br>${c.l.map((x, j) => `<span class="${j === c.w ? 'bad' : ''}">${M(x)}${j === c.w ? ' ✘' : ''}</span>`).join('<br>')}${c.w < 0 ? '<br><span class="okk">✔ Không có lỗi</span>' : ''}<br><span class="muted">Sửa: ${M(c.f)}</span></li>`).join('')}</ol>`;
+  if (id === 'tre') return (B.tre.hint ? `<p class="muted">${M(B.tre.hint)}</p>` : '') + `<ol>${B.tre.items.map(t => `<li><b>${esc(t.k)}:</b> ${M(t.e)} ${M(t.s)} → mã <span class="okk">${t.v}</span></li>`).join('')}</ol><p>Mã mở rương: <b class="okk">${B.tre.items.map(t => t.v).join(' – ')}</b></p>`;
+  return '';
+}
+function saveEditor() {
+  const txt = assemble(), { B, E } = parseBank(txt);
+  if (E.length) { edCheck(); return toast(`Còn ${E.length} lỗi, xem các mục có dấu ⚠️`); }
+  const ve = vtkApply();
+  if (ve) { if (ED.tab !== 'info') { ED.tab = 'info'; renderEditor(); const w = $('#vtk-s-warn'); if (w) w.textContent = ve; } return toast(ve); }
+  const canon = t => t.split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith('#')).join('\n');
+  lsSet('bank', canon(txt) === canon(DEFAULT_TXT) ? null : txt);
+  applyBank(txt, B); const snd = S.sound; S = fresh(); S.sound = snd; save();
+  closeEditor(true); rTeams(); go('home'); toast('✅ Đã lưu bộ câu hỏi mới');
+}
+function loadTxt(t) {
+  t = String(t || '').replace(/^﻿/, '').replace(/^```[^\n]*\n?|```\s*$/gm, '').trim();
+  if (!t) return toast('Chưa có nội dung để nạp');
+  if (!/^\s*\[.+\]\s*$/m.test(t)) { ED.parts.s3 = t; ED.tab = 's3'; toast('File không chia mục: đã nạp vào mục Luyện tập'); }
+  else { ED = { ...fromTxt(t, ED), tab: 'info' }; toast('Đã nạp. Kiểm tra từng mục rồi bấm Lưu'); }
+  ED.dirty = true; renderEditor();
+}
+function importFile(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const rd = new FileReader(); rd.onload = () => loadTxt(rd.result); rd.readAsText(f, 'UTF-8'); inp.value = '';
+}
+function exportTxt() { download('bo-cau-hoi-' + slug(ED.info['Bài'] || ED.info['Tiêu đề dòng 2'] || 'game') + '.txt', '﻿' + assemble(), 'text/plain;charset=utf-8'); }
+function exportHtml() {
+  const txt = assemble(), { E } = parseBank(txt);
+  if (E.length) { edCheck(); return toast('Sửa hết lỗi (mục có dấu ⚠️) trước khi tải file game'); }
+  const ve = vtkApply(); if (ve) return toast(ve);
+  const id = 'g' + Date.now().toString(36);
+  const html = VTK.embed(SRC).replace(/<script id="bank"[^>]*>[\s\S]*?<\/script>/, () => `<script id="bank" type="text/plain" data-id="${id}">\n${txt}\n<\/script>`);
+  download(slug((ED.info['Tiêu đề dòng 1'] || '') + ' ' + (ED.info['Tiêu đề dòng 2'] || '') + ' ' + (ED.info['Bài'] || '')).slice(0, 80) + '.html', html, 'text/html;charset=utf-8');
+  toast('⬇ Đã tải file game mới');
+}
+function copyPrompt() {
+  const bai = $('#gpBai').value.trim(), lop = $('#gpLop').value.trim();
+  if (!bai) { $('#gpBai').focus(); return toast('Nhập tên bài trước'); }
+  const p = `Bạn là giáo viên giỏi, đang soạn nội dung cho một trò chơi học tập trên lớp gồm 5 chặng: Khởi động, Ngôi đền (khám phá kiến thức), Luyện tập, Thám tử bắt lỗi sai, Mở khóa kho báu.
+
+Môn/lớp: ${lop || '(ghi môn và lớp)'}
+Bài: ${bai}
+
+YÊU CẦU
+- [THÔNG TIN]: đặt Tiêu đề dòng 1 và Tiêu đề dòng 2 theo kiểu "Giải cứu" + tên một vương quốc gắn với bài; viết Cốt truyện ngắn (phù thủy Sai Số gây rối, Robot cần học sinh giúp) và Câu hỏi dẫn dắt vào bài mới.
+- [KHỞI ĐỘNG]: 3 câu trắc nghiệm dễ, gợi nhớ kiến thức cũ và tạo tình huống dẫn vào bài.
+- [PHÒNG 1], [PHÒNG 2], [PHÒNG 3]: mỗi phòng giúp học sinh tự phát hiện 1 ý kiến thức. Kiểu "so sánh" (2 biểu thức hoặc tình huống A, B để so sánh) hoặc kiểu "sắp xếp" (các thẻ là các bước, học sinh xếp đúng thứ tự). Mỗi phòng có 2–3 câu thảo luận và 1 mảnh quy tắc.
+- [QUY TẮC]: tóm tắt kiến thức cả bài, mỗi dòng 1 ý.
+- [LUYỆN TẬP]: 6 câu trắc nghiệm, 2 Nhận biết, 2 Thông hiểu, 2 Vận dụng. Phương án sai phải là lỗi học sinh hay mắc.
+- [THÁM TỬ]: 6 lời giải của phù thủy Sai Số, mỗi lời giải sai đúng 1 dòng dựa trên lỗi học sinh hay mắc; có 1 hồ sơ hoàn toàn đúng (Dòng sai = 0).
+- [KHO BÁU]: 3 bài vận dụng; Số mã là 1 chữ số 0–9 lấy từ kết quả; dòng Gợi ý nói rõ cách lấy số mã.
+- Tự giải lại và kiểm tra MỌI đáp án, mọi số mã trước khi trả lời.
+
+QUY ƯỚC VIẾT
+- Phân số viết {tử/mẫu}, ví dụ {3/4}. Lũy thừa viết ^2. Dùng × cho nhân, : cho chia, − cho trừ.
+- Dấu | ngăn cách các cột. Ở mục THÁM TỬ, các dòng lời giải ngăn cách bằng dấu ;
+- Giữ nguyên các tiêu đề trong ngoặc vuông và tên các dòng như mẫu. Mỗi câu nằm trọn trên một dòng.
+
+Chỉ trả về nội dung theo đúng định dạng mẫu dưới đây, đặt trong MỘT khối code, không giải thích thêm.
+
+MẪU ĐỊNH DẠNG (của một bài khác, chỉ để tham khảo cách viết):
+${assemble()}`;
+  const done = () => toast('📋 Đã copy câu lệnh. Dán vào ChatGPT nhé!');
+  const fallback = () => { const ta = document.createElement('textarea'); ta.value = p; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(p).then(done, fallback); else fallback();
+}
+function restoreDefault() {
+  if (!confirm('Bỏ mọi thay đổi trên máy này và quay về bộ câu hỏi gốc của file?')) return;
+  ED = { ...fromTxt(DEFAULT_TXT), tab: 'info', dirty: true }; renderEditor(); toast('Đã nạp bộ gốc. Bấm Lưu để áp dụng');
+}
+
+rTeams();
+$('#snd').textContent = S.sound ? '🔊' : '🔇';
+$('#snd').insertAdjacentHTML('afterend', VTK.musicButton('tool'));
+bgm('vui');
+go(R[S.screen] ? S.screen : 'home');
+</script>
+</body>
+</html>

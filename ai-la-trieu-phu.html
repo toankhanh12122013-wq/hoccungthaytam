@@ -1,0 +1,174 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Triệu Phú Học Đường</title><style>
+*{box-sizing:border-box}body{margin:0;color:white;font-family:Arial,sans-serif;background:radial-gradient(ellipse at 50% 45%,#50206c 0%,#1c1043 52%,#070d25 100%);min-height:100vh}button{cursor:pointer;font:inherit}header{display:flex;justify-content:space-between;align-items:center;padding:14px 22px;background:#050c25bb;border-bottom:1px solid #7787ba}header strong{color:#ffd94a;font-size:23px}.layout{display:grid;grid-template-columns:210px minmax(0,1fr) 205px;gap:12px;max-width:1500px;margin:auto;padding:14px}.panel{background:#050b23aa;border:1px solid #5761a0;border-radius:12px;padding:14px}.panel h3{margin:0 0 16px;color:#ffb82f}.player{padding:9px;color:#ff7e28;border-bottom:1px solid #ffffff1c}.center{text-align:center}.top{display:flex;justify-content:center;gap:22px;align-items:center;margin-bottom:15px}.circle{border:3px solid white;border-radius:50%;background:linear-gradient(#2197f6,#03256c);padding:14px 18px;font-weight:bold}.title{border:1px solid #f5cb2b;background:#091633;border-radius:9px;padding:12px;color:#ffe074;font-weight:bold}.logo{margin:24px auto;color:#ffcb31;text-shadow:0 0 15px #49aaff;font-size:30px;font-weight:900}.question{background:linear-gradient(100deg,#053187,#0645aa,#053187);border:3px solid white;clip-path:polygon(5% 0,95% 0,100% 50%,95% 100%,5% 100%,0 50%);padding:36px 8%;font-size:21px;font-weight:bold;min-height:135px;display:flex;align-items:center;justify-content:center}.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.answer{background:linear-gradient(#0645a9,#052879);border:2px solid #e6edff;color:white;min-height:92px;padding:20px 28px;text-align:left;font-size:18px;font-weight:bold;clip-path:polygon(10% 0,90% 0,100% 50%,90% 100%,10% 100%,0 50%)}.answer b{color:#ffe23d;margin-right:12px}.answer:hover:not(:disabled){background:#1673db}.answer.correct{background:#138b4b}.answer.wrong{background:#b32637}.answer:disabled{cursor:default;opacity:.8}.controls{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:16px}.controls button,.help button{border:1px solid #90b9ff;border-radius:8px;background:#0c286c;color:white;padding:10px 13px}.help{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:16px}.help button:disabled{opacity:.4}.ladder{display:flex;flex-direction:column-reverse;gap:5px}.step{padding:8px 5px;text-align:center;border:2px solid #2071e5;background:linear-gradient(#063b92,#061b55);clip-path:polygon(8% 0,92% 0,100% 50%,92% 100%,8% 100%,0 50%);font-weight:bold}.step.active{background:#f4a51c;color:#09152b}.step.done{background:#118d79}.status{min-height:30px;color:#ffdf63;font-weight:bold}.mobile-label{display:none}@media(max-width:900px){.layout{grid-template-columns:1fr}.side{display:none}.answers{grid-template-columns:1fr}.question{font-size:18px;padding:25px 10%}.answer{min-height:70px}.mobile-label{display:block}}
+
+.lucky-btn{width:100%;margin-top:14px;padding:14px 8px;border:2px solid #ffe45c;border-radius:14px;background:linear-gradient(135deg,#ffb72c,#ed6500);color:white;font-weight:900;font-size:16px;cursor:pointer;box-shadow:0 0 15px #ff9d3f80}.lucky-btn:hover{filter:brightness(1.15)}
+.lucky-overlay{position:fixed;inset:0;background:#05071cdd;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px}.lucky-overlay.show{display:flex}.lucky-card{width:min(95vw,540px);text-align:center;background:radial-gradient(circle at top,#392078,#0b1745 75%);border:3px solid #ffdb52;border-radius:22px;padding:32px 22px;box-shadow:0 0 55px #f5bd4570}.lucky-card h2{color:#ffe064;font-size:clamp(22px,4vw,32px);margin:0 0 22px}.lucky-name{min-height:115px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:clamp(26px,5vw,40px);font-weight:900;text-shadow:0 0 16px #59bfff;overflow-wrap:anywhere}.lucky-name.spinning{animation:lucky-pulse .16s infinite alternate}@keyframes lucky-pulse{to{transform:scale(1.04);color:#ffe271}}.lucky-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}.lucky-actions button{padding:12px 17px;border-radius:12px;border:1px solid #ffe17a;background:#0761ba;color:white;font-weight:bold;cursor:pointer}.lucky-actions button.primary{background:linear-gradient(110deg,#ffb623,#f36a00);color:#fff}.lucky-actions button:disabled{opacity:.4;cursor:not-allowed}.lucky-note{color:#c8d9ff;font-size:13px;margin:15px 0 0}
+.teacher{font-size:clamp(12px,1.4vw,16px);color:#ffe58c;font-weight:bold}.teacher-center{text-align:center;color:#ffe58c;font-weight:bold;margin:4px 0 12px}@media(max-width:650px){header{flex-wrap:wrap;gap:8px}.teacher{order:3;width:100%;text-align:center}}
+</style></head><body><header><strong>🌟 TRIỆU PHÚ HỌC ĐƯỜNG — TOÁN 12</strong><span class="teacher">Giáo viên: Nguyễn Văn Tâm</span><span id="score">Tiền thưởng: $0</span></header><div class="layout"><aside class="panel side"><h3>Danh sách người chơi</h3><div id="players"></div><button class="lucky-btn" onclick="openLucky()">🎲 Chọn người may mắn</button><div style="margin-top:18px"><input id="playerName" placeholder="Tên người chơi" style="width:100%;padding:9px;border-radius:6px"><button onclick="addPlayer()" style="margin-top:8px;padding:8px">Thêm người chơi</button></div></aside><main class="center"><div class="top"><span class="circle" id="timer">60</span><span class="circle">👤</span><span class="circle">👥</span></div><div class="title" id="progress">Người chơi • Câu 1/15</div><div class="logo">🏆<br>TRIỆU PHÚ<br>TOÁN 12</div><div class="teacher-center">Giáo viên: Nguyễn Văn Tâm</div><div class="question" id="question"></div><div class="answers" id="answers"></div><p class="status" id="status"></p><div class="help"><button id="fifty" onclick="fifty()">50:50</button><button id="audience" onclick="audience()">👥 Hỏi khán giả</button><button id="expert" onclick="expert()">☎ Hỏi chuyên gia</button></div><div class="controls"><button onclick="togglePause()" id="pause">Tạm dừng</button><button onclick="quit()">Dừng & bảo toàn</button><button onclick="restart()">Chơi lại</button><button onclick="toggleSound()" id="sound">🔊 Âm thanh</button></div></main><aside class="panel side"><h3>Thang giải thưởng</h3><div class="ladder" id="ladder"></div></aside></div>
+<div class="lucky-overlay" id="luckyOverlay" role="dialog" aria-modal="true" aria-label="Chọn người may mắn"><div class="lucky-card"><h2>✨ CHỌN NGƯỜI MAY MẮN ✨</h2><div class="lucky-name" id="luckyName" aria-live="polite">Sẵn sàng!</div><div class="lucky-actions"><button class="primary" id="spinLucky" onclick="spinLucky()">🎲 Bắt đầu quay</button><button id="playLucky" onclick="playLucky()" disabled>🏆 Bắt đầu chơi</button><button id="closeLucky" onclick="closeLucky()">Đóng</button></div><p class="lucky-note">Chọn ngẫu nhiên công bằng từ danh sách người chơi bên trái.</p></div></div><script>
+const questions=[
+ {
+  "q": "Đạo hàm của hàm số y = x³ - 3x + 2 là?",
+  "a": [
+   "3x² - 3",
+   "x² - 3",
+   "3x² + 3",
+   "x³ - 3"
+  ],
+  "c": 0
+ },
+ {
+  "q": "Hàm số y = x³ - 3x đồng biến trên khoảng nào?",
+  "a": [
+   "(-1; 1)",
+   "(1; +∞)",
+   "(-∞; 1)",
+   "(-2; 0)"
+  ],
+  "c": 1
+ },
+ {
+  "q": "Giá trị cực đại của hàm số y = -x³ + 3x là?",
+  "a": [
+   "-2",
+   "0",
+   "2",
+   "3"
+  ],
+  "c": 2
+ },
+ {
+  "q": "Tiệm cận đứng của đồ thị y = (2x+1)/(x-1) là?",
+  "a": [
+   "x = -1",
+   "y = 2",
+   "x = 2",
+   "x = 1"
+  ],
+  "c": 3
+ },
+ {
+  "q": "Tập xác định của hàm số y = log₂(x - 3) là?",
+  "a": [
+   "(3; +∞)",
+   "[3; +∞)",
+   "(0; +∞)",
+   "R"
+  ],
+  "c": 0
+ },
+ {
+  "q": "Giá trị của log₂32 bằng?",
+  "a": [
+   "4",
+   "5",
+   "6",
+   "16"
+  ],
+  "c": 1
+ },
+ {
+  "q": "Nghiệm của phương trình 3ˣ = 81 là?",
+  "a": [
+   "3",
+   "5",
+   "4",
+   "9"
+  ],
+  "c": 2
+ },
+ {
+  "q": "Đạo hàm của hàm số y = e²ˣ là?",
+  "a": [
+   "e²ˣ",
+   "2x·e²ˣ",
+   "eˣ",
+   "2e²ˣ"
+  ],
+  "c": 3
+ },
+ {
+  "q": "Một nguyên hàm của f(x) = 2x là?",
+  "a": [
+   "x² + C",
+   "2x² + C",
+   "x + C",
+   "2 + C"
+  ],
+  "c": 0
+ },
+ {
+  "q": "Tích phân từ 0 đến 2 của hàm số f(x) = x bằng?",
+  "a": [
+   "1",
+   "2",
+   "3",
+   "4"
+  ],
+  "c": 1
+ },
+ {
+  "q": "Thể tích khối chóp có diện tích đáy S = 12 và chiều cao h = 6 là?",
+  "a": [
+   "72",
+   "36",
+   "24",
+   "18"
+  ],
+  "c": 2
+ },
+ {
+  "q": "Trong không gian Oxyz, độ dài vectơ a = (1; 2; 2) là?",
+  "a": [
+   "√5",
+   "√7",
+   "2",
+   "3"
+  ],
+  "c": 3
+ },
+ {
+  "q": "Phương trình mặt cầu tâm I(1; 2; 3), bán kính R = 2 là?",
+  "a": [
+   "(x-1)²+(y-2)²+(z-3)²=4",
+   "(x+1)²+(y+2)²+(z+3)²=4",
+   "(x-1)²+(y-2)²+(z-3)²=2",
+   "x²+y²+z²=4"
+  ],
+  "c": 0
+ },
+ {
+  "q": "Cho A(1; 0; 2), B(3; 4; 6). Trung điểm AB là?",
+  "a": [
+   "(4; 4; 8)",
+   "(2; 2; 4)",
+   "(1; 2; 3)",
+   "(2; 4; 4)"
+  ],
+  "c": 1
+ },
+ {
+  "q": "Trong hộp có 3 bi đỏ và 2 bi xanh. Xác suất lấy ngẫu nhiên một bi đỏ là?",
+  "a": [
+   "2/5",
+   "1/2",
+   "3/5",
+   "3/2"
+  ],
+  "c": 2
+ }
+];
+const prizes=[500,1000,2000,3000,5000,7000,10000,15000,25000,50000,100000,250000,500000,750000,1000000];
+let index=0,seconds=60,paused=false,locked=false,finished=false,sound=true,used={fifty:false,audience:false,expert:false},players=['Dương Quỳnh Anh','Lương Nguyễn Trâm Anh','Nguyễn Quốc Bảo','Nguyễn Hoàng Dũng','Trần Mỹ Duyên','Huỳnh Hải Đăng','Phan Thị Ngọc Hân'],name='Người chơi';
+const el=id=>document.getElementById(id);function money(n){return '$'+n.toLocaleString('en-US')}function render(){el('players').innerHTML=players.map(p=>`<div class="player">${escapeHTML(p)}</div>`).join('');el('progress').textContent=`${name} • Câu ${Math.min(index+1,15)}/15`;el('score').textContent='Tiền thưởng: '+money(index?prizes[index-1]:0);el('ladder').innerHTML=prizes.map((p,i)=>`<div class="step ${i===index?'active':i<index?'done':''}">${i+1} • ${money(p)}</div>`).join('');if(finished)return;let q=questions[index];el('question').textContent=`Câu ${index+1} (0,5 điểm). ${q.q}`;el('answers').innerHTML=q.a.map((a,i)=>`<button class="answer" onclick="choose(${i})" id="ans${i}"><b>${'ABCD'[i]}.</b>${escapeHTML(a)}</button>`).join('');el('timer').textContent=seconds;el('status').textContent='';for(const k in used)el(k).disabled=used[k]}
+function escapeHTML(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function beep(freq=600){if(!sound)return;try{let ctx=new (window.AudioContext||window.webkitAudioContext)(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.frequency.value=freq;gain.gain.value=.035;osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.14);osc.onended=()=>ctx.close()}catch(e){}}
+function choose(i){if(locked||paused||finished)return;locked=true;const right=questions[index].c;el('ans'+i).classList.add(i===right?'correct':'wrong');el('ans'+right).classList.add('correct');document.querySelectorAll('.answer').forEach(b=>b.disabled=true);beep(i===right?800:200);if(i!==right){el('status').textContent='Chưa chính xác! Đáp án đúng: '+ 'ABCD'[right];setTimeout(()=>end('Bạn đã dừng ở câu '+(index+1)+'.'),1600)}else{el('status').textContent='Chính xác! 🎉';setTimeout(()=>{index++;if(index===15){end('Chúc mừng! Bạn đã chinh phục 15 câu hỏi và nhận '+money(prizes[14])+'!')}else{seconds=60;locked=false;render()}},1200)}}
+function end(msg){finished=true;locked=true;el('status').textContent=msg;el('score').textContent='Tiền thưởng: '+money(index?prizes[index-1]:0);document.querySelectorAll('.answer').forEach(b=>b.disabled=true)}function quit(){if(finished)return;end('Bạn bảo toàn số tiền '+money(index?prizes[index-1]:0))}function restart(){index=0;seconds=60;paused=false;locked=false;finished=false;used={fifty:false,audience:false,expert:false};el('pause').textContent='Tạm dừng';render()}function togglePause(){if(finished)return;paused=!paused;el('pause').textContent=paused?'Tiếp tục':'Tạm dừng';el('status').textContent=paused?'Trò chơi đang tạm dừng':''}function toggleSound(){sound=!sound;el('sound').textContent=sound?'🔊 Âm thanh':'🔇 Tắt tiếng'}function fifty(){if(used.fifty||locked||paused||finished)return;used.fifty=true;let wrong=[0,1,2,3].filter(i=>i!==questions[index].c).sort(()=>Math.random()-.5);wrong.slice(0,2).forEach(i=>el('ans'+i).style.visibility='hidden');el('fifty').disabled=true}function audience(){if(used.audience||locked||paused||finished)return;used.audience=true;el('audience').disabled=true;let right=questions[index].c;el('status').textContent='Khán giả bình chọn: '+[0,1,2,3].map(i=>`${'ABCD'[i]}: ${i===right?'70%':i===(right+1)%4?'15%':'7.5%'}`).join(' | ')}function expert(){if(used.expert||locked||paused||finished)return;used.expert=true;el('expert').disabled=true;el('status').textContent='Chuyên gia gợi ý: Tôi nghiêng về đáp án '+ 'ABCD'[questions[index].c]+'.'}function addPlayer(){let v=el('playerName').value.trim();if(!v)return;players.push(v);name=v;el('playerName').value='';render()}
+let luckyRolling=false,luckyWinner=null,luckyTimeout=null;
+function openLucky(){if(!players.length){alert('Hãy thêm ít nhất một người chơi!');return;}el('luckyOverlay').classList.add('show');el('luckyName').textContent='Sẵn sàng!';el('playLucky').disabled=true;el('spinLucky').disabled=false;luckyWinner=null;}
+function closeLucky(){if(luckyRolling)return;el('luckyOverlay').classList.remove('show')}
+function randomIndex(max){if(globalThis.crypto&&crypto.getRandomValues){const arr=new Uint32Array(1);const limit=Math.floor(4294967296/max)*max;do{crypto.getRandomValues(arr)}while(arr[0]>=limit);return arr[0]%max;}return Math.floor(Math.random()*max)}
+function spinLucky(){if(luckyRolling||!players.length)return;luckyRolling=true;luckyWinner=null;el('spinLucky').disabled=true;el('playLucky').disabled=true;el('closeLucky').disabled=true;el('luckyName').classList.add('spinning');const winner=players[randomIndex(players.length)];let tick=0;const total=32;function step(){if(tick>=total){luckyRolling=false;luckyWinner=winner;el('luckyName').classList.remove('spinning');el('luckyName').textContent='🎉 '+winner+' 🎉';el('spinLucky').disabled=false;el('spinLucky').textContent='🔄 Quay lại';el('playLucky').disabled=false;el('closeLucky').disabled=false;return;}el('luckyName').textContent=players[randomIndex(players.length)];tick++;luckyTimeout=setTimeout(step,55+Math.pow(tick/total,3)*330)}step()}
+function playLucky(){if(!luckyWinner||luckyRolling)return;name=luckyWinner;restart();el('luckyOverlay').classList.remove('show')}
+setInterval(()=>{if(paused||locked||finished)return;seconds--;el('timer').textContent=seconds;if(seconds<=0)end('Hết giờ! Trò chơi kết thúc.')},1000);render();
+</script></body></html>

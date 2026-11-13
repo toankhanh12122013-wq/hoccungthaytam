@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Trò Chơi Ôn Tập Toán THPT — Lớp 10, 11, 12</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f8; --surface:#ffffff; --surface2:#eef2f5; --ink:#14232e; --muted:#5b6b76;
+  --line:#dbe3e8; --navy:#0f2a44; --navy2:#16395c;
+  --amber:#d97706; --amber-bg:#fef3c7;
+  --g10:#047857; --g10-bg:#d1fae5;
+  --g11:#1d4ed8; --g11-bg:#dbeafe;
+  --g12:#be123c; --g12-bg:#ffe4e6;
+  --ok:#15803d; --ok-bg:#dcfce7; --bad:#b91c1c; --bad-bg:#fee2e2;
+  --shadow:0 10px 30px rgba(15,42,68,.10);
+  --radius:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0c141b; --surface:#14222e; --surface2:#1a2c3b; --ink:#e8eff4; --muted:#9db0bd;
+    --line:#26394a; --navy:#0a1c30; --navy2:#12293f;
+    --amber:#f5a524; --amber-bg:#3a2c07;
+    --g10:#34d399; --g10-bg:#06382a; --g11:#60a5fa; --g11-bg:#122c52; --g12:#fb7185; --g12-bg:#451222;
+    --ok:#4ade80; --ok-bg:#0d331c; --bad:#f87171; --bad-bg:#3d1111;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+input,select{font:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+sup,sub{font-size:.68em}
+
+/* ---------- HERO ---------- */
+.hero{background:var(--navy);color:#eaf2f8;overflow:hidden;position:relative}
+.hero::after{content:"∑ π √ ∞ Δ ∫ θ";position:absolute;right:-10px;top:6px;font-size:88px;font-weight:900;letter-spacing:8px;color:rgba(255,255,255,.05);pointer-events:none;white-space:nowrap}
+.hero-in{padding:34px 0 30px;position:relative;z-index:1}
+.hero h1{font-size:clamp(28px,4.6vw,44px);line-height:1.12;margin:0 0 10px;font-weight:900;letter-spacing:-.02em}
+.hero h1 .hl{color:#fbbf24}
+.hero p.lead{max-width:720px;color:#c4d5e2;margin:0 0 18px;font-size:clamp(15px,2vw,17px)}
+.hero-stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.stat{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);padding:7px 13px;border-radius:999px;font-size:13.5px;font-weight:600}
+.stat b{color:#fbbf24}
+.quick-row{display:flex;flex-wrap:wrap;gap:10px}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;font-size:15px;display:inline-flex;align-items:center;gap:8px;transition:transform .12s ease, filter .12s ease;text-decoration:none}
+.btn:active{transform:scale(.97)}
+.btn-amber{background:#f59e0b;color:#221a03}
+.btn-amber:hover{filter:brightness(1.07)}
+.btn-ghost{background:rgba(255,255,255,.10);color:#eaf2f8;border:1px solid rgba(255,255,255,.25)}
+.btn-ghost:hover{background:rgba(255,255,255,.18)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-line{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn-line:hover{border-color:var(--muted)}
+
+/* ---------- HOW ---------- */
+.how{padding:26px 0 4px}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.how-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.how-card .num{width:34px;height:34px;border-radius:10px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;margin-bottom:10px}
+@media (prefers-color-scheme: dark){.how-card .num{background:var(--amber);color:#221a03}}
+.how-card h3{margin:0 0 6px;font-size:16px}
+.how-card p{margin:0;color:var(--muted);font-size:14px}
+
+/* ---------- CONTROLS ---------- */
+.controls{position:sticky;top:0;z-index:40;background:var(--bg);padding:18px 0 12px}
+.grade-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.gtab{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:10px 18px;font-weight:700;font-size:15px}
+.gtab small{font-weight:600;opacity:.65;font-size:12.5px;margin-left:4px}
+.gtab.active[data-grade="all"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.gtab.active[data-grade="10"]{background:var(--g10);border-color:var(--g10);color:#fff}
+.gtab.active[data-grade="11"]{background:var(--g11);border-color:var(--g11);color:#fff}
+.gtab.active[data-grade="12"]{background:var(--g12);border-color:var(--g12);color:#fff}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search{flex:1 1 220px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:0 14px}
+.search input{border:0;background:transparent;color:var(--ink);padding:11px 0;width:100%;outline:none;font-size:15px}
+.mode-chips{display:flex;gap:6px}
+.mchip{border:1.5px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:9px 14px;font-weight:600;font-size:14px}
+.mchip.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.result-count{color:var(--muted);font-size:14px;margin:14px 2px 10px}
+.result-count b{color:var(--ink)}
+
+/* ---------- GAME GRID ---------- */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding-bottom:10px}
+@media(max-width:960px){.grid{grid-template-columns:repeat(2,1fr)}.how-grid{grid-template-columns:1fr}}
+@media(max-width:620px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 8px rgba(15,42,68,.04)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.badge-grade{font-size:12.5px;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.02em}
+.bg10{background:var(--g10-bg);color:var(--g10)} .bg11{background:var(--g11-bg);color:var(--g11)} .bg12{background:var(--g12-bg);color:var(--g12)}
+.badge-mode{font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.card h3{margin:0;font-size:19px;line-height:1.3}
+.card .topic{color:var(--muted);font-size:14px;margin:0}
+.card .meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:2px}
+.card .meta b{color:var(--ink)}
+.card .mechanic{font-size:13.5px;background:var(--surface2);border-radius:10px;padding:9px 12px;color:var(--muted)}
+.card .mechanic b{color:var(--ink)}
+.card-actions{margin-top:auto;display:flex;gap:8px;padding-top:6px}
+.card-actions .btn{flex:1;justify-content:center;padding:11px 10px;font-size:14.5px}
+.play10{background:var(--g10);color:#fff}.play11{background:var(--g11);color:#fff}.play12{background:var(--g12);color:#fff}
+.empty{display:none;text-align:center;padding:44px 20px;background:var(--surface);border:1.5px dashed var(--line);border-radius:var(--radius);color:var(--muted)}
+.empty.show{display:block}
+
+/* ---------- SCOPE ---------- */
+.scope{padding:34px 0 8px}
+.scope h2,.road h2{font-size:clamp(21px,3vw,27px);margin:0 0 6px;font-weight:800}
+.scope .sub,.road .sub{color:var(--muted);margin:0 0 16px;max-width:760px}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:860px){.scope-grid{grid-template-columns:1fr}}
+.scope-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.scope-card h3{margin:0 0 10px;font-size:16.5px;display:flex;align-items:center;gap:8px}
+.scope-card ul{margin:0;padding-left:19px;color:var(--muted);font-size:14px}
+.scope-card li{margin-bottom:5px}
+.scope-card li b{color:var(--ink);font-weight:600}
+
+/* ---------- ROADMAP ---------- */
+.road{padding:26px 0 10px}
+.road-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:720px){.road-list{grid-template-columns:1fr}}
+.road-item{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;gap:13px;align-items:flex-start}
+.road-item .sess{flex:none;width:40px;height:40px;border-radius:10px;background:var(--amber-bg);color:var(--amber);display:grid;place-items:center;font-weight:800;font-size:14px;text-align:center;line-height:1.1}
+.road-item h4{margin:0 0 3px;font-size:15px}
+.road-item p{margin:0;color:var(--muted);font-size:13.5px}
+.tip{margin-top:14px;background:var(--amber-bg);border-radius:14px;padding:14px 16px;font-size:14px;color:var(--ink)}
+.tip b{color:var(--amber)}
+
+/* ---------- FOOTER ---------- */
+footer{padding:30px 0 44px;color:var(--muted);font-size:13.5px;text-align:center}
+
+/* ---------- OVERLAYS ---------- */
+.overlay{position:fixed;inset:0;background:rgba(6,17,27,.72);backdrop-filter:blur(3px);z-index:100;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:18px 12px}
+.overlay.open{display:flex}
+.sheet{background:var(--surface);color:var(--ink);border-radius:22px;width:100%;max-width:680px;padding:24px;box-shadow:var(--shadow);margin:auto 0}
+.sheet.wide{max-width:760px}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.sheet-head h3{margin:0;font-size:22px;line-height:1.25}
+.x{flex:none;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-size:17px;line-height:1}
+.detail-topic{color:var(--muted);margin:0 0 14px}
+.rules{background:var(--surface2);border-radius:14px;padding:14px 16px;font-size:14.5px;margin-bottom:16px}
+.rules ol{margin:6px 0 0;padding-left:20px}
+.rules li{margin-bottom:4px}
+.qprev{border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:10px}
+.qprev .qq{font-weight:600;margin:0 0 7px}
+.qprev .opts{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;font-size:14px;color:var(--muted);margin-bottom:8px}
+@media(max-width:560px){.qprev .opts{grid-template-columns:1fr}}
+.qprev .ans{display:none;background:var(--ok-bg);color:var(--ok);border-radius:9px;padding:8px 11px;font-size:14px;font-weight:600}
+.qprev.show-ans .ans{display:block}
+.mini-btn{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;padding:6px 12px;font-size:13px;font-weight:600}
+.detail-actions{display:flex;gap:9px;margin-top:16px}
+.detail-actions .btn{flex:1;justify-content:center}
+
+/* ---------- PLAYER ---------- */
+.player-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.pill{background:var(--surface2);border-radius:999px;padding:6px 13px;font-size:13.5px;font-weight:700}
+.pill.score{background:var(--navy);color:#fff}
+@media (prefers-color-scheme: dark){.pill.score{background:var(--amber);color:#221a03}}
+.pill.turn{background:var(--amber-bg);color:var(--amber)}
+.progress{height:10px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.progress i{display:block;height:100%;background:var(--amber);border-radius:99px;transition:width .3s ease}
+.timerbar{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.timerbar i{display:block;height:100%;background:var(--ok);border-radius:99px}
+.timerbar i.low{background:var(--bad)}
+.team-board{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.team-chip{border:1.5px solid var(--line);border-radius:12px;padding:8px 13px;font-size:14px;font-weight:600;color:var(--muted)}
+.team-chip.on{border-color:var(--amber);color:var(--ink);background:var(--amber-bg)}
+.team-chip b{font-family:"IBM Plex Mono",monospace}
+.qtext{font-size:clamp(18px,2.6vw,22px);font-weight:700;line-height:1.45;margin:0 0 16px}
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media(max-width:560px){.opts-grid{grid-template-columns:1fr}}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:15px 16px;font-size:16.5px;font-weight:600;transition:border-color .12s, background .12s;width:100%}
+.opt:hover:not(:disabled){border-color:var(--muted)}
+.opt .letter{flex:none;width:34px;height:34px;border-radius:9px;background:var(--surface2);display:grid;place-items:center;font-weight:800;font-size:15px}
+.opt.correct{border-color:var(--ok);background:var(--ok-bg)}
+.opt.correct .letter{background:var(--ok);color:#fff}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.wrong .letter{background:var(--bad);color:#fff}
+.opt:disabled{cursor:default;opacity:.85}
+.opt.correct:disabled,.opt.wrong:disabled{opacity:1}
+.feedback{display:none;margin-top:15px;border-radius:14px;padding:13px 16px;font-size:15px}
+.feedback.show{display:block}
+.feedback.good{background:var(--ok-bg);color:var(--ok)}
+.feedback.badf{background:var(--bad-bg);color:var(--bad)}
+.feedback .expl{display:block;margin-top:4px;font-weight:500;opacity:.9;font-size:14.5px}
+.next-row{display:none;margin-top:15px}
+.next-row.show{display:block}
+.next-row .btn{width:100%;justify-content:center}
+
+/* setup */
+.setup label{display:block;font-weight:700;font-size:14.5px;margin:14px 0 7px}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:11px;padding:11px;font-weight:700;font-size:16px}
+.seg button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.team-names input{width:100%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:11px;padding:11px 13px;margin-bottom:9px;font-size:15px;outline:none}
+.team-names input:focus{border-color:var(--amber)}
+.solo-name{width:100%;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:11px;padding:11px 13px;font-size:15px;outline:none}
+.setup .btn{width:100%;justify-content:center;margin-top:18px}
+
+/* result */
+.result{text-align:center;padding:6px 0}
+.result .big{font-size:52px;line-height:1;margin:8px 0 2px}
+.result .score-big{font-size:40px;font-weight:900;margin:4px 0}
+.result .medal{display:inline-block;background:var(--amber-bg);color:var(--amber);font-weight:800;border-radius:999px;padding:7px 16px;font-size:15px;margin-bottom:8px}
+.result p{color:var(--muted);margin:6px auto;max-width:460px}
+.rank-list{text-align:left;max-width:420px;margin:14px auto;background:var(--surface2);border-radius:14px;padding:8px 16px}
+.rank-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-weight:600}
+.rank-row:last-child{border-bottom:0}
+.rank-row .pts{font-family:"IBM Plex Mono",monospace}
+.result-actions{display:flex;gap:9px;margin-top:18px}
+.result-actions .btn{flex:1;justify-content:center}
+.review-list{text-align:left;margin-top:18px}
+.review-list h4{margin:0 0 10px;font-size:16px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-in">
+    <h1>Trò Chơi Ôn Tập <span class="hl">Toán THPT</span><br>Lớp 10 · Lớp 11 · Lớp 12</h1>
+    <p class="lead">Mỗi lớp một bộ trò chơi riêng bám chương trình GDPT 2018. Mỗi trò có đúng <b>10 câu trắc nghiệm</b> — bấm chọn đáp án A, B, C, D, trang chấm ngay và cộng điểm tại chỗ. Chơi cá nhân để nhận huy hiệu, hoặc chia 2–4 đội thi đua ngay trên lớp.</p>
+    <div class="hero-stats">
+      <span class="stat"><b>15</b> trò chơi</span>
+      <span class="stat"><b>150</b> câu hỏi có giải thích</span>
+      <span class="stat"><b>9</b> trò cá nhân · <b>6</b> trò đồng đội</span>
+      <span class="stat">Không cần đăng nhập</span>
+    </div>
+    <div class="quick-row">
+      <button class="btn btn-amber" onclick="quickPlay('all')">▶ Chơi nhanh — trộn cả 3 lớp</button>
+      <button class="btn btn-ghost" onclick="quickPlay('10')">Lớp 10</button>
+      <button class="btn btn-ghost" onclick="quickPlay('11')">Lớp 11</button>
+      <button class="btn btn-ghost" onclick="quickPlay('12')">Lớp 12</button>
+    </div>
+  </div>
+</header>
+
+<section class="how wrap">
+  <div class="how-grid">
+    <div class="how-card"><div class="num">1</div><h3>Chọn lớp &amp; chọn trò</h3><p>Bấm vào lớp 10, 11 hoặc 12 rồi chọn một thẻ trò. Trò đồng đội sẽ hỏi số đội và tên đội trước khi bắt đầu.</p></div>
+    <div class="how-card"><div class="num">2</div><h3>Trả lời trong thời gian quy định</h3><p>Mỗi câu hiện riêng trên màn hình kèm đồng hồ đếm ngược. Bấm một trong 4 đáp án lớn — không cần gõ chữ, hết giờ câu đó tính là sai.</p></div>
+    <div class="how-card"><div class="num">3</div><h3>Chấm ngay, xem giải thích</h3><p>Đúng được cộng 10 điểm và hiện lời giải thích ngắn; sai thì đáp án đúng hiện rõ để nhớ bài. Hết 10 câu là màn hình kết quả và huy hiệu / đội thắng.</p></div>
+  </div>
+</section>
+
+<main class="wrap">
+  <div class="controls">
+    <div class="grade-tabs" role="tablist" aria-label="Chọn lớp">
+      <button class="gtab active" data-grade="all" onclick="setGrade('all',this)">Tất cả các lớp</button>
+      <button class="gtab" data-grade="10" onclick="setGrade('10',this)">Lớp 10 <small>Đại số · Hình học phẳng</small></button>
+      <button class="gtab" data-grade="11" onclick="setGrade('11',this)">Lớp 11 <small>Lượng giác · Dãy số</small></button>
+      <button class="gtab" data-grade="12" onclick="setGrade('12',this)">Lớp 12 <small>Giải tích · Oxyz</small></button>
+    </div>
+    <div class="filter-row">
+      <div class="search">
+        <span aria-hidden="true">🔍</span>
+        <input id="searchInput" type="search" placeholder="Tìm trò theo tên hoặc chủ đề… (ví dụ: vectơ, đạo hàm)" oninput="renderGames()">
+      </div>
+      <div class="mode-chips">
+        <button class="mchip active" data-mode="all" onclick="setMode('all',this)">Tất cả</button>
+        <button class="mchip" data-mode="solo" onclick="setMode('solo',this)">Cá nhân</button>
+        <button class="mchip" data-mode="team" onclick="setMode('team',this)">Đồng đội</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="result-count" id="resultCount"></p>
+  <div class="grid" id="gameGrid"></div>
+  <div class="empty" id="emptyState">
+    <p style="font-size:17px;font-weight:700;color:var(--ink);margin:0 0 4px">Chưa tìm thấy trò phù hợp</p>
+    <p style="margin:0">Thử đổi từ khóa hoặc bỏ bớt bộ lọc nhé.</p>
+  </div>
+
+  <section class="scope">
+    <h2>Phạm vi kiến thức theo lớp</h2>
+    <p class="sub">Nhìn bảng này trước khi chơi để biết mỗi lớp cần ôn những gì. Câu hỏi bám sách giáo khoa Toán theo Chương trình GDPT 2018.</p>
+    <div class="scope-grid">
+      <div class="scope-card">
+        <h3><span class="badge-grade bg10">LỚP 10</span></h3>
+        <ul>
+          <li><b>Mệnh đề &amp; tập hợp:</b> mệnh đề, phủ định, tập con, giao – hợp – hiệu</li>
+          <li><b>Bất phương trình bậc nhất hai ẩn:</b> miền nghiệm, hệ bất phương trình</li>
+          <li><b>Hàm số bậc hai:</b> đỉnh, trục đối xứng, đồ thị parabol, giá trị lớn nhất – nhỏ nhất</li>
+          <li><b>Hệ thức lượng trong tam giác:</b> định lí sin, định lí côsin, diện tích</li>
+          <li><b>Vectơ:</b> tổng – hiệu vectơ, tích với một số, tọa độ vectơ</li>
+        </ul>
+      </div>
+      <div class="scope-card">
+        <h3><span class="badge-grade bg11">LỚP 11</span></h3>
+        <ul>
+          <li><b>Giá trị lượng giác &amp; công thức:</b> cộng, nhân đôi, biến đổi tích – tổng</li>
+          <li><b>Hàm số lượng giác &amp; phương trình cơ bản:</b> tập xác định, chu kì, nghiệm sin – cos – tan</li>
+          <li><b>Dãy số:</b> cấp số cộng, cấp số nhân, số hạng tổng quát và tổng n số hạng</li>
+          <li><b>Thống kê:</b> mẫu số liệu ghép nhóm, số trung bình, trung vị, tứ phân vị</li>
+          <li><b>Hình học không gian:</b> đường thẳng và mặt phẳng song song</li>
+        </ul>
+      </div>
+      <div class="scope-card">
+        <h3><span class="badge-grade bg12">LỚP 12</span></h3>
+        <ul>
+          <li><b>Ứng dụng đạo hàm:</b> tính đơn điệu, cực trị của hàm số</li>
+          <li><b>Giá trị lớn nhất – nhỏ nhất &amp; tiệm cận:</b> tiệm cận đứng, ngang, xiên</li>
+          <li><b>Vectơ trong không gian:</b> hệ trục tọa độ Oxyz, tọa độ điểm và vectơ</li>
+          <li><b>Nguyên hàm – tích phân:</b> nguyên hàm cơ bản, tích phân và ứng dụng</li>
+          <li><b>Xác suất có điều kiện:</b> công thức Bayes, công thức xác suất toàn phần</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="road">
+    <h2>Gợi ý lộ trình ôn bằng trò chơi</h2>
+    <p class="sub">Mỗi buổi chọn các trò của đúng lớp mình đang học. Học sinh tự ôn ở nhà chơi các trò cá nhân; buổi ôn trên lớp ưu tiên trò đồng đội để cả lớp cùng tham gia.</p>
+    <div class="road-list">
+      <div class="road-item"><div class="sess">Buổi<br>1</div><div><h4>Nền tảng của từng lớp</h4><p>Lớp 10: Mệnh đề &amp; Tập hợp · Lớp 11: Giá trị lượng giác · Lớp 12: Đơn điệu &amp; Cực trị. Chơi cá nhân, ghi lại câu sai.</p></div></div>
+      <div class="road-item"><div class="sess">Buổi<br>2</div><div><h4>Chủ đề trọng tâm</h4><p>Lớp 10: Hàm số bậc hai · Lớp 11: Phương trình lượng giác · Lớp 12: Tiệm cận &amp; Đồ thị. Thi đồng đội 4 tổ trong lớp.</p></div></div>
+      <div class="road-item"><div class="sess">Buổi<br>3</div><div><h4>Hình học &amp; tọa độ</h4><p>Lớp 10: Vectơ + Hệ thức lượng · Lớp 11: Quan hệ song song · Lớp 12: Tọa độ Oxyz. Xen kẽ một trò cá nhân tính giờ.</p></div></div>
+      <div class="road-item"><div class="sess">Buổi<br>4</div><div><h4>Tổng kết trước kiểm tra</h4><p>Bấm nút lớp của mình trong hàng “Chơi nhanh” ở đầu trang để trộn 10 câu ngẫu nhiên của riêng lớp đó (nút đầu tiên trộn cả 3 lớp), sau đó mở “Xem chi tiết” của trò yếu nhất để đọc lại đủ 10 câu kèm đáp án.</p></div></div>
+    </div>
+    <div class="tip"><b>Mẹo cho thầy cô:</b> sau mỗi buổi, ghi nhanh 3 lỗi sai xuất hiện nhiều nhất và mở đầu buổi sau bằng 5 phút sửa lỗi. Trước ngày kiểm tra chỉ nên chơi một trò nhẹ trong 15 phút, dành thời gian còn lại để dặn dò cách đọc kĩ đề và kiểm tra lại bài.</div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Trò Chơi Ôn Tập Toán THPT — ngân hàng 150 câu hỏi tự soạn theo chương trình GDPT 2018, mỗi câu đều có lời giải thích ngắn để học sinh tự sửa sai ngay khi chơi.</div>
+</footer>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailOverlay" role="dialog" aria-modal="true">
+  <div class="sheet wide">
+    <div class="sheet-head"><h3 id="dTitle"></h3><button class="x" onclick="closeOverlay('detailOverlay')" aria-label="Đóng">✕</button></div>
+    <p class="detail-topic" id="dTopic"></p>
+    <div class="rules" id="dRules"></div>
+    <div id="dQuestions"></div>
+    <div class="detail-actions">
+      <button class="btn btn-line" onclick="closeOverlay('detailOverlay')">Đóng</button>
+      <button class="btn btn-navy" id="dPlayBtn">▶ Chơi trò này</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP + PLAYER -->
+<div class="overlay" id="playOverlay" role="dialog" aria-modal="true">
+  <div class="sheet" id="playSheet"></div>
+</div>
+
+<script>
+/* ================= QUESTION BANK =================
+   q: câu hỏi | o: 4 đáp án | a: chỉ số đáp án đúng (0-3) | e: giải thích */
+const GAMES = [
+/* ---------------- LỚP 10 ---------------- */
+{id:"l10-menh-de", grade:10, mode:"solo", kind:"speed", icon:"🏁", title:"Đua Tốc Độ — Mệnh Đề & Tập Hợp",
+ topic:"Mệnh đề, phủ định, các phép toán trên tập hợp", time:20,
+ mechanic:"<b>Luật riêng:</b> mỗi câu chỉ có 20 giây. Trả lời đúng trong 10 giây đầu được cộng thêm 2 điểm thưởng tốc độ.",
+ qs:[
+  {q:"Trong các câu sau, câu nào là một mệnh đề?",o:["Hôm nay trời đẹp quá!","2 + 3 = 6","Bạn học lớp mấy?","Hãy làm bài tập!"],a:1,e:"Mệnh đề là câu khẳng định đúng hoặc sai. “2 + 3 = 6” là khẳng định (sai) nên là mệnh đề; các câu còn lại là câu cảm thán, câu hỏi, câu cầu khiến."},
+  {q:"Phủ định của mệnh đề “∀x ∈ ℝ, x² ≥ 0” là:",o:["∀x ∈ ℝ, x² < 0","∃x ∈ ℝ, x² ≤ 0","∃x ∈ ℝ, x² < 0","∀x ∈ ℝ, x² ≤ 0"],a:2,e:"Phủ định của ∀ là ∃, đồng thời phủ định của ≥ là <. Vậy phủ định là “∃x ∈ ℝ, x² < 0”."},
+  {q:"Cho A = {1; 2; 3; 4}, B = {2; 4; 6}. Tập hợp A ∩ B là:",o:["{1; 3}","{2; 4}","{1; 2; 3; 4; 6}","{6}"],a:1,e:"Giao của hai tập hợp gồm các phần tử chung của cả A và B, đó là 2 và 4."},
+  {q:"Cho A = {1; 2; 3}, B = {3; 4; 5}. Tập hợp A ∪ B có bao nhiêu phần tử?",o:["3","4","5","6"],a:2,e:"A ∪ B = {1; 2; 3; 4; 5} — phần tử 3 chung chỉ đếm một lần, nên có 5 phần tử."},
+  {q:"Một tập hợp có 4 phần tử thì có bao nhiêu tập con?",o:["8","12","16","4"],a:2,e:"Tập có n phần tử thì có 2ⁿ tập con. Với n = 4: 2⁴ = 16 tập con."},
+  {q:"Cho A = {0; 1; 2; 3; 4}, B = {2; 3; 4; 5}. Tập hợp A \\ B là:",o:["{0; 1}","{5}","{2; 3; 4}","{0; 1; 5}"],a:0,e:"A \\ B gồm các phần tử thuộc A nhưng không thuộc B, đó là 0 và 1."},
+  {q:"Mệnh đề “π là một số hữu tỉ” là mệnh đề:",o:["Đúng","Sai","Vừa đúng vừa sai","Không phải mệnh đề"],a:1,e:"π là số vô tỉ nên khẳng định “π là số hữu tỉ” là mệnh đề sai."},
+  {q:"Tập hợp [−2; 5) gồm các số thực x thỏa mãn:",o:["−2 < x ≤ 5","−2 ≤ x < 5","−2 < x < 5","−2 ≤ x ≤ 5"],a:1,e:"Ngoặc vuông [ ở đầu trái nghĩa là lấy cả −2; ngoặc tròn ) ở đầu phải nghĩa là không lấy 5. Vậy −2 ≤ x < 5."},
+  {q:"Mệnh đề kéo theo P ⇒ Q chỉ sai khi:",o:["P đúng, Q đúng","P sai, Q đúng","P sai, Q sai","P đúng, Q sai"],a:3,e:"P ⇒ Q chỉ sai trong trường hợp duy nhất: giả thiết P đúng nhưng kết luận Q sai."},
+  {q:"Cho A = {x ∈ ℕ | x < 5}. Tập A viết dạng liệt kê là:",o:["{1; 2; 3; 4; 5}","{0; 1; 2; 3; 4}","{1; 2; 3; 4}","{0; 1; 2; 3; 4; 5}"],a:1,e:"Số tự nhiên nhỏ hơn 5 gồm 0, 1, 2, 3, 4 (0 là số tự nhiên, 5 không thỏa x < 5)."}
+ ]},
+{id:"l10-ham-bac-hai", grade:10, mode:"solo", kind:"tower", icon:"🗼", title:"Leo Tháp — Hàm Số Bậc Hai",
+ topic:"Parabol: đỉnh, trục đối xứng, đồ thị, giá trị lớn nhất – nhỏ nhất", time:30,
+ mechanic:"<b>Luật riêng:</b> 10 câu là 10 tầng tháp. Trả lời đúng leo lên 1 tầng; sai vẫn được xem giải thích rồi leo tiếp — đích là tầng 10.",
+ qs:[
+  {q:"Đỉnh của parabol y = x² − 4x + 3 là:",o:["(2; −1)","(−2; 15)","(2; 3)","(4; 3)"],a:0,e:"Hoành độ đỉnh x = −b/(2a) = 4/2 = 2; tung độ y = 2² − 4·2 + 3 = −1. Đỉnh là (2; −1)."},
+  {q:"Trục đối xứng của parabol y = 2x² + 4x − 1 là đường thẳng:",o:["x = 1","x = −1","x = 2","x = −2"],a:1,e:"Trục đối xứng: x = −b/(2a) = −4/(2·2) = −1."},
+  {q:"Hàm số y = −x² + 2x + 3 đồng biến trên khoảng:",o:["(1; +∞)","(−∞; 1)","(−∞; −1)","(3; +∞)"],a:1,e:"a = −1 < 0 nên parabol quay bề lõm xuống: hàm đồng biến ở bên trái đỉnh. Đỉnh có hoành độ x = 1 nên đồng biến trên (−∞; 1)."},
+  {q:"Giá trị lớn nhất của hàm số y = −x² + 4x − 1 là:",o:["2","3","4","−1"],a:1,e:"Đỉnh tại x = 2, giá trị tại đỉnh y = −4 + 8 − 1 = 3. Vì a < 0 nên đây là giá trị lớn nhất."},
+  {q:"Tập xác định của hàm số y = √(x − 2) là:",o:["(2; +∞)","[2; +∞)","(−∞; 2]","ℝ"],a:1,e:"Biểu thức dưới căn phải không âm: x − 2 ≥ 0 ⇔ x ≥ 2. Tập xác định là [2; +∞)."},
+  {q:"Cho f(x) = x² − 3x + 1. Giá trị f(2) bằng:",o:["1","−1","3","−3"],a:1,e:"f(2) = 2² − 3·2 + 1 = 4 − 6 + 1 = −1."},
+  {q:"Parabol y = ax² + bx + c (a ≠ 0) có bề lõm quay lên trên khi:",o:["a < 0","a > 0","b > 0","c > 0"],a:1,e:"Hệ số a quyết định hướng bề lõm: a > 0 bề lõm quay lên, a < 0 bề lõm quay xuống."},
+  {q:"Parabol y = x² − 2x cắt trục tung tại điểm:",o:["(0; 1)","(2; 0)","(0; 0)","(1; −1)"],a:2,e:"Giao với trục tung khi x = 0: y = 0² − 2·0 = 0. Điểm cần tìm là gốc tọa độ (0; 0)."},
+  {q:"Hàm số bậc hai nào dưới đây có đỉnh là I(1; 4)?",o:["y = −x² + 2x + 3","y = x² − 2x + 3","y = −x² − 2x + 3","y = x² + 2x + 3"],a:0,e:"Dạng đỉnh: y = −(x − 1)² + 4 = −x² + 2x + 3. Kiểm tra: đỉnh x = −2/(2·(−1)) = 1, y(1) = −1 + 2 + 3 = 4."},
+  {q:"Một quả bóng được ném lên, độ cao h(t) = −5t² + 20t (m). Độ cao lớn nhất quả bóng đạt được là:",o:["10 m","15 m","20 m","40 m"],a:2,e:"Đỉnh tại t = −20/(2·(−5)) = 2 giây; h(2) = −5·4 + 40 = 20 m."}
+ ]},
+{id:"l10-bpt", grade:10, mode:"team", kind:"team", icon:"🤝", title:"Tiếp Sức — Bất Phương Trình Hai Ẩn",
+ topic:"Bất phương trình và hệ bất phương trình bậc nhất hai ẩn, miền nghiệm", time:30,
+ mechanic:"<b>Luật đồng đội:</b> các đội luân phiên trả lời, mỗi câu một đội. Đội nào trả lời đúng ghi 10 điểm cho đội mình.",
+ qs:[
+  {q:"Cặp số nào sau đây là nghiệm của bất phương trình 2x − y > 1?",o:["(0; 0)","(1; 2)","(2; 1)","(0; 1)"],a:2,e:"Thử (2; 1): 2·2 − 1 = 3 > 1, đúng. Các cặp còn lại cho giá trị ≤ 1."},
+  {q:"Miền nghiệm của bất phương trình x + y ≤ 3 là:",o:["Nửa mặt phẳng bờ x + y = 3 chứa gốc O, kể cả bờ","Nửa mặt phẳng bờ x + y = 3 không chứa gốc O","Chỉ đường thẳng x + y = 3","Toàn bộ mặt phẳng"],a:0,e:"Thử O(0; 0): 0 + 0 = 0 ≤ 3 đúng, và dấu ≤ cho phép lấy cả bờ. Vậy miền nghiệm là nửa mặt phẳng chứa O kể cả bờ."},
+  {q:"Điểm nào thuộc miền nghiệm của hệ { x ≥ 0; y ≥ 0; x + y ≤ 4 }?",o:["(5; 0)","(1; 2)","(−1; 3)","(3; 2)"],a:1,e:"(1; 2): x, y đều ≥ 0 và 1 + 2 = 3 ≤ 4, thỏa cả ba bất phương trình. (3; 2) có tổng bằng 5 > 4 nên bị loại."},
+  {q:"Bất phương trình nào sau đây là bất phương trình bậc nhất hai ẩn?",o:["x² + y > 2","3x − 2y ≤ 5","xy + 1 > 0","x + y + z > 1"],a:1,e:"Bậc nhất hai ẩn phải có đúng hai ẩn x, y, mỗi ẩn bậc một, không có tích xy hay ẩn thứ ba. Chỉ 3x − 2y ≤ 5 thỏa."},
+  {q:"Miền nghiệm của bất phương trình 2x + y < 4 (không kể bờ) không chứa điểm:",o:["(0; 0)","(1; 1)","(2; 1)","(0; 3)"],a:2,e:"(2; 1): 2·2 + 1 = 5, không nhỏ hơn 4 nên điểm này không thuộc miền nghiệm."},
+  {q:"Một xưởng làm bàn (lãi 300 nghìn/chiếc) và ghế (lãi 200 nghìn/chiếc). Nếu làm x bàn, y ghế thì tiền lãi (nghìn đồng) là:",o:["300x + 200y","500(x + y)","300y + 200x","(300 + 200)xy"],a:0,e:"Tiền lãi = lãi mỗi bàn × số bàn + lãi mỗi ghế × số ghế = 300x + 200y (nghìn đồng)."},
+  {q:"Hệ bất phương trình { x > 1; x < 4 } tương đương với:",o:["1 < x < 4","x > 4","x < 1","1 ≤ x ≤ 4"],a:0,e:"x đồng thời lớn hơn 1 và nhỏ hơn 4, tức là 1 < x < 4 (không lấy hai đầu mút vì dấu > và <)."},
+  {q:"Đường thẳng x − y = 2 chia mặt phẳng thành hai nửa. Nửa chứa điểm (0; 0) ứng với:",o:["x − y > 2","x − y < 2","x − y = 2","x − y ≥ 2"],a:1,e:"Thay (0; 0) vào vế trái: 0 − 0 = 0 < 2, nên nửa mặt phẳng chứa gốc tọa độ ứng với x − y < 2."},
+  {q:"Miền nghiệm của hệ { x ≥ 0; y ≥ 0; x ≤ 3; y ≤ 2 } là hình:",o:["Tam giác","Hình chữ nhật","Hình tròn","Nửa mặt phẳng"],a:1,e:"Bốn điều kiện giới hạn x trong [0; 3] và y trong [0; 2] — đó là hình chữ nhật có các đỉnh (0;0), (3;0), (3;2), (0;2)."},
+  {q:"Bạn An mua x kg táo (20 nghìn/kg) và y kg cam (30 nghìn/kg), tổng tiền không quá 200 nghìn. Bất phương trình đúng là:",o:["20x + 30y ≥ 200","20x + 30y ≤ 200","20x + 30y = 200","x + y ≤ 200"],a:1,e:"Tổng tiền là 20x + 30y (nghìn đồng); “không quá 200 nghìn” nghĩa là ≤ 200."}
+ ]},
+{id:"l10-he-thuc-luong", grade:10, mode:"solo", kind:"treasure", icon:"🧭", title:"Truy Tìm Kho Báu — Hệ Thức Lượng Trong Tam Giác",
+ topic:"Định lí sin, định lí côsin, công thức diện tích tam giác", time:30,
+ mechanic:"<b>Luật riêng:</b> mỗi câu đúng mở thêm một ô bản đồ kho báu. Đúng 10/10 là mở trọn bản đồ và nhận huy hiệu cao nhất.",
+ qs:[
+  {q:"Định lí côsin trong tam giác ABC phát biểu:",o:["a² = b² + c² + 2bc·cosA","a² = b² + c² − 2bc·cosA","a² = b² − c² − 2bc·cosA","a = b + c − 2bc·cosA"],a:1,e:"Định lí côsin: a² = b² + c² − 2bc·cosA. Khi A = 90° thì cosA = 0 và ta thu được định lí Pythagore."},
+  {q:"Tam giác vuông có hai cạnh góc vuông 3 và 4. Sin của góc đối diện cạnh 3 bằng:",o:["3/4","4/5","3/5","5/3"],a:2,e:"Cạnh huyền = √(3² + 4²) = 5. Sin = cạnh đối / cạnh huyền = 3/5."},
+  {q:"Công thức diện tích tam giác ABC theo hai cạnh b, c và góc A xen giữa là:",o:["S = bc·sinA","S = ½·bc·cosA","S = ½·bc·sinA","S = ½·bc·tanA"],a:2,e:"S = ½·bc·sinA — diện tích bằng nửa tích hai cạnh nhân sin góc xen giữa."},
+  {q:"Theo định lí sin, với R là bán kính đường tròn ngoại tiếp tam giác ABC:",o:["a/sinA = R","a/sinA = 2R","a·sinA = 2R","a/sinA = R/2"],a:1,e:"Định lí sin: a/sinA = b/sinB = c/sinC = 2R."},
+  {q:"Cho tam giác ABC có b = 4, c = 3, góc A = 90°. Cạnh a bằng:",o:["5","6","7","√7"],a:0,e:"a² = b² + c² − 2bc·cos90° = 16 + 9 − 0 = 25, nên a = 5."},
+  {q:"Tam giác có các cạnh 5, 6, 7. Muốn tính góc lớn nhất, ta dùng:",o:["Định lí sin với cạnh 5","Định lí côsin với cạnh 7","Công thức Heron","Định lí Pythagore"],a:1,e:"Góc lớn nhất đối diện cạnh lớn nhất (cạnh 7). Biết đủ ba cạnh, dùng định lí côsin: cosC = (5² + 6² − 7²)/(2·5·6)."},
+  {q:"Diện tích tam giác có cạnh đáy 10 và chiều cao tương ứng 6 là:",o:["60","30","16","36"],a:1,e:"S = ½ × đáy × chiều cao = ½ × 10 × 6 = 30 (đơn vị diện tích)."},
+  {q:"Cho tam giác ABC với a = 6, sinA = ½. Bán kính đường tròn ngoại tiếp R bằng:",o:["3","12","6","1,5"],a:2,e:"a/sinA = 2R ⇒ 6/(½) = 12 = 2R ⇒ R = 6."},
+  {q:"Công thức Heron tính diện tích khi biết ba cạnh a, b, c và nửa chu vi p là:",o:["S = √(p(p−a)(p−b)(p−c))","S = p(p−a)(p−b)(p−c)","S = √((a+b+c)·abc)","S = ½·p·(a+b+c)"],a:0,e:"Công thức Heron: S = √(p(p−a)(p−b)(p−c)) với p là nửa chu vi."},
+  {q:"Hai lực cùng tác dụng tạo hợp lực — trong tam giác lực, độ lớn cạnh thứ ba khi hai cạnh 8, 6 và góc xen giữa 60° thỏa:",o:["a² = 8² + 6² − 2·8·6·cos60° = 52","a² = 8² + 6² = 100","a² = 8² − 6² = 28","a² = 2·8·6·cos60° = 48"],a:0,e:"Áp dụng định lí côsin: a² = 64 + 36 − 96·(½) = 100 − 48 = 52."}
+ ]},
+{id:"l10-vecto", grade:10, mode:"team", kind:"team", icon:"🏃", title:"Tiếp Sức Vectơ — Vectơ & Tọa Độ",
+ topic:"Tổng, hiệu vectơ, tích vectơ với một số, tọa độ vectơ", time:30,
+ mechanic:"<b>Luật đồng đội:</b> các đội luân phiên “chạy tiếp sức” — mỗi câu là một chặng. Đội đúng nhiều chặng nhất thắng.",
+ qs:[
+  {q:"Cho ba điểm A, B, C bất kì. Vectơ AB→ + BC→ bằng:",o:["CA→","AC→","CB→","BA→"],a:1,e:"Quy tắc ba điểm: AB→ + BC→ = AC→ (điểm cuối của vectơ trước là điểm đầu của vectơ sau)."},
+  {q:"Vectơ có điểm đầu A(1; 2), điểm cuối B(4; 6) có tọa độ là:",o:["(5; 8)","(3; 4)","(−3; −4)","(4; 3)"],a:1,e:"AB→ = (xB − xA; yB − yA) = (4 − 1; 6 − 2) = (3; 4)."},
+  {q:"Độ dài của vectơ u→ = (3; 4) là:",o:["7","5","12","25"],a:1,e:"|u→| = √(3² + 4²) = √25 = 5."},
+  {q:"Cho M là trung điểm của đoạn AB. Đẳng thức đúng là:",o:["MA→ + MB→ = AB→","MA→ + MB→ = 0→","MA→ − MB→ = 0→","MA→ + MB→ = 2AB→"],a:1,e:"M là trung điểm nên MA→ và MB→ là hai vectơ đối nhau, tổng của chúng bằng vectơ-không."},
+  {q:"Cho a→ = (2; −1), b→ = (1; 3). Vectơ a→ + b→ có tọa độ:",o:["(3; 2)","(1; −4)","(3; −4)","(2; 3)"],a:0,e:"Cộng theo từng thành phần: (2 + 1; −1 + 3) = (3; 2)."},
+  {q:"Hình bình hành ABCD (theo thứ tự đỉnh) thỏa mãn đẳng thức:",o:["AB→ = CD→","AB→ = DC→","AB→ = AD→","AB→ = BC→"],a:1,e:"Trong hình bình hành, cặp cạnh đối AB và CD song song, bằng nhau; vectơ AB→ bằng vectơ DC→ (cùng hướng). Lưu ý AB→ = −CD→."},
+  {q:"Cho điểm O bất kì và M là trung điểm AB. Ta có OA→ + OB→ bằng:",o:["OM→","2·OM→","AB→","0→"],a:1,e:"Quy tắc trung điểm: OA→ + OB→ = 2·OM→ với M là trung điểm của AB."},
+  {q:"Vectơ 2a→ với a→ = (−3; 5) có tọa độ:",o:["(−6; 10)","(−1; 7)","(−6; 5)","(−3; 10)"],a:0,e:"Nhân vectơ với số 2: nhân từng thành phần: (2·(−3); 2·5) = (−6; 10)."},
+  {q:"Hai vectơ u→ = (2; 4) và v→ = (1; 2) có quan hệ:",o:["Vuông góc","Cùng phương, u→ = 2v→","Đối nhau","Bằng nhau"],a:1,e:"(2; 4) = 2·(1; 2) nên u→ = 2v→: hai vectơ cùng phương và cùng hướng."},
+  {q:"Trọng tâm G của tam giác ABC có tọa độ bằng:",o:["Tổng tọa độ ba đỉnh","Trung bình cộng tọa độ ba đỉnh","Hiệu tọa độ ba đỉnh","Tọa độ đỉnh A"],a:1,e:"xG = (xA + xB + xC)/3, yG = (yA + yB + yC)/3 — trung bình cộng tọa độ của ba đỉnh."}
+ ]},
+
+/* ---------------- LỚP 11 ---------------- */
+{id:"l11-gia-tri-lg", grade:11, mode:"solo", kind:"speed", icon:"🏁", title:"Đua Tốc Độ — Giá Trị & Công Thức Lượng Giác",
+ topic:"Giá trị lượng giác, công thức cộng, công thức nhân đôi", time:20,
+ mechanic:"<b>Luật riêng:</b> mỗi câu chỉ có 20 giây. Trả lời đúng trong 10 giây đầu được cộng thêm 2 điểm thưởng tốc độ.",
+ qs:[
+  {q:"Giá trị sin(π/6) bằng:",o:["√3/2","1/2","√2/2","1"],a:1,e:"sin 30° = 1/2. Cần thuộc bảng giá trị lượng giác của các góc đặc biệt."},
+  {q:"Nếu sinα = 3/5 và α thuộc góc phần tư thứ I thì cosα bằng:",o:["4/5","−4/5","3/4","5/3"],a:0,e:"sin²α + cos²α = 1 ⇒ cos²α = 1 − 9/25 = 16/25. Ở góc phần tư I, cosα > 0 nên cosα = 4/5."},
+  {q:"Công thức đúng là:",o:["sin(a + b) = sina·cosb − cosa·sinb","sin(a + b) = sina·cosb + cosa·sinb","cos(a + b) = cosa·cosb + sina·sinb","tan(a + b) = tana + tanb"],a:1,e:"sin(a + b) = sina·cosb + cosa·sinb. Lưu ý cos(a + b) = cosa·cosb − sina·sinb (dấu trừ)."},
+  {q:"Giá trị cos(2π/3) bằng:",o:["1/2","−1/2","√3/2","−√3/2"],a:1,e:"2π/3 = 120°, cos120° = −cos60° = −1/2."},
+  {q:"Biểu thức sin2α bằng:",o:["2sinα","2sinα·cosα","sin²α − cos²α","2cosα"],a:1,e:"Công thức nhân đôi: sin2α = 2sinα·cosα; còn cos2α = cos²α − sin²α."},
+  {q:"Nếu tanα = 2 thì tan(α + π/4) bằng:",o:["3","−3","1/3","−1/3"],a:1,e:"tan(α + π/4) = (tanα + 1)/(1 − tanα) = (2 + 1)/(1 − 2) = −3."},
+  {q:"Giá trị của biểu thức sin(π/3)·cos(π/6) + cos(π/3)·sin(π/6) là:",o:["1/2","√3/2","1","0"],a:2,e:"Đây là sin(π/3 + π/6) = sin(π/2) = 1 theo công thức cộng."},
+  {q:"1 radian xấp xỉ bằng:",o:["30°","57,3°","90°","180°"],a:1,e:"1 rad = 180°/π ≈ 57,3°. Ngược lại 1° = π/180 rad."},
+  {q:"Cung có số đo 3π/2 radian đổi sang độ là:",o:["240°","270°","300°","135°"],a:1,e:"3π/2 × (180°/π) = 270°."},
+  {q:"Với mọi α, biểu thức sin²α + cos²α + tanα·cotα (khi xác định) bằng:",o:["1","2","0","3"],a:1,e:"sin²α + cos²α = 1 và tanα·cotα = 1, tổng bằng 2."}
+ ]},
+{id:"l11-ptlg", grade:11, mode:"solo", kind:"tower", icon:"🗼", title:"Leo Tháp — Phương Trình Lượng Giác Cơ Bản",
+ topic:"Hàm số lượng giác, phương trình sin, cos, tan cơ bản (GDPT 2018)", time:30,
+ mechanic:"<b>Luật riêng:</b> 10 câu là 10 tầng tháp. Trả lời đúng leo lên 1 tầng; sai vẫn được xem giải thích rồi leo tiếp — đích là tầng 10.",
+ qs:[
+  {q:"Tập xác định của hàm số y = tanx là:",o:["ℝ","ℝ \\ {π/2 + kπ, k ∈ ℤ}","ℝ \\ {kπ, k ∈ ℤ}","[−1; 1]"],a:1,e:"tanx = sinx/cosx xác định khi cosx ≠ 0 ⇔ x ≠ π/2 + kπ."},
+  {q:"Chu kì của hàm số y = sin2x là:",o:["2π","π","π/2","4π"],a:1,e:"y = sin(ax) có chu kì 2π/|a| = 2π/2 = π."},
+  {q:"Phương trình sinx = 1/2 có nghiệm là:",o:["x = π/6 + k2π hoặc x = 5π/6 + k2π","x = π/6 + kπ","x = ±π/6 + k2π","x = π/3 + k2π"],a:0,e:"sinx = sina ⇔ x = a + k2π hoặc x = π − a + k2π. Với a = π/6: hai họ nghiệm π/6 + k2π và 5π/6 + k2π."},
+  {q:"Phương trình cosx = 0 có nghiệm là:",o:["x = kπ","x = π/2 + kπ","x = k2π","x = π/2 + k2π"],a:1,e:"cosx = 0 tại các điểm cuối của đường kính đứng trên đường tròn lượng giác: x = π/2 + kπ."},
+  {q:"Trên đoạn [0; 2π], phương trình tanx = 0 có bao nhiêu nghiệm?",o:["1","2","3","4"],a:2,e:"tanx = 0 ⇔ x = kπ. Trong [0; 2π] có x = 0, π, 2π — ba nghiệm."},
+  {q:"Hàm số y = cosx là hàm:",o:["Lẻ","Chẵn","Vừa chẵn vừa lẻ","Không chẵn không lẻ"],a:1,e:"cos(−x) = cosx với mọi x nên y = cosx là hàm chẵn; y = sinx là hàm lẻ."},
+  {q:"Giá trị lớn nhất của hàm số y = 3sinx − 2 là:",o:["3","1","5","−2"],a:1,e:"sinx ≤ 1 nên y ≤ 3·1 − 2 = 1. Giá trị lớn nhất bằng 1."},
+  {q:"Phương trình sinx = sin(x + π/4) thuộc dạng cơ bản nào?",o:["sin u = sin v","sin u = m với m cụ thể","cos u = cos v","tan u = tan v"],a:0,e:"Hai vế đều là sin của hai biểu thức chứa x — dạng sin u = sin v, giải bằng u = v + k2π hoặc u = π − v + k2π (theo GDPT 2018, không cần biến đổi bậc cao)."},
+  {q:"Nghiệm của phương trình cos2x = 1 trong khoảng (0; 2π) là:",o:["x = π","x = π/2 và x = 3π/2","Không có nghiệm","x = 0 và x = 2π"],a:0,e:"cos2x = 1 ⇔ 2x = k2π ⇔ x = kπ. Trong (0; 2π) chỉ có x = π (không lấy đầu mút)."},
+  {q:"Hàm số y = sinx + cosx có chu kì là:",o:["π","2π","π/2","4π"],a:1,e:"Cả sinx và cosx cùng có chu kì 2π nên tổng của chúng có chu kì 2π."}
+ ]},
+{id:"l11-day-so", grade:11, mode:"team", kind:"team", icon:"🤝", title:"Đấu Trường Dãy Số — CSC & CSN",
+ topic:"Dãy số, cấp số cộng, cấp số nhân", time:30,
+ mechanic:"<b>Luật đồng đội:</b> các đội luân phiên trả lời, mỗi câu một đội. Đội nào trả lời đúng ghi 10 điểm cho đội mình.",
+ qs:[
+  {q:"Cho cấp số cộng có u₁ = 3, công sai d = 2. Số hạng u₅ bằng:",o:["9","11","13","10"],a:1,e:"u₅ = u₁ + 4d = 3 + 4·2 = 11."},
+  {q:"Cho dãy số uₙ = 2n − 1. Số hạng u₄ bằng:",o:["5","6","7","9"],a:2,e:"u₄ = 2·4 − 1 = 7. Dãy này là dãy các số lẻ: 1, 3, 5, 7, …"},
+  {q:"Cho cấp số nhân có u₁ = 2, công bội q = 3. Số hạng u₄ bằng:",o:["18","24","54","162"],a:2,e:"u₄ = u₁·q³ = 2·27 = 54."},
+  {q:"Cấp số cộng có u₁ = 5, u₂ = 9. Công sai d bằng:",o:["2","4","5","14"],a:1,e:"d = u₂ − u₁ = 9 − 5 = 4."},
+  {q:"Tổng 10 số hạng đầu của cấp số cộng u₁ = 1, d = 2 là:",o:["90","100","110","95"],a:1,e:"S₁₀ = 10/2 · (2·1 + 9·2) = 5 · 20 = 100. (Đây là tổng 10 số lẻ đầu tiên.)"},
+  {q:"Ba số 2, x, 8 theo thứ tự lập thành cấp số nhân. Giá trị dương của x là:",o:["4","5","16","±4"],a:0,e:"x² = 2·8 = 16 ⇒ x = ±4; giá trị dương là x = 4 (công bội q = 2)."},
+  {q:"Cho cấp số nhân u₁ = 81, q = 1/3. Số hạng u₄ bằng:",o:["27","9","3","1"],a:2,e:"u₄ = 81·(1/3)³ = 81/27 = 3."},
+  {q:"Dãy số nào sau đây là cấp số cộng?",o:["1; 2; 4; 8; …","3; 7; 11; 15; …","1; 4; 9; 16; …","5; 5; 6; 7; …"],a:1,e:"3; 7; 11; 15 có hiệu hai số liên tiếp luôn bằng 4 — là cấp số cộng với d = 4. Dãy 1; 2; 4; 8 là cấp số nhân."},
+  {q:"Một người gửi tiết kiệm theo lãi kép, số tiền mỗi năm nhân với 1,05. Sau 3 năm số tiền gấp số ban đầu:",o:["1,15 lần","1,05³ ≈ 1,158 lần","3,15 lần","1,05 + 3 lần"],a:1,e:"Tiền gửi lãi kép lập thành cấp số nhân với công bội 1,05; sau 3 năm nhân thêm 1,05³ ≈ 1,158."},
+  {q:"Cấp số cộng có u₃ = 10, u₇ = 22. Công sai d bằng:",o:["2","3","4","6"],a:1,e:"u₇ − u₃ = 4d = 22 − 10 = 12 ⇒ d = 3."}
+ ]},
+{id:"l11-thong-ke", grade:11, mode:"solo", kind:"treasure", icon:"🧭", title:"Truy Tìm Kho Báu — Thống Kê Ghép Nhóm",
+ topic:"Mẫu số liệu ghép nhóm: số trung bình, trung vị, tứ phân vị, mốt", time:30,
+ mechanic:"<b>Luật riêng:</b> mỗi câu đúng mở thêm một ô bản đồ kho báu. Đúng 10/10 là mở trọn bản đồ và nhận huy hiệu cao nhất.",
+ qs:[
+  {q:"Số trung bình của mẫu số liệu 2; 4; 6; 8; 10 là:",o:["5","6","7","30"],a:1,e:"x̄ = (2 + 4 + 6 + 8 + 10)/5 = 30/5 = 6."},
+  {q:"Trung vị của mẫu số liệu 3; 7; 5; 9; 1 (sau khi sắp xếp) là:",o:["3","5","7","9"],a:1,e:"Sắp xếp: 1; 3; 5; 7; 9. Có 5 giá trị, trung vị là giá trị ở giữa: 5."},
+  {q:"Mẫu số liệu ghép nhóm có các nhóm [0; 10), [10; 20), [20; 30). Giá trị đại diện của nhóm [10; 20) là:",o:["10","20","15","30"],a:2,e:"Giá trị đại diện là trung điểm của nhóm: (10 + 20)/2 = 15."},
+  {q:"Mốt của mẫu số liệu 2; 3; 3; 5; 3; 7 là:",o:["2","3","5","7"],a:1,e:"Giá trị 3 xuất hiện nhiều nhất (3 lần) nên mốt bằng 3."},
+  {q:"Khoảng biến thiên của mẫu 4; 9; 15; 7; 22 là:",o:["18","11","22","7"],a:0,e:"Khoảng biến thiên = giá trị lớn nhất − giá trị nhỏ nhất = 22 − 4 = 18."},
+  {q:"Trong bảng ghép nhóm, cột “tần số” cho biết:",o:["Giá trị lớn nhất của nhóm","Số lần xuất hiện của các giá trị trong nhóm","Trung bình của nhóm","Độ lệch chuẩn"],a:1,e:"Tần số của một nhóm là số lượng giá trị của mẫu thuộc nhóm đó."},
+  {q:"Tứ phân vị thứ hai Q₂ của mẫu số liệu chính là:",o:["Số trung bình","Trung vị","Mốt","Giá trị lớn nhất"],a:1,e:"Ba tứ phân vị Q₁, Q₂, Q₃ chia mẫu thành 4 phần bằng nhau; Q₂ trùng với trung vị."},
+  {q:"Mẫu số liệu có 4 nhóm với tần số 5; 10; 15; 10. Cỡ mẫu n bằng:",o:["15","30","40","4"],a:2,e:"Cỡ mẫu = tổng các tần số = 5 + 10 + 15 + 10 = 40."},
+  {q:"Nhóm có tần số lớn nhất trong bảng ghép nhóm được gọi là:",o:["Nhóm trung vị","Nhóm chứa mốt (nhóm mốt)","Nhóm đầu tiên","Nhóm tứ phân vị"],a:1,e:"Nhóm có tần số lớn nhất là nhóm chứa mốt của mẫu số liệu ghép nhóm."},
+  {q:"Chiều cao (cm) của học sinh được ghép nhóm [150; 155), [155; 160), … Độ dài mỗi nhóm là:",o:["150","5","155","10"],a:1,e:"Độ dài nhóm = đầu mút phải − đầu mút trái = 155 − 150 = 5 cm."}
+ ]},
+{id:"l11-song-song", grade:11, mode:"team", kind:"team", icon:"🏃", title:"Tiếp Sức Không Gian — Quan Hệ Song Song",
+ topic:"Đường thẳng và mặt phẳng trong không gian, quan hệ song song", time:30,
+ mechanic:"<b>Luật đồng đội:</b> các đội luân phiên “chạy tiếp sức” — mỗi câu là một chặng. Đội đúng nhiều chặng nhất thắng.",
+ qs:[
+  {q:"Qua một điểm nằm ngoài một đường thẳng, có bao nhiêu đường thẳng song song với đường thẳng đã cho?",o:["0","1","2","Vô số"],a:1,e:"Tiên đề Euclid trong không gian: qua một điểm ngoài đường thẳng có duy nhất một đường thẳng song song với nó."},
+  {q:"Hai đường thẳng trong không gian không có điểm chung thì:",o:["Chắc chắn song song","Song song hoặc chéo nhau","Chắc chắn chéo nhau","Trùng nhau"],a:1,e:"Không có điểm chung gồm hai khả năng: song song (cùng mặt phẳng) hoặc chéo nhau (không cùng mặt phẳng)."},
+  {q:"Cho a // (P). Mặt phẳng (Q) chứa a và cắt (P) theo giao tuyến b. Khẳng định đúng là:",o:["b cắt a","b // a","b vuông góc với a","b nằm trong (Q) nhưng cắt (P) tại một điểm"],a:1,e:"Định lí về giao tuyến: nếu đường thẳng a song song với (P) thì mọi mặt phẳng chứa a và cắt (P) đều có giao tuyến song song với a, tức b // a."},
+  {q:"Điều kiện để đường thẳng a song song với mặt phẳng (P) là:",o:["a nằm trong (P)","a song song với một đường thẳng nằm trong (P) và a không nằm trong (P)","a cắt (P) tại một điểm","a vuông góc (P)"],a:1,e:"a // (P) khi a không nằm trong (P) và a song song với một đường thẳng nào đó thuộc (P)."},
+  {q:"Trong hình chóp S.ABCD có đáy ABCD là hình bình hành, đường thẳng AB song song với:",o:["CD","SC","SD","AC"],a:0,e:"Đáy là hình bình hành nên AB // CD."},
+  {q:"Hai mặt phẳng song song thì:",o:["Có đúng một điểm chung","Không có điểm chung","Có một đường thẳng chung","Cắt nhau"],a:1,e:"Hai mặt phẳng phân biệt song song với nhau thì không có điểm chung nào."},
+  {q:"Trong hình hộp ABCD.A'B'C'D', mặt phẳng (ABCD) song song với mặt phẳng:",o:["(A'B'C'D')","(ABB'A')","(BCC'B')","(ABC'D')"],a:0,e:"Hai mặt đáy của hình hộp song song với nhau: (ABCD) // (A'B'C'D')."},
+  {q:"Đường trung bình của tam giác trong mặt phẳng (nối trung điểm hai cạnh) thì:",o:["Cắt cạnh thứ ba","Song song với cạnh thứ ba","Vuông góc cạnh thứ ba","Trùng cạnh thứ ba"],a:1,e:"Đường trung bình song song với cạnh thứ ba và bằng nửa cạnh đó — cơ sở của nhiều bài toán song song trong không gian."},
+  {q:"Nếu hai mặt phẳng cùng song song với một đường thẳng thì giao tuyến của chúng (nếu có):",o:["Vuông góc đường thẳng đó","Song song với đường thẳng đó","Trùng đường thẳng đó","Cắt đường thẳng đó"],a:1,e:"Tính chất: hai mặt phẳng phân biệt cùng song song với một đường thẳng thì giao tuyến của chúng song song với đường thẳng ấy."},
+  {q:"Hình chiếu song song của một đoạn thẳng thì:",o:["Luôn dài hơn đoạn gốc","Là một đoạn thẳng hoặc một điểm","Luôn là một điểm","Không xác định"],a:1,e:"Phép chiếu song song biến đoạn thẳng thành đoạn thẳng; trường hợp đặc biệt khi đoạn song song với phương chiếu thì hình chiếu là một điểm."}
+ ]},
+
+/* ---------------- LỚP 12 ---------------- */
+{id:"l12-dao-ham", grade:12, mode:"solo", kind:"speed", icon:"🏁", title:"Đua Tốc Độ — Đơn Điệu & Cực Trị",
+ topic:"Ứng dụng đạo hàm: tính đơn điệu, cực trị của hàm số", time:20,
+ mechanic:"<b>Luật riêng:</b> mỗi câu chỉ có 20 giây. Trả lời đúng trong 10 giây đầu được cộng thêm 2 điểm thưởng tốc độ.",
+ qs:[
+  {q:"Cho hàm số y = x³ − 3x. Hàm số nghịch biến trên khoảng:",o:["(−∞; −1)","(−1; 1)","(1; +∞)","(0; +∞)"],a:1,e:"y' = 3x² − 3 < 0 ⇔ −1 < x < 1. Hàm nghịch biến trên (−1; 1)."},
+  {q:"Hàm số y = x⁴ − 2x² + 1 có bao nhiêu điểm cực trị?",o:["0","1","2","3"],a:3,e:"y' = 4x³ − 4x = 4x(x−1)(x+1), đổi dấu tại x = −1, 0, 1 nên có 3 điểm cực trị."},
+  {q:"Điểm cực đại của hàm số y = −x² + 4x − 3 là x =",o:["0","2","4","−2"],a:1,e:"y' = −2x + 4 = 0 ⇔ x = 2; y' đổi dấu từ + sang − nên x = 2 là điểm cực đại."},
+  {q:"Hàm số y = (x − 1)/(x + 2) đồng biến trên:",o:["Từng khoảng xác định của nó","Toàn bộ ℝ","(−2; +∞) mà thôi","Không có khoảng nào"],a:0,e:"y' = 3/(x + 2)² > 0 với mọi x ≠ −2, nên hàm đồng biến trên từng khoảng (−∞; −2) và (−2; +∞) — không nói gộp trên toàn tập xác định."},
+  {q:"Cho hàm số có f'(x) = (x − 1)(x − 3). Hàm số đạt cực tiểu tại:",o:["x = 1","x = 3","x = 2","Không có cực tiểu"],a:1,e:"f' đổi dấu: dương → âm tại x = 1 (cực đại), âm → dương tại x = 3 (cực tiểu)."},
+  {q:"Giá trị cực tiểu của hàm số y = x³ − 3x + 2 là:",o:["0","4","−2","2"],a:0,e:"y' = 3x² − 3; cực tiểu tại x = 1, giá trị y(1) = 1 − 3 + 2 = 0."},
+  {q:"Hàm số y = 2x + 1/x (x > 0) đạt cực tiểu tại:",o:["x = 1","x = 1/√2","x = √2","x = 2"],a:1,e:"y' = 2 − 1/x² = 0 ⇔ x² = 1/2 ⇔ x = 1/√2 (x > 0); y' đổi dấu − sang + nên là cực tiểu."},
+  {q:"Nếu f'(x) > 0 với mọi x thuộc khoảng (a; b) thì hàm số f:",o:["Nghịch biến trên (a; b)","Đồng biến trên (a; b)","Không đổi trên (a; b)","Đạt cực đại trên (a; b)"],a:1,e:"Dấu của đạo hàm quyết định tính đơn điệu: f' > 0 thì hàm đồng biến."},
+  {q:"Hàm số y = −x³ + 3x² − 1 có điểm cực đại là x =",o:["0","1","2","3"],a:2,e:"y' = −3x² + 6x = −3x(x − 2); tại x = 2 đạo hàm đổi dấu từ + sang − nên x = 2 là điểm cực đại (x = 0 là điểm cực tiểu)."},
+  {q:"Số điểm cực trị của hàm số y = |x| là:",o:["0","1","2","Vô số"],a:1,e:"Đồ thị |x| có một “đáy” tại x = 0 — đó là điểm cực tiểu duy nhất, dù hàm không có đạo hàm tại đó."}
+ ]},
+{id:"l12-gtln-tiem-can", grade:12, mode:"solo", kind:"tower", icon:"🗼", title:"Leo Tháp — GTLN–GTNN & Tiệm Cận",
+ topic:"Giá trị lớn nhất, nhỏ nhất; tiệm cận đứng, ngang, xiên; đồ thị hàm số", time:30,
+ mechanic:"<b>Luật riêng:</b> 10 câu là 10 tầng tháp. Trả lời đúng leo lên 1 tầng; sai vẫn được xem giải thích rồi leo tiếp — đích là tầng 10.",
+ qs:[
+  {q:"Giá trị lớn nhất của hàm số y = x² − 4x + 5 trên đoạn [0; 3] là:",o:["1","5","2","9"],a:1,e:"y' = 2x − 4 < 0 trên [0; 3) nên hàm nghịch biến; giá trị lớn nhất tại x = 0: y = 5."},
+  {q:"Đồ thị hàm số y = (2x + 1)/(x − 3) có tiệm cận đứng là:",o:["x = −3","x = 3","y = 2","x = 2"],a:1,e:"Tiệm cận đứng là đường x = 3, nơi mẫu bằng 0 và tử khác 0."},
+  {q:"Tiệm cận ngang của đồ thị hàm số y = (2x + 1)/(x − 3) là:",o:["y = 1","y = 3","y = 2","Không có"],a:2,e:"Khi x → ±∞, y → 2/1 = 2 (tỉ số hệ số của x). Tiệm cận ngang: y = 2."},
+  {q:"Giá trị nhỏ nhất của hàm số y = x + 4/x trên (0; +∞) là:",o:["2","4","5","Không có"],a:1,e:"Theo bất đẳng thức: x + 4/x ≥ 2√(x · 4/x) = 4, đạt tại x = 2."},
+  {q:"Đồ thị hàm số y = (x² + x)/(x − 1) có tiệm cận xiên là:",o:["y = x + 2","y = x","y = x − 2","y = 2x + 1"],a:0,e:"Chia đa thức: (x² + x)/(x − 1) = x + 2 + 2/(x − 1). Phần dư tiến về 0 nên tiệm cận xiên là y = x + 2."},
+  {q:"Hàm số y = √(x) trên đoạn [0; 4] đạt giá trị lớn nhất bằng:",o:["4","2","16","0"],a:1,e:"Hàm √x đồng biến nên giá trị lớn nhất tại x = 4: √4 = 2."},
+  {q:"Đồ thị hàm số y = 1/(x² + 1) có tiệm cận ngang là:",o:["y = 1","y = 0","x = 0","Không có"],a:1,e:"Khi x → ±∞, 1/(x² + 1) → 0 nên tiệm cận ngang là y = 0 (trục hoành)."},
+  {q:"Một hình chữ nhật có chu vi 40 m. Diện tích lớn nhất có thể là:",o:["80 m²","100 m²","120 m²","160 m²"],a:1,e:"Hai cạnh a + b = 20; diện tích ab lớn nhất khi a = b = 10 (hình vuông), S = 100 m²."},
+  {q:"Giá trị lớn nhất của hàm số y = sinx + cosx là:",o:["1","√2","2","2√2"],a:1,e:"sinx + cosx = √2·sin(x + π/4) ≤ √2. Giá trị lớn nhất bằng √2."},
+  {q:"Đồ thị hàm số y = (x + 1)/(x² − 4) có bao nhiêu tiệm cận đứng?",o:["0","1","2","3"],a:2,e:"Mẫu bằng 0 tại x = 2 và x = −2; tử tại hai điểm này đều khác 0 nên có 2 tiệm cận đứng."}
+ ]},
+{id:"l12-oxyz", grade:12, mode:"team", kind:"team", icon:"🤝", title:"Đấu Trường Oxyz — Tọa Độ Không Gian",
+ topic:"Hệ trục tọa độ Oxyz, vectơ và điểm trong không gian", time:30,
+ mechanic:"<b>Luật đồng đội:</b> các đội luân phiên trả lời, mỗi câu một đội. Đội nào trả lời đúng ghi 10 điểm cho đội mình.",
+ qs:[
+  {q:"Trong không gian Oxyz, điểm M(2; −1; 3) có hình chiếu lên mặt phẳng (Oxy) là:",o:["(2; −1; 0)","(2; 0; 3)","(0; −1; 3)","(2; −1; 3)"],a:0,e:"Chiếu lên (Oxy) thì cao độ z thành 0, giữ nguyên x, y: (2; −1; 0)."},
+  {q:"Cho A(1; 0; 2), B(3; 2; 4). Vectơ AB→ có tọa độ:",o:["(4; 2; 6)","(2; 2; 2)","(−2; −2; −2)","(2; 0; 2)"],a:1,e:"AB→ = (3 − 1; 2 − 0; 4 − 2) = (2; 2; 2)."},
+  {q:"Độ dài đoạn thẳng nối O(0; 0; 0) và M(1; 2; 2) là:",o:["5","3","√5","9"],a:1,e:"OM = √(1² + 2² + 2²) = √9 = 3."},
+  {q:"Trung điểm của đoạn thẳng AB với A(0; 2; 4), B(2; 4; 0) là:",o:["(1; 3; 2)","(2; 6; 4)","(1; 2; 3)","(0; 3; 2)"],a:0,e:"Trung điểm = trung bình cộng từng tọa độ: ((0+2)/2; (2+4)/2; (4+0)/2) = (1; 3; 2)."},
+  {q:"Cho u→ = (1; −2; 2). Độ dài của vectơ u→ là:",o:["1","3","5","√3"],a:1,e:"|u→| = √(1 + 4 + 4) = √9 = 3."},
+  {q:"Điểm nào nằm trên trục Oz?",o:["(1; 0; 0)","(0; 2; 0)","(0; 0; −5)","(1; 1; 0)"],a:2,e:"Điểm trên trục Oz có x = y = 0: (0; 0; −5)."},
+  {q:"Cho a→ = (2; 1; −1), b→ = (0; 3; 2). Vectơ a→ + b→ là:",o:["(2; 4; 1)","(2; 3; 2)","(0; 3; −2)","(2; 4; −3)"],a:0,e:"Cộng từng thành phần: (2 + 0; 1 + 3; −1 + 2) = (2; 4; 1)."},
+  {q:"Hai vectơ u→ = (2; −1; 2) và v→ = (4; −2; 4) có quan hệ:",o:["Vuông góc","Cùng phương","Đối nhau","Bằng nhau"],a:1,e:"v→ = 2u→ nên hai vectơ cùng phương, cùng hướng."},
+  {q:"Trong không gian Oxyz, mặt phẳng (Oxz) gồm các điểm có:",o:["x = 0","y = 0","z = 0","x = z"],a:1,e:"Mọi điểm thuộc (Oxz) đều có tung độ y = 0."},
+  {q:"Khoảng cách từ điểm A(1; 2; 3) đến mặt phẳng (Oxy) bằng:",o:["1","2","3","√14"],a:2,e:"Khoảng cách từ A đến (Oxy) bằng |zA| = 3 (hình chiếu của A lên (Oxy) là (1; 2; 0))."}
+ ]},
+{id:"l12-tich-phan", grade:12, mode:"solo", kind:"treasure", icon:"🧭", title:"Truy Tìm Kho Báu — Nguyên Hàm & Tích Phân",
+ topic:"Nguyên hàm cơ bản, tích phân xác định và ứng dụng", time:30,
+ mechanic:"<b>Luật riêng:</b> mỗi câu đúng mở thêm một ô bản đồ kho báu. Đúng 10/10 là mở trọn bản đồ và nhận huy hiệu cao nhất.",
+ qs:[
+  {q:"Một nguyên hàm của hàm số f(x) = 2x là:",o:["x² + C","2 + C","x + C","2x² + C"],a:0,e:"(x²)' = 2x nên họ nguyên hàm của 2x là x² + C."},
+  {q:"Nguyên hàm của f(x) = eˣ là:",o:["eˣ + C","xeˣ + C","eˣ⁺¹ + C","ln|x| + C"],a:0,e:"(eˣ)' = eˣ nên nguyên hàm của eˣ là chính nó cộng hằng số C."},
+  {q:"Tích phân ∫₀¹ 2x dx bằng:",o:["0","1","2","1/2"],a:1,e:"∫₀¹ 2x dx = [x²]₀¹ = 1 − 0 = 1."},
+  {q:"Một nguyên hàm của f(x) = 1/x (x > 0) là:",o:["−1/x²","ln x","1/x²","x·ln x"],a:1,e:"(ln x)' = 1/x với x > 0. Tổng quát: nguyên hàm của 1/x là ln|x| + C."},
+  {q:"Tích phân ∫₀^π sinx dx bằng:",o:["0","1","2","−2"],a:2,e:"∫ sinx dx = −cosx; thay cận: (−cosπ) − (−cos0) = 1 + 1 = 2."},
+  {q:"Nguyên hàm của f(x) = cosx là:",o:["−sinx + C","sinx + C","cosx + C","tanx + C"],a:1,e:"(sinx)' = cosx nên nguyên hàm của cosx là sinx + C. (Lưu ý nguyên hàm của sinx mới là −cosx + C.)"},
+  {q:"Nếu F(x) là một nguyên hàm của f(x) thì ∫ₐᵇ f(x) dx bằng:",o:["F(a) − F(b)","F(b) − F(a)","F(a) + F(b)","F'(b) − F'(a)"],a:1,e:"Công thức Newton–Leibniz: ∫ₐᵇ f(x) dx = F(b) − F(a)."},
+  {q:"Tích phân ∫₁² (3x²) dx bằng:",o:["3","7","8","9"],a:1,e:"Nguyên hàm của 3x² là x³; [x³]₁² = 8 − 1 = 7."},
+  {q:"Diện tích hình phẳng giới hạn bởi y = x, trục Ox và hai đường x = 0, x = 2 là:",o:["2","4","1","8"],a:0,e:"S = ∫₀² x dx = [x²/2]₀² = 2 (diện tích tam giác vuông cạnh 2: ½·2·2 = 2)."},
+  {q:"Nguyên hàm của f(x) = x³ là:",o:["3x² + C","x⁴/4 + C","x⁴ + C","4x⁴ + C"],a:1,e:"∫xⁿ dx = xⁿ⁺¹/(n + 1) + C, nên ∫x³ dx = x⁴/4 + C."}
+ ]},
+{id:"l12-xac-suat", grade:12, mode:"team", kind:"team", icon:"🏃", title:"Tiếp Sức Xác Suất — Xác Suất Có Điều Kiện",
+ topic:"Xác suất có điều kiện, công thức Bayes, xác suất toàn phần", time:30,
+ mechanic:"<b>Luật đồng đội:</b> các đội luân phiên “chạy tiếp sức” — mỗi câu là một chặng. Đội đúng nhiều chặng nhất thắng.",
+ qs:[
+  {q:"Công thức xác suất có điều kiện P(A|B) là:",o:["P(A∩B) / P(B)","P(A∩B) · P(B)","P(A) / P(B)","P(A) + P(B)"],a:0,e:"P(A|B) = P(A∩B)/P(B), với điều kiện P(B) > 0: thu hẹp không gian mẫu vào biến cố B đã xảy ra."},
+  {q:"Nếu A và B độc lập thì P(A|B) bằng:",o:["0","P(A)","P(B)","1"],a:1,e:"A, B độc lập nghĩa là việc B xảy ra không làm thay đổi xác suất của A: P(A|B) = P(A)."},
+  {q:"Gieo một con xúc xắc cân đối. Biết kết quả là số chẵn, xác suất để được số 6 là:",o:["1/6","1/3","1/2","2/3"],a:1,e:"Không gian mẫu thu hẹp còn {2; 4; 6} — 3 khả năng; thuận lợi cho “số 6” là 1 nên xác suất = 1/3."},
+  {q:"P(A) = 0,5; P(B) = 0,4; P(A∩B) = 0,2. Vậy P(A|B) bằng:",o:["0,2","0,4","0,5","0,8"],a:2,e:"P(A|B) = P(A∩B)/P(B) = 0,2/0,4 = 0,5."},
+  {q:"Công thức Bayes dùng để:",o:["Tính xác suất của tổng hai biến cố","Tính xác suất “ngược”: P(B|A) khi biết P(A|B)","Tính số tổ hợp","Tính kỳ vọng"],a:1,e:"Bayes cho phép đảo chiều điều kiện: từ P(A|B) suy ra P(B|A) = P(A|B)·P(B)/P(A)."},
+  {q:"Một hộp có 3 bi đỏ, 2 bi xanh. Lấy ngẫu nhiên 1 bi và được biết bi lấy ra không phải màu xanh. Xác suất bi đó là bi đỏ bằng:",o:["3/5","2/5","1/2","1"],a:3,e:"Đã biết không phải xanh thì chắc chắn là đỏ (hộp chỉ có hai màu), xác suất bằng 1. Đây là ý nghĩa của việc thu hẹp không gian mẫu khi có thêm thông tin."},
+  {q:"P(A|B) = 0,8 có nghĩa là:",o:["A xảy ra thì B chắc chắn xảy ra","Khi B đã xảy ra, khả năng A xảy ra là 80%","P(A) = 0,8","A và B xung khắc"],a:1,e:"Xác suất có điều kiện đo khả năng của A trong điều kiện B đã xảy ra: 0,8 tức 80%."},
+  {q:"Hai biến cố A, B xung khắc và P(B) > 0 thì P(A|B) bằng:",o:["1","P(A)","0","Không tính được"],a:2,e:"Xung khắc nghĩa là A∩B = ∅ nên P(A∩B) = 0, do đó P(A|B) = 0: B đã xảy ra thì A không thể xảy ra."},
+  {q:"Trong lớp có 60% học sinh giỏi Toán, trong số đó 30% cũng giỏi Văn. Tỉ lệ học sinh giỏi cả hai môn là:",o:["90%","30%","18%","50%"],a:2,e:"P(cả hai) = P(giỏi Toán) × P(giỏi Văn | giỏi Toán) = 0,6 × 0,3 = 0,18 = 18%."},
+  {q:"Công thức xác suất toàn phần áp dụng khi:",o:["Các biến cố xung khắc từng đôi và hợp của chúng là toàn bộ không gian mẫu","Hai biến cố độc lập","Chỉ có một biến cố","P(A) = P(B)"],a:0,e:"Xác suất toàn phần chia không gian mẫu thành các trường hợp xung khắc bao phủ hết mọi khả năng, rồi cộng các xác suất có điều kiện tương ứng."}
+ ]}
+];
+
+/* ================= LOBBY ================= */
+let curGrade = "all", curMode = "all";
+const LETTERS = ["A","B","C","D"];
+const KIND_LABEL = {speed:"Đua tốc độ · 20 giây/câu", tower:"Leo tháp 10 tầng", treasure:"Mở bản đồ kho báu", team:"Luân phiên theo đội"};
+function gradeColor(g){ return g===10?"10":g===11?"11":"12"; }
+function setGrade(g, el){
+  curGrade = g;
+  document.querySelectorAll(".gtab").forEach(b=>b.classList.toggle("active", b===el));
+  renderGames();
+}
+function setMode(m, el){
+  curMode = m;
+  document.querySelectorAll(".mchip").forEach(b=>b.classList.toggle("active", b===el));
+  renderGames();
+}
+function renderGames(){
+  const kw = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+  const list = GAMES.filter(g =>
+    (curGrade==="all" || String(g.grade)===curGrade) &&
+    (curMode==="all" || g.mode===curMode) &&
+    (!kw || (g.title + " " + g.topic).toLowerCase().includes(kw))
+  );
+  const grid = document.getElementById("gameGrid");
+  grid.innerHTML = list.map(g => `
+    <article class="card">
+      <div class="card-top">
+        <span class="badge-grade bg${g.grade}">LỚP ${g.grade}</span>
+        <span class="badge-mode">${g.mode==="team" ? "👥 Đồng đội 2–4 đội" : "👤 Cá nhân"}</span>
+      </div>
+      <h3>${g.icon} ${g.title}</h3>
+      <p class="topic">${g.topic}</p>
+      <div class="meta"><span><b>10</b> câu trắc nghiệm</span><span><b>${g.time} giây</b>/câu</span><span>${KIND_LABEL[g.kind]}</span></div>
+      <div class="mechanic">${g.mechanic}</div>
+      <div class="card-actions">
+        <button class="btn play${g.grade}" onclick="openSetup('${g.id}')">▶ Chơi online ngay</button>
+        <button class="btn btn-line" onclick="openDetail('${g.id}')">Xem chi tiết</button>
+      </div>
+    </article>`).join("");
+  document.getElementById("emptyState").classList.toggle("show", list.length===0);
+  document.getElementById("resultCount").innerHTML =
+    `Đang hiển thị <b>${list.length}</b> trò` +
+    (curGrade==="all" ? " của cả 3 lớp" : ` của lớp ${curGrade}`) +
+    (curMode==="solo" ? " · chỉ trò cá nhân" : curMode==="team" ? " · chỉ trò đồng đội" : "") + ".";
+}
+function findGame(id){ return GAMES.find(g=>g.id===id); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ================= DETAIL ================= */
+let detailId = null;
+function openDetail(id){
+  const g = findGame(id); detailId = id;
+  document.getElementById("dTitle").textContent = g.icon + " " + g.title;
+  document.getElementById("dTopic").textContent = "Lớp " + g.grade + " · " + g.topic + " · " + (g.mode==="team" ? "Trò đồng đội (2–4 đội)" : "Trò cá nhân");
+  document.getElementById("dRules").innerHTML =
+    `<b>Luật chơi trên lớp:</b>
+     <ol>
+       <li>Bấm “Chơi trò này”, ${g.mode==="team" ? "chọn số đội (2–4) và đặt tên cho từng đội" : "nhập tên của em (không bắt buộc)"}.</li>
+       <li>10 câu hỏi hiện từng câu một, mỗi câu có ${g.time} giây và 4 đáp án A, B, C, D thật lớn để bấm chọn${g.mode==="team" ? " — các đội luân phiên nhau trả lời" : ""}.</li>
+       <li>Trả lời đúng được 10 điểm${g.kind==="speed" ? ", đúng nhanh trong nửa thời gian đầu được thêm 2 điểm thưởng" : ""}; trả lời sai hoặc hết giờ thì đáp án đúng và lời giải thích hiện ra ngay để nhớ bài.</li>
+       <li>Hết 10 câu, màn hình kết quả công bố ${g.mode==="team" ? "bảng điểm và đội thắng" : "tổng điểm cùng huy hiệu đạt được"}.</li>
+     </ol>
+     <p style="margin:8px 0 0">${g.mechanic}</p>`;
+  document.getElementById("dQuestions").innerHTML =
+    `<p style="font-weight:700;margin:0 0 10px">Đủ 10 câu hỏi của trò (đáp án đúng được giấu — bấm “Xem đáp án” để mở):</p>` +
+    g.qs.map((q,i)=>`
+      <div class="qprev" id="qp-${i}">
+        <p class="qq">Câu ${i+1}. ${q.q}</p>
+        <div class="opts">${q.o.map((o,j)=>`<span><b>${LETTERS[j]}.</b> ${o}</span>`).join("")}</div>
+        <button class="mini-btn" onclick="document.getElementById('qp-${i}').classList.toggle('show-ans')">Xem đáp án</button>
+        <div class="ans">Đáp án đúng: ${LETTERS[q.a]}. ${q.o[q.a]}<br><span style="font-weight:500">${q.e}</span></div>
+      </div>`).join("");
+  document.getElementById("dPlayBtn").onclick = function(){ closeOverlay("detailOverlay"); openSetup(id); };
+  document.getElementById("detailOverlay").classList.add("open");
+}
+function closeOverlay(id){
+  document.getElementById(id).classList.remove("open");
+  if(id==="playOverlay") stopTimer();
+}
+
+/* ================= GAME ENGINE ================= */
+let S = null, timerId = null, timeLeft = 0;
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function prepareQuestions(qs){
+  return shuffle(qs).map(q=>{
+    const order = shuffle([0,1,2,3]);
+    return { q:q.q, e:q.e, o:order.map(i=>q.o[i]), a:order.indexOf(q.a) };
+  });
+}
+function quickPlay(grade){
+  let pool = [];
+  GAMES.filter(g=> grade==="all" || String(g.grade)===grade).forEach(g=> g.qs.forEach(q=> pool.push(q)));
+  const game = { id:"quick-"+grade+"-"+Date.now(), grade: grade==="all" ? "10–12" : grade, mode:"solo", kind:"mix", icon:"🎲",
+    title: grade==="all" ? "Chơi Nhanh — Trộn Cả 3 Lớp" : "Chơi Nhanh — Lớp " + grade,
+    topic:"10 câu ngẫu nhiên", time:30, mechanic:"", qs: shuffle(pool).slice(0,10) };
+  GAMES.push(game);
+  openSetup(game.id);
+}
+function openSetup(id){
+  const g = findGame(id); if(!g) return;
+  S = { game:g, teams:[], playerName:"", idx:0, score:0, correct:0, qs:[], review:[], answered:false };
+  const sheet = document.getElementById("playSheet");
+  if(g.mode==="team"){
+    sheet.innerHTML = `
+      <div class="sheet-head"><h3>${g.icon} ${g.title}</h3><button class="x" onclick="closeOverlay('playOverlay')" aria-label="Đóng">✕</button></div>
+      <p class="detail-topic">Lớp ${g.grade} · ${g.topic} · 10 câu · các đội luân phiên trả lời</p>
+      <div class="setup">
+        <label>Số đội tham gia</label>
+        <div class="seg" id="teamCountSeg">
+          <button onclick="setTeamCount(2)">2 đội</button>
+          <button class="active" onclick="setTeamCount(3)">3 đội</button>
+          <button onclick="setTeamCount(4)">4 đội</button>
+        </div>
+        <label>Tên các đội</label>
+        <div class="team-names" id="teamNames"></div>
+        <button class="btn btn-amber" onclick="beginPlay()">▶ Bắt đầu chơi</button>
+      </div>`;
+    setTeamCount(3);
+  } else {
+    sheet.innerHTML = `
+      <div class="sheet-head"><h3>${g.icon} ${g.title}</h3><button class="x" onclick="closeOverlay('playOverlay')" aria-label="Đóng">✕</button></div>
+      <p class="detail-topic">${g.grade==="10–12" ? "Cả 3 lớp" : "Lớp " + g.grade} · ${g.topic} · 10 câu · mỗi câu ${g.time} giây · đúng 10 điểm${g.kind==="speed" ? ", đúng nhanh +2 điểm thưởng" : ""}</p>
+      <div class="setup">
+        <label for="soloName">Tên của em (để hiện trên huy hiệu — có thể bỏ trống)</label>
+        <input class="solo-name" id="soloName" type="text" maxlength="30" placeholder="Ví dụ: Minh Anh — 11A1">
+        <button class="btn btn-amber" onclick="beginPlay()">▶ Bắt đầu chơi</button>
+      </div>`;
+  }
+  document.getElementById("playOverlay").classList.add("open");
+}
+function setTeamCount(n){
+  document.querySelectorAll("#teamCountSeg button").forEach((b,i)=> b.classList.toggle("active", i===n-2));
+  const defaults = ["Đội Đỏ","Đội Xanh","Đội Vàng","Đội Tím"];
+  const box = document.getElementById("teamNames");
+  const current = Array.from(box.querySelectorAll("input")).map(i=>i.value);
+  box.innerHTML = "";
+  for(let i=0;i<n;i++){
+    const inp = document.createElement("input");
+    inp.type="text"; inp.maxLength=24; inp.placeholder = defaults[i];
+    inp.value = current[i] || ""; inp.dataset.def = defaults[i];
+    box.appendChild(inp);
+  }
+}
+function beginPlay(){
+  const g = S.game;
+  if(g.mode==="team"){
+    const inputs = document.querySelectorAll("#teamNames input");
+    S.teams = Array.from(inputs).map(inp => ({ name: (inp.value.trim() || inp.dataset.def), score:0, correct:0 }));
+  } else {
+    const inp = document.getElementById("soloName");
+    S.playerName = inp ? inp.value.trim() : "";
+  }
+  S.qs = prepareQuestions(g.qs);
+  S.idx = 0; S.score = 0; S.correct = 0; S.review = [];
+  renderQuestion();
+}
+function currentTeamIdx(){ return S.game.mode==="team" ? S.idx % S.teams.length : -1; }
+function stopTimer(){ if(timerId){ clearInterval(timerId); timerId = null; } }
+function renderQuestion(){
+  stopTimer();
+  S.answered = false;
+  const g = S.game, q = S.qs[S.idx];
+  const ti = currentTeamIdx();
+  const sheet = document.getElementById("playSheet");
+  const teamBoard = g.mode==="team" ? `<div class="team-board">${S.teams.map((t,i)=>`<span class="team-chip ${i===ti?"on":""}">${esc(t.name)}: <b>${t.score} điểm</b></span>`).join("")}</div>` : "";
+  sheet.innerHTML = `
+    <div class="player-top">
+      <span class="pill">Câu ${S.idx+1} / 10</span>
+      ${g.mode==="team" ? `<span class="pill turn">Lượt của: ${esc(S.teams[ti].name)}</span>` : `<span class="pill score">Điểm: ${S.score}</span>`}
+      <span class="pill mono" id="timerText">⏱ ${g.time}s</span>
+      <span style="flex:1"></span>
+      <button class="x" onclick="closeOverlay('playOverlay')" aria-label="Thoát">✕</button>
+    </div>
+    <div class="progress"><i style="width:${(S.idx)/10*100}%"></i></div>
+    <div class="timerbar"><i id="timerBar" style="width:100%"></i></div>
+    ${teamBoard}
+    <p class="qtext">${q.q}</p>
+    <div class="opts-grid">
+      ${q.o.map((o,i)=>`<button class="opt" id="opt-${i}" onclick="answer(${i})"><span class="letter">${LETTERS[i]}</span><span>${o}</span></button>`).join("")}
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <div class="next-row" id="nextRow"><button class="btn btn-navy" onclick="nextQuestion()">${S.idx===9 ? "Xem kết quả 🏁" : "Câu tiếp theo →"}</button></div>`;
+  timeLeft = g.time;
+  const total = g.time;
+  timerId = setInterval(()=>{
+    timeLeft = Math.max(0, timeLeft - 0.1);
+    const bar = document.getElementById("timerBar");
+    const txt = document.getElementById("timerText");
+    if(bar){ bar.style.width = (timeLeft/total*100) + "%"; bar.classList.toggle("low", timeLeft <= 5); }
+    if(txt){ txt.textContent = "⏱ " + Math.ceil(timeLeft) + "s"; }
+    if(timeLeft <= 0){ stopTimer(); answer(-1); }
+  }, 100);
+}
+function answer(chosen){
+  if(S.answered) return;
+  S.answered = true;
+  stopTimer();
+  const g = S.game, q = S.qs[S.idx];
+  const right = chosen === q.a;
+  const ti = currentTeamIdx();
+  let bonus = 0;
+  if(right){
+    S.correct++;
+    if(g.mode==="team"){ S.teams[ti].score += 10; S.teams[ti].correct++; }
+    else {
+      S.score += 10;
+      if(g.kind==="speed" && timeLeft > g.time/2){ bonus = 2; S.score += 2; }
+    }
+  }
+  if(!right) S.review.push({ q:q.q, correct:q.o[q.a], letter:LETTERS[q.a], e:q.e, chosen: chosen>=0 ? q.o[chosen] : "(hết giờ)" });
+  for(let i=0;i<4;i++){
+    const b = document.getElementById("opt-"+i);
+    if(!b) continue;
+    b.disabled = true;
+    if(i===q.a) b.classList.add("correct");
+    else if(i===chosen) b.classList.add("wrong");
+  }
+  const fb = document.getElementById("feedback");
+  fb.className = "feedback show " + (right ? "good" : "badf");
+  const praise = ["Chính xác! 🎉","Đúng rồi, tốt lắm! 🌟","Tuyệt vời! 👏","Chuẩn không cần chỉnh! 💪"][Math.floor(Math.random()*4)];
+  if(right){
+    fb.innerHTML = (g.mode==="team" ? `<b>${esc(S.teams[ti].name)} ghi 10 điểm!</b> ${praise}` : `<b>+10 điểm${bonus ? " +2 điểm thưởng tốc độ ⚡" : ""}!</b> ${praise}`) +
+      `<span class="expl">${q.e}</span>`;
+  } else if(chosen === -1){
+    fb.innerHTML = `<b>⏰ Hết giờ!</b> Đáp án đúng là <b>${LETTERS[q.a]}. ${q.o[q.a]}</b><span class="expl">${q.e}</span>`;
+  } else {
+    fb.innerHTML = `<b>Chưa đúng rồi.</b> Đáp án đúng là <b>${LETTERS[q.a]}. ${q.o[q.a]}</b><span class="expl">${q.e}</span>`;
+  }
+  if(g.mode!=="team"){
+    const scorePill = document.querySelector(".pill.score");
+    if(scorePill) scorePill.textContent = "Điểm: " + S.score;
+  } else {
+    document.querySelectorAll(".team-chip").forEach((c,i)=>{ c.innerHTML = `${esc(S.teams[i].name)}: <b>${S.teams[i].score} điểm</b>`; });
+  }
+  const nr = document.getElementById("nextRow");
+  nr.classList.add("show");
+  setTimeout(()=>{ try{ nr.scrollIntoView({behavior:"smooth", block:"nearest"}); }catch(e){} }, 60);
+}
+function nextQuestion(){
+  S.idx++;
+  if(S.idx >= 10){ renderResult(); } else { renderQuestion(); }
+}
+function medalFor(score, correct){
+  if(correct===10) return { t:"🏆 Huy hiệu Vàng — Bậc thầy Toán học", d:"Đúng tuyệt đối cả 10 câu. Em đã nắm chắc chủ đề này rồi!" };
+  if(score>=80) return { t:"🥇 Huy hiệu Vàng", d:"Kết quả rất ấn tượng — chỉ còn một chút nữa là tuyệt đối." };
+  if(score>=60) return { t:"🥈 Huy hiệu Bạc", d:"Nắm khá vững. Xem lại các câu sai ở dưới để lên Vàng nhé." };
+  if(score>=40) return { t:"🥉 Huy hiệu Đồng", d:"Đã có nền tảng. Ôn lại phần giải thích của các câu sai rồi chơi lại một lượt nữa." };
+  return { t:"🌱 Huy hiệu Khởi động", d:"Đừng nản — mở “Xem chi tiết” của trò này, đọc 10 câu kèm đáp án rồi thử lại." };
+}
+function renderResult(){
+  stopTimer();
+  const g = S.game;
+  const sheet = document.getElementById("playSheet");
+  let head = "", board = "";
+  if(g.mode==="team"){
+    const ranked = S.teams.slice().sort((a,b)=> b.score - a.score);
+    const top = ranked[0];
+    const tied = ranked.filter(t=>t.score===top.score);
+    head = `<div class="big">🏆</div>
+      <div class="medal">${tied.length>1 ? "Hòa! Các đội thắng: " + tied.map(t=>esc(t.name)).join(", ") : "Đội thắng: " + esc(top.name)}</div>
+      <p>${esc(top.name)} đạt ${top.score} điểm (đúng ${top.correct}/10 lượt của đội). Cả lớp cùng xem lại các câu cả lớp hay sai ở dưới nhé.</p>`;
+    board = `<div class="rank-list">${ranked.map((t,i)=>`<div class="rank-row"><span>${i+1}. ${esc(t.name)}</span><span class="pts">${t.score} điểm</span></div>`).join("")}</div>`;
+  } else {
+    const m = medalFor(S.score, S.correct);
+    head = `<div class="big">${S.correct===10 ? "🏆" : S.score>=60 ? "🎉" : "💪"}</div>
+      ${S.playerName ? `<p style="font-weight:700;color:var(--ink);font-size:17px;margin-bottom:2px">${esc(S.playerName)}</p>` : ""}
+      <div class="score-big">${S.score} điểm</div>
+      <div class="medal">${m.t}</div>
+      <p>Đúng ${S.correct}/10 câu của trò “${g.title}”. ${m.d}</p>`;
+  }
+  const review = S.review.length ? `
+    <div class="review-list">
+      <h4>📝 Xem lại ${S.review.length} câu chưa đúng</h4>
+      ${S.review.map((r,i)=>`
+        <div class="qprev">
+          <p class="qq">${r.q}</p>
+          <div class="ans" style="display:block">Đáp án đúng: ${r.letter}. ${r.correct}<br><span style="font-weight:500">${r.e}</span></div>
+        </div>`).join("")}
+    </div>` : `<p style="font-weight:700;color:var(--ok)">Không có câu nào sai — hoàn hảo! 🎯</p>`;
+  sheet.innerHTML = `
+    <div class="result">
+      ${head}
+      ${board}
+      ${review}
+      <div class="result-actions">
+        <button class="btn btn-line" onclick="closeOverlay('playOverlay')">Về sảnh trò chơi</button>
+        <button class="btn btn-amber" onclick="openSetup('${g.id}')">↻ Chơi lại</button>
+      </div>
+    </div>`;
+}
+renderGames();
+</script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chiếc Nón Kỳ Diệu — Đoán Thuật Ngữ Toán Học</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', system-ui, sans-serif; }
+  body { min-height:100vh; background:linear-gradient(160deg,#1b1040,#3b1d6e 55%,#6d28a8); color:#fff; padding:18px; }
+  .top { max-width:1150px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .top a { color:#ffd94d; text-decoration:none; font-weight:700; }
+  h1 { text-align:center; font-size:clamp(26px,4.5vw,44px); margin:8px 0 2px; text-shadow:0 3px 0 rgba(0,0,0,.35); }
+  .sub { text-align:center; opacity:.85; margin-bottom:14px; }
+  .layout { max-width:1150px; margin:0 auto; display:grid; grid-template-columns:340px 1fr; gap:18px; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+  .wheelbox { background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.18); border-radius:18px; padding:16px; text-align:center; }
+  .wheelwrap { position:relative; width:290px; height:290px; margin:6px auto; }
+  .pointer { position:absolute; top:-8px; left:50%; transform:translateX(-50%); font-size:30px; z-index:3; filter:drop-shadow(0 2px 2px rgba(0,0,0,.5)); }
+  #wheel { width:290px; height:290px; border-radius:50%; border:8px solid #ffd94d; box-shadow:0 10px 30px rgba(0,0,0,.45); transition:transform 4.2s cubic-bezier(.12,.8,.16,1); }
+  .hub { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:74px; height:74px; border-radius:50%; background:#ffd94d; color:#3b1d6e; font-weight:900; display:flex; align-items:center; justify-content:center; font-size:13px; text-align:center; border:4px solid #fff; z-index:2; }
+  .spinbtn { background:linear-gradient(135deg,#ffb300,#ff7847); color:#fff; border:none; font-size:19px; font-weight:800; padding:12px 30px; border-radius:999px; cursor:pointer; box-shadow:0 6px 0 #b25b00; margin-top:10px; }
+  .spinbtn:active { transform:translateY(4px); box-shadow:0 2px 0 #b25b00; }
+  .spinbtn:disabled { opacity:.5; cursor:wait; }
+  .spinres { min-height:30px; font-size:20px; font-weight:800; color:#ffd94d; margin-top:10px; }
+  .score { display:flex; gap:10px; justify-content:center; margin-top:8px; flex-wrap:wrap; }
+  .score div { background:rgba(0,0,0,.3); border-radius:12px; padding:8px 14px; font-size:15px; }
+  .score b { color:#ffd94d; font-size:19px; }
+  .board { background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.18); border-radius:18px; padding:18px; }
+  .hint { background:rgba(255,217,77,.15); border:1px dashed #ffd94d; border-radius:12px; padding:10px 14px; font-size:16px; margin-bottom:14px; }
+  .phrase { display:flex; flex-wrap:wrap; gap:14px 6px; justify-content:center; margin:16px 0 20px; }
+  .word { display:flex; gap:5px; }
+  .tile { width:44px; height:54px; background:#fff; color:#2b1055; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:900; box-shadow:0 4px 0 rgba(0,0,0,.3); }
+  .tile.blank { background:rgba(255,255,255,.22); color:transparent; }
+  .keys { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+  .key { width:44px; height:44px; border:none; border-radius:10px; background:#fff; color:#2b1055; font-size:19px; font-weight:800; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.3); }
+  .key:disabled { opacity:.28; cursor:default; box-shadow:none; }
+  .key.hit { background:#37d67a; color:#fff; opacity:1; }
+  .key.miss { background:#e05252; color:#fff; opacity:1; }
+  .row { display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap; }
+  .btn { border:none; border-radius:999px; padding:11px 22px; font-size:16px; font-weight:800; cursor:pointer; }
+  .btn.gold { background:#ffd94d; color:#3b1d6e; }
+  .btn.ghost { background:rgba(255,255,255,.15); color:#fff; border:1px solid rgba(255,255,255,.4); }
+  .msg { text-align:center; font-size:19px; font-weight:700; min-height:28px; margin-top:12px; }
+  .solve { display:flex; gap:8px; justify-content:center; margin-top:10px; flex-wrap:wrap; }
+  .solve input { padding:11px 14px; border-radius:999px; border:none; font-size:16px; width:min(340px,80vw); text-align:center; }
+</style>
+</head>
+<body>
+  <div class="top"><a href="index.html">← Về trang chủ Học Toán</a><span>🎡 Trò chơi ôn thuật ngữ</span></div>
+  <h1>🎡 CHIẾC NÓN KỲ DIỆU</h1>
+  <p class="sub">Quay nón lấy điểm, đoán từng chữ cái của thuật ngữ Toán học bị che. Đoán đúng mỗi chữ được nhân điểm ô vừa quay!</p>
+  <div class="layout">
+    <div class="wheelbox">
+      <div class="wheelwrap"><div class="pointer">▼</div><canvas id="wheel" width="290" height="290"></canvas><div class="hub">CHIẾC<br>NÓN</div></div>
+      <button class="spinbtn" id="spinBtn">QUAY NÓN!</button>
+      <div class="spinres" id="spinRes">Bấm QUAY để bắt đầu</div>
+      <div class="score"><div>Điểm vòng này: <b id="roundScore">0</b></div><div>Tổng điểm: <b id="totalScore">0</b></div><div>Câu: <b id="qNum">1</b></div></div>
+    </div>
+    <div class="board">
+      <div class="hint">💡 <b>Gợi ý:</b> <span id="hintText"></span> <span style="opacity:.75" id="lopText"></span></div>
+      <div class="phrase" id="phrase"></div>
+      <div class="keys" id="keys"></div>
+      <div class="solve">
+        <input id="solveInput" placeholder="Đoán cả cụm? Gõ đáp án vào đây...">
+        <button class="btn gold" id="solveBtn">Đoán cả cụm (+1.000đ)</button>
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="revealBtn">👀 Mở đáp án</button>
+        <button class="btn gold" id="nextBtn">Câu tiếp ▶</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+<script>
+const TERMS = [
+ {t:'ĐẠO HÀM', lop:'Lớp 11', h:'Khái niệm mở đầu của giải tích, đo tốc độ thay đổi tức thời của hàm số.'},
+ {t:'TÍCH PHÂN', lop:'Lớp 12', h:'Phép toán ngược của đạo hàm, dùng tính diện tích hình phẳng.'},
+ {t:'NGUYÊN HÀM', lop:'Lớp 12', h:'Hàm số F mà đạo hàm của nó bằng hàm số f cho trước.'},
+ {t:'LOGARIT', lop:'Lớp 11', h:'Phép toán tìm số mũ: nếu a mũ x bằng b thì x là ... của b theo cơ số a.'},
+ {t:'LŨY THỪA', lop:'Lớp 11', h:'Phép toán a mũ n, nền tảng của hàm số mũ.'},
+ {t:'CẤP SỐ CỘNG', lop:'Lớp 11', h:'Dãy số mà hiệu hai số hạng liên tiếp luôn không đổi.'},
+ {t:'CẤP SỐ NHÂN', lop:'Lớp 11', h:'Dãy số mà tỉ số hai số hạng liên tiếp luôn không đổi.'},
+ {t:'DÃY SỐ', lop:'Lớp 11', h:'Hàm số xác định trên tập các số nguyên dương.'},
+ {t:'GIỚI HẠN', lop:'Lớp 11', h:'Giá trị mà hàm số tiến tới khi biến tiến gần một điểm.'},
+ {t:'CỰC TRỊ', lop:'Lớp 12', h:'Tên gọi chung của điểm cực đại và điểm cực tiểu.'},
+ {t:'TIỆM CẬN', lop:'Lớp 12', h:'Đường thẳng mà đồ thị hàm số tiến sát dần ở vô cực.'},
+ {t:'HÀM SỐ BẬC HAI', lop:'Lớp 10', h:'Hàm số có đồ thị là một đường parabol.'},
+ {t:'VECTƠ', lop:'Lớp 10', h:'Đoạn thẳng có hướng, có điểm đầu và điểm cuối.'},
+ {t:'ĐỊNH LÍ COSIN', lop:'Lớp 10', h:'Định lí liên hệ cạnh và góc trong tam giác: a² = b² + c² − 2bc·cosA.'},
+ {t:'MỆNH ĐỀ', lop:'Lớp 10', h:'Câu khẳng định đúng hoặc sai ở đầu chương trình Toán 10.'},
+ {t:'TẬP HỢP', lop:'Lớp 10', h:'Khái niệm cơ bản: một nhóm các đối tượng xác định.'},
+ {t:'XÁC SUẤT', lop:'Lớp 10 – 11', h:'Số đo khả năng xảy ra của một biến cố, từ 0 đến 1.'},
+ {t:'TỔ HỢP', lop:'Lớp 10', h:'Số cách chọn k phần tử mà không xét thứ tự.'},
+ {t:'CHỈNH HỢP', lop:'Lớp 10', h:'Số cách chọn k phần tử có xét thứ tự.'},
+ {t:'SỐ PHỨC', lop:'Lớp 12', h:'Số có dạng a + bi, trong đó i² = −1.'},
+ {t:'MẶT CẦU', lop:'Lớp 12', h:'Tập hợp các điểm cách đều một điểm cố định cho trước.'},
+ {t:'KHỐI CHÓP', lop:'Lớp 11 – 12', h:'Hình có một đáy là đa giác và các mặt bên là tam giác chung đỉnh.'},
+ {t:'LƯỢNG GIÁC', lop:'Lớp 10 – 11', h:'Ngành toán học về góc và các hàm sin, cos, tan, cot.'},
+ {t:'PHƯƠNG TRÌNH', lop:'Nhiều lớp', h:'Đẳng thức chứa ẩn, nhiệm vụ là tìm nghiệm của nó.'}
+];
+// chuan hoa chu cai: tra ve khoa doan (A, E, D...)
+function baseKey(ch){
+  const MAP = {A:'AÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬ', E:'EÉÈẺẼẸÊẾỀỂỄỆ', I:'IÍÌỈĨỊ', O:'OÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢ', U:'UÚÙỦŨỤƯỨỪỬỮỰ', Y:'YÝỲỶỸỴ', D:'DĐ'};
+  for (const k in MAP) if (MAP[k].includes(ch)) return k;
+  return ch;
+}
+function stripAcc(s){ return s.toUpperCase().split('').map(c => c === ' ' ? ' ' : baseKey(c)).join('').replace(/\s+/g,' ').trim(); }
+const ALPHA = ['A','Ă','Â','B','C','D','Đ','E','Ê','G','H','I','K','L','M','N','O','Ô','Ơ','P','Q','R','S','T','U','Ư','V','X','Y'];
+const SEGS = [100,500,200,'MATLUOT',300,800,150,'PHASAN',400,1000,250,600];
+const SEGTXT = {100:'100',500:'500',200:'200',MATLUOT:'MẤT LƯỢT',300:'300',800:'800',150:'150',PHASAN:'PHÁ SẢN',400:'400',1000:'1000',250:'250',600:'600'};
+const COLORS = ['#ff5d5d','#ffa94d','#ffd94d','#69db7c','#38d9a9','#4dabf7','#9775fa','#f783ac','#ff8fab','#63e6be','#ffa8a8','#ffe066'];
+const cv = document.getElementById('wheel'), ctx = cv.getContext('2d');
+function drawWheel(){
+  const n = SEGS.length, R = 145;
+  for (let i=0;i<n;i++){
+    const a0 = (i/n)*Math.PI*2 - Math.PI/2, a1 = ((i+1)/n)*Math.PI*2 - Math.PI/2;
+    ctx.beginPath(); ctx.moveTo(R,R); ctx.arc(R,R,R-4,a0,a1); ctx.closePath();
+    ctx.fillStyle = COLORS[i%COLORS.length]; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    ctx.save(); ctx.translate(R,R); ctx.rotate((a0+a1)/2); ctx.textAlign='right';
+    ctx.fillStyle = '#2b1055'; ctx.font = 'bold 15px Segoe UI';
+    ctx.fillText(SEGTXT[SEGS[i]], R-14, 5); ctx.restore();
+  }
+}
+drawWheel();
+let order = [...TERMS.keys()].sort(()=>Math.random()-.5), qi = 0;
+let cur = null, revealed = new Set(), guessed = new Set(), segVal = null, round = 0, total = 0, spinning = false, rot = 0, solved = false;
+const $ = id => document.getElementById(id);
+let AC = null;
+function beep(f, d){ try { AC = AC || new (window.AudioContext||window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value=f; o.connect(g); g.connect(AC.destination); g.gain.setValueAtTime(.12, AC.currentTime); g.gain.exponentialRampToValueAtTime(.001, AC.currentTime + (d||.15)); o.start(); o.stop(AC.currentTime + (d||.15)); } catch(e){} }
+function newRound(){
+  cur = TERMS[order[qi % order.length]]; revealed = new Set(); guessed = new Set(); segVal = null; round = 0; solved = false;
+  $('hintText').textContent = cur.h; $('lopText').textContent = '· ' + cur.lop;
+  $('qNum').textContent = (qi % order.length) + 1; $('roundScore').textContent = '0';
+  $('spinRes').textContent = 'Bấm QUAY để bắt đầu'; $('msg').textContent = '';
+  $('solveInput').value = '';
+  renderPhrase(); renderKeys();
+}
+function renderPhrase(){
+  const box = $('phrase'); box.innerHTML = '';
+  cur.t.split(' ').forEach(word => {
+    const w = document.createElement('div'); w.className = 'word';
+    [...word].forEach(ch => {
+      const d = document.createElement('div');
+      const open = revealed.has(baseKey(ch)) || solved;
+      d.className = 'tile' + (open ? '' : ' blank'); d.textContent = open ? ch : '•';
+      w.appendChild(d);
+    });
+    box.appendChild(w);
+  });
+}
+function renderKeys(){
+  const box = $('keys'); box.innerHTML = '';
+  ALPHA.forEach(L => {
+    const b = document.createElement('button'); b.className = 'key'; b.textContent = L;
+    if (guessed.has(L)) { b.disabled = true; b.classList.add(cur.t.toUpperCase().split('').some(c => baseKey(c) === L) ? 'hit' : 'miss'); }
+    b.onclick = () => guess(L, b);
+    box.appendChild(b);
+  });
+}
+function guess(L, btn){
+  if (solved) return;
+  if (segVal === null) { $('msg').textContent = '⚠️ Quay nón trước để lấy điểm của ô này đã nhé!'; beep(200,.2); return; }
+  guessed.add(L);
+  const hits = [...cur.t.toUpperCase()].filter(c => baseKey(c) === L).length;
+  if (hits > 0) {
+    revealed.add(L); const gain = segVal * hits; round += gain;
+    $('msg').textContent = `🎉 Có ${hits} chữ ${L} — cộng ${gain} điểm!`;
+    beep(880,.15); setTimeout(()=>beep(1174,.2),120);
+  } else {
+    $('msg').textContent = `😅 Không có chữ ${L} nào. Quay tiếp nào!`;
+    beep(220,.25);
+  }
+  segVal = null; $('spinRes').textContent = 'Quay tiếp để đoán chữ sau';
+  $('roundScore').textContent = round;
+  renderPhrase(); renderKeys(); checkWin();
+}
+function checkWin(){
+  const letters = [...cur.t.toUpperCase()].filter(c => c !== ' ');
+  if (letters.every(c => revealed.has(baseKey(c)))) finish(true);
+}
+function finish(byLetters){
+  solved = true; total += round + (byLetters ? 500 : 1000);
+  $('totalScore').textContent = total;
+  $('msg').textContent = `🏆 Chính xác: ${cur.t}! ${byLetters ? 'Mở hết các chữ, thưởng thêm 500đ.' : 'Đoán cả cụm, thưởng 1.000đ.'} Tổng điểm: ${total}`;
+  beep(1046,.2); setTimeout(()=>beep(1318,.25),150);
+  renderPhrase();
+}
+$('spinBtn').onclick = () => {
+  if (spinning || solved) return;
+  spinning = true; $('spinBtn').disabled = true; $('spinRes').textContent = 'Đang quay...';
+  const idx = Math.floor(Math.random()*SEGS.length);
+  const segAngle = 360/SEGS.length;
+  const target = 360*6 + (360 - (idx*segAngle + segAngle/2));
+  rot += target - (rot % 360);
+  cv.style.transform = `rotate(${rot}deg)`;
+  setTimeout(() => {
+    spinning = false; $('spinBtn').disabled = false;
+    const v = SEGS[idx];
+    if (v === 'MATLUOT') { segVal = null; $('spinRes').textContent = '😖 MẤT LƯỢT! Quay lại nhé.'; beep(180,.3); }
+    else if (v === 'PHASAN') { round = 0; $('roundScore').textContent = '0'; segVal = null; $('spinRes').textContent = '💥 PHÁ SẢN! Điểm vòng này về 0.'; beep(140,.4); }
+    else { segVal = v; $('spinRes').textContent = `Ô ${v} điểm — chọn một chữ cái!`; beep(660,.12); }
+  }, 4300);
+};
+$('solveBtn').onclick = () => {
+  if (solved) return;
+  const val = stripAcc($('solveInput').value);
+  if (!val) return;
+  if (val === stripAcc(cur.t)) finish(false);
+  else { $('msg').textContent = '❌ Chưa đúng cụm từ. Thử đoán thêm chữ nhé!'; beep(220,.25); }
+};
+$('revealBtn').onclick = () => { if (!solved) { solved = true; $('msg').textContent = 'Đáp án: ' + cur.t + ' — vòng này không tính điểm.'; renderPhrase(); } };
+$('nextBtn').onclick = () => { qi++; newRound(); };
+newRound();
+</script>
+</body>
+</html>

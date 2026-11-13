@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hoạt Cảnh Gọi Tên — Gọi học sinh lên bảng</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: #eef7f1; color: #17301f; min-height: 100vh; }
+  header { background: linear-gradient(90deg, #0d7a5f, #12a37c); color: #fff; padding: 12px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; box-shadow: 0 3px 10px #0003; }
+  header h1 { font-size: 22px; letter-spacing: .3px; }
+  header .sub { opacity: .92; font-size: 14px; }
+  .badge { background: #ffb300; color: #4e2c00; font-weight: 800; padding: 2px 10px; border-radius: 999px; font-size: 13px; }
+  header .spacer { flex: 1; }
+  .hbtn { background: #ffffff22; color: #fff; border: 1.5px solid #ffffff88; border-radius: 10px; padding: 7px 12px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .hbtn:hover { background: #ffffff44; }
+  .wrap { display: flex; gap: 14px; padding: 14px; align-items: flex-start; max-width: 1600px; margin: 0 auto; }
+  /* ===== PANEL ===== */
+  #panel { width: 300px; flex: 0 0 300px; background: #fff; border-radius: 16px; padding: 14px; box-shadow: 0 4px 14px #0001; }
+  #panel h3 { font-size: 16px; margin-bottom: 8px; }
+  #panel textarea { width: 100%; height: 220px; border: 1.5px solid #bcd8c6; border-radius: 10px; padding: 9px; font-size: 14px; line-height: 1.5; resize: vertical; font-family: inherit; }
+  #panel .row { display: flex; gap: 8px; margin: 9px 0; flex-wrap: wrap; }
+  .btn { border: none; border-radius: 10px; padding: 9px 13px; font-size: 14px; font-weight: 700; cursor: pointer; background: #e3f2e8; color: #0d7a5f; }
+  .btn:hover { filter: brightness(.96); }
+  .btn.warn { background: #fdecea; color: #b3261e; }
+  #panel label.chk { display: flex; gap: 8px; align-items: center; font-size: 14px; margin: 8px 0; cursor: pointer; }
+  #panel .cnt { font-size: 13.5px; color: #40614d; margin: 6px 0; }
+  #calledBox { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip { background: #fff3e0; border: 1.5px solid #ffcc80; color: #7a4a00; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 600; }
+  #panel .tip { font-size: 12.5px; color: #6b8574; margin-top: 10px; line-height: 1.45; }
+  /* ===== STAGE ===== */
+  #stageCol { flex: 1; min-width: 0; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tab { border: 2px solid #bcd8c6; background: #fff; border-radius: 999px; padding: 9px 16px; font-size: 15px; font-weight: 700; cursor: pointer; color: #33523f; }
+  .tab.on { background: #0d7a5f; border-color: #0d7a5f; color: #fff; box-shadow: 0 4px 10px #0d7a5f55; }
+  .tab:disabled { opacity: .55; cursor: default; }
+  #stageBox { position: relative; }
+  #stage { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 18px; overflow: hidden; box-shadow: 0 10px 26px #0003; background: #bfe8ff; user-select: none; }
+  #stage:fullscreen { border-radius: 0; }
+  .scene { position: absolute; inset: 0; display: none; overflow: hidden; }
+  .scene.on { display: block; }
+  /* --- bé đậu (nhân vật) --- */
+  .bean { position: absolute; width: 74px; margin-left: -37px; text-align: center; z-index: 6; transition: opacity .45s, filter .45s; }
+  .bean .nm { display: inline-block; background: #fff; border: 2px solid #17301f2b; padding: 1px 9px; border-radius: 999px; font-weight: 800; font-size: 13.5px; color: #14532d; box-shadow: 0 2px 6px #0002; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+  .bean .bd { width: 52px; height: 58px; margin: 3px auto 0; border-radius: 25px 25px 23px 23px; position: relative; box-shadow: inset -7px -9px 0 #00000014, 0 5px 9px #0003; animation: bob 2.3s ease-in-out infinite; }
+  .bean .eye { position: absolute; top: 21px; width: 6.5px; height: 10px; background: #263238; border-radius: 3px; }
+  .bean .eye.l { left: 15px; } .bean .eye.r { right: 15px; }
+  .bean .mo { position: absolute; top: 36px; left: 50%; width: 15px; height: 9px; margin-left: -8.5px; border: 2.5px solid #263238; border-top: none; border-left: none; border-right: none; border-radius: 0 0 14px 14px; }
+  .bean .sweat { position: absolute; top: 12px; right: 2px; font-size: 17px; opacity: 0; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .bean.hot .bd { animation: shake .16s linear infinite; box-shadow: 0 0 0 5px #ff7043bb, 0 0 22px #ff5722; }
+  @keyframes shake { 0% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-2.5px,1px) rotate(-4deg); } 75% { transform: translate(2.5px,-1px) rotate(4deg); } 100% { transform: translate(0,0); } }
+  .bean.dim { opacity: .25; filter: grayscale(.7); }
+  .bean.win { z-index: 12; }
+  .bean.win .bd { animation: winb .45s ease-in-out infinite alternate; box-shadow: 0 0 0 6px #ffd54f, 0 0 34px #ffd54f; }
+  @keyframes winb { from { transform: translateY(0) scale(1.12); } to { transform: translateY(-13px) scale(1.22); } }
+  .bean.nervous .bd { animation: shake .3s linear infinite; }
+  .bean.nervous .sweat { opacity: 1; }
+  .bean.duck .bd { transform: scaleY(.72) translateY(12px); animation: none; }
+  /* --- lớp phủ & chữ lớn --- */
+  #bigText { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 40; pointer-events: none; }
+  #bigText span { font-size: clamp(60px, 11vw, 150px); font-weight: 900; color: #fff; text-shadow: 0 6px 0 #b3261e, 0 12px 30px #0007; letter-spacing: 2px; animation: pop .35s ease; }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  #toast { position: absolute; top: 4.5%; left: 50%; transform: translateX(-50%); z-index: 41; background: #fffbe9; border: 2.5px solid #17301f; border-radius: 14px; padding: 8px 18px; font-size: clamp(15px, 2vw, 22px); font-weight: 800; color: #17301f; box-shadow: 0 6px 16px #0004; display: none; }
+  #bubble { position: absolute; z-index: 30; background: #fff; border: 2.5px solid #17301f; border-radius: 14px; padding: 7px 13px; font-size: clamp(14px, 1.8vw, 20px); font-weight: 700; box-shadow: 0 5px 12px #0003; opacity: 0; transform: scale(.7); transition: opacity .25s, transform .25s; pointer-events: none; max-width: 46%; }
+  #bubble.on { opacity: 1; transform: scale(1); }
+  /* --- nút điều khiển trên sân khấu --- */
+  #ctlBar { position: absolute; left: 0; right: 0; bottom: 3.5%; display: flex; justify-content: center; gap: 10px; z-index: 45; }
+  #startBtn { background: linear-gradient(180deg, #22b573, #0d7a5f); color: #fff; border: none; font-size: clamp(17px, 2.4vw, 25px); font-weight: 900; padding: 14px 34px; border-radius: 999px; cursor: pointer; box-shadow: 0 8px 20px #0d7a5f88, inset 0 -3px 0 #0003; }
+  #startBtn:hover { filter: brightness(1.07); }
+  #startBtn:disabled { opacity: .6; cursor: default; }
+  #skipBtn { position: absolute; top: 3%; right: 2%; z-index: 46; display: none; background: #17301fdd; color: #fff; border: none; border-radius: 999px; padding: 9px 16px; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+  #fsBtn { position: absolute; top: 3%; left: 2%; z-index: 46; background: #17301fbb; color: #fff; border: none; border-radius: 999px; padding: 9px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  /* --- thẻ công bố --- */
+  #reveal { position: absolute; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; background: #10243e66; }
+  #reveal .card { background: #fff; border-radius: 22px; padding: 30px 44px; text-align: center; max-width: 78%; box-shadow: 0 22px 50px #0006; animation: cardin .45s cubic-bezier(.2,1.6,.4,1); border-top: 10px solid #ffb300; }
+  @keyframes cardin { from { transform: scale(.6) translateY(50px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+  #reveal .kick { font-size: clamp(14px, 1.9vw, 19px); font-weight: 900; letter-spacing: 1.5px; color: #b3261e; text-transform: uppercase; }
+  #reveal .pre { font-size: clamp(16px, 2.2vw, 23px); color: #40614d; margin-top: 8px; }
+  #reveal .name { font-size: clamp(38px, 6.5vw, 74px); font-weight: 900; color: #0d7a5f; line-height: 1.12; margin: 6px 0 2px; }
+  #reveal .post { font-size: clamp(16px, 2.2vw, 23px); font-weight: 700; color: #17301f; }
+  #reveal .rrow { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+  #reveal .next { background: linear-gradient(180deg, #22b573, #0d7a5f); color: #fff; border: none; font-size: 18px; font-weight: 900; padding: 12px 26px; border-radius: 999px; cursor: pointer; box-shadow: 0 6px 16px #0d7a5f66; }
+  #reveal .close { background: #eef3f0; color: #33523f; border: none; font-size: 16px; font-weight: 800; padding: 12px 20px; border-radius: 999px; cursor: pointer; }
+  .confetti { position: absolute; width: 10px; height: 15px; z-index: 55; border-radius: 2px; pointer-events: none; }
+  /* ===== HOẠT CẢNH 1: SÂN TRƯỜNG ===== */
+  #sc-potato { background: linear-gradient(180deg, #aee3ff 0%, #d8f3ff 42%, #ffe9b8 42.2%, #ffdf9e 100%); }
+  #sc-potato .school { position: absolute; top: 3%; left: 50%; transform: translateX(-50%); font-size: clamp(64px, 10vw, 128px); z-index: 1; filter: drop-shadow(0 6px 8px #0002); }
+  #sc-potato .tree { position: absolute; font-size: clamp(40px, 6vw, 76px); z-index: 1; }
+  #potato { position: absolute; width: 54px; height: 54px; margin: -27px 0 0 -27px; font-size: 46px; line-height: 54px; text-align: center; z-index: 20; left: 0; top: 0; filter: drop-shadow(0 0 12px #ff7043) drop-shadow(0 8px 8px #0004); display: none; }
+  /* ===== HOẠT CẢNH 2: SÔNG ===== */
+  #sc-ferry { background: linear-gradient(180deg, #ffe9a8 0%, #cdeffd 34%, #7ec8e3 34.2%, #4aa3c7 100%); }
+  #sc-ferry .sun { position: absolute; top: 4%; right: 7%; font-size: clamp(38px, 5vw, 64px); z-index: 1; }
+  #sc-ferry .bank { position: absolute; top: 21%; left: 0; right: 0; font-size: clamp(24px, 3.6vw, 44px); letter-spacing: 6px; z-index: 1; white-space: nowrap; overflow: hidden; opacity: .95; }
+  #sc-ferry .rainbow { position: absolute; top: 2%; left: 4%; font-size: clamp(52px, 8vw, 104px); z-index: 1; opacity: 0; transition: opacity 1.2s; }
+  #stormFx { position: absolute; inset: 0; z-index: 15; pointer-events: none; opacity: 0; transition: opacity .7s; background: repeating-linear-gradient(105deg, transparent 0 34px, #ffffff2e 34px 36px), linear-gradient(180deg, #263238b8, #26323840 55%, transparent); }
+  #stormFx.on { opacity: 1; }
+  #boat { position: absolute; bottom: 13%; left: 2%; width: 58%; height: 40%; z-index: 8; }
+  #boat .hull { position: absolute; bottom: 0; left: 0; right: 0; height: 38%; background: linear-gradient(180deg, #a1662f, #7c4a21); clip-path: polygon(0 22%, 100% 22%, 92% 100%, 9% 100%); border-radius: 0 0 26px 26px; box-shadow: inset 0 10px 0 #c68a45; }
+  #boat .deck { position: absolute; bottom: 30%; left: 2%; right: 2%; height: 10%; background: #c68a45; border-radius: 8px; }
+  #boat.rock { animation: rock 1s ease-in-out infinite; }
+  @keyframes rock { 0%,100% { transform: rotate(-2.6deg) translateY(0); } 50% { transform: rotate(2.6deg) translateY(-7px); } }
+  #dock { position: absolute; bottom: 9%; right: 0; width: 25%; height: 9%; background: repeating-linear-gradient(90deg, #a1662f 0 26px, #8a5527 26px 30px); border-radius: 8px 0 0 8px; z-index: 7; box-shadow: 0 -4px 0 #c68a45; }
+  #dockSign { position: absolute; bottom: 47%; right: 1.2%; z-index: 5; background: #0d7a5f; color: #fff; font-weight: 800; font-size: clamp(11px, 1.5vw, 16px); padding: 5px 12px; border-radius: 8px; transform: rotate(-3deg); box-shadow: 0 4px 10px #0003; }
+  /* ===== HOẠT CẢNH 3: LỚP HỌC ===== */
+  #sc-note { background: linear-gradient(180deg, #fff6e0 0%, #ffeec2 55%, #f3cf9a 55.2%, #eebd7d 100%); }
+  #sc-note .board { position: absolute; top: 4%; left: 50%; transform: translateX(-50%); width: 52%; background: #14532d; color: #eafff1; border: 8px solid #a1662f; border-radius: 8px; text-align: center; padding: 10px 8px 13px; z-index: 2; box-shadow: 0 8px 18px #0003; }
+  #sc-note .board .b1 { font-size: clamp(13px, 1.7vw, 19px); color: #ffd54f; font-weight: 800; letter-spacing: 1px; }
+  #sc-note .board .b2 { font-size: clamp(19px, 3vw, 34px); font-weight: 900; margin-top: 2px; }
+  #deskGrid { position: absolute; left: 5%; right: 5%; top: 33%; bottom: 4%; display: grid; gap: 4% 3%; z-index: 4; }
+  .seat { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+  .seat .bean2 { position: relative; text-align: center; margin-bottom: 16%; }
+  .seat .desk { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 86%; height: 26%; background: linear-gradient(180deg, #c68a45, #a1662f); border-radius: 7px; box-shadow: inset 0 4px 0 #e0aa63, 0 4px 7px #0003; z-index: 7; }
+  .seat .desk::after { content: "📖"; position: absolute; top: -13px; left: 50%; transform: translateX(-50%); font-size: clamp(12px, 1.6vw, 19px); }
+  #teacher { position: absolute; width: 84px; margin-left: -42px; text-align: center; z-index: 25; transition: left .55s ease, top .55s ease; }
+  #teacher .nm { display: inline-block; background: #17301f; color: #fff; padding: 2px 11px; border-radius: 999px; font-weight: 800; font-size: 13.5px; white-space: nowrap; }
+  #teacher .bd { width: 60px; height: 68px; margin: 3px auto 0; border-radius: 28px 28px 24px 24px; background: #5b8def; position: relative; box-shadow: inset -7px -9px 0 #0002, 0 6px 10px #0004; }
+  #teacher .eye { position: absolute; top: 24px; width: 7px; height: 11px; background: #fff; border-radius: 3px; box-shadow: inset 0 -5px 0 #263238; }
+  #teacher .eye.l { left: 17px; } #teacher .eye.r { right: 17px; }
+  #teacher .book { position: absolute; bottom: 8px; right: -14px; font-size: 27px; }
+
+  /* --- quản lý danh sách V2 --- */
+  .addrow { display: flex; gap: 8px; margin-bottom: 10px; }
+  .addrow input { flex: 1; border: 1.5px solid #bcd8c6; border-radius: 10px; padding: 10px 11px; font-size: 14.5px; font-family: inherit; min-width: 0; }
+  .addrow input:focus { outline: 2px solid #12a37c; border-color: #12a37c; }
+  .btn.primary { background: #0d7a5f; color: #fff; }
+  #roster { max-height: 290px; overflow-y: auto; border: 1.5px solid #dcebe1; border-radius: 10px; padding: 5px; background: #fbfefc; }
+  .srow { display: flex; align-items: center; gap: 8px; padding: 5px 7px; border-radius: 8px; }
+  .srow:hover { background: #eef7f1; }
+  .srow .no { color: #8aa695; font-size: 12.5px; width: 24px; text-align: right; flex: 0 0 24px; }
+  .srow .sn { flex: 1; font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .srow .del { flex: 0 0 32px; width: 32px; height: 32px; border: none; border-radius: 9px; background: #fdecea; color: #b3261e; font-size: 16px; font-weight: 900; cursor: pointer; line-height: 1; }
+  .srow .del:hover { background: #b3261e; color: #fff; }
+  .srow .del:disabled { opacity: .4; cursor: default; }
+  #roster .empty { color: #6b8574; font-size: 13.5px; padding: 10px; text-align: center; }
+  #pasteBox textarea { height: 130px; }
+  @media (max-width: 900px) { .wrap { flex-direction: column; } #panel { width: 100%; flex: none; order: 2; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🎲 HOẠT CẢNH GỌI TÊN <span class="badge">V2</span></h1>
+    <div class="sub">Gọi học sinh lên bảng kiểm tra bài cũ bằng hoạt cảnh — mỗi lượt chừng nửa phút, cả lớp cùng hồi hộp</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="hbtn" id="soundBtn">🔊 Âm thanh: Bật</button>
+  <button class="hbtn" id="panelBtn">🗂️ Ẩn panel lớp</button>
+</header>
+
+<div class="wrap">
+  <div id="stageCol">
+    <div class="tabs">
+      <button class="tab on" data-sc="potato">🥔 Khoai Nóng Bỏng Tay</button>
+      <button class="tab" data-sc="ferry">⛵ Chuyến Đò Sang Sông</button>
+      <button class="tab" data-sc="note">📒 Thầy Kiểm Tra Vở</button>
+    </div>
+    <div id="stageBox">
+      <div id="stage">
+        <!-- HOẠT CẢNH 1 -->
+        <div class="scene on" id="sc-potato">
+          <div class="school">🏫</div>
+          <div class="tree" style="left:3%;top:16%">🌳</div>
+          <div class="tree" style="right:4%;top:14%">🌲</div>
+          <div class="tree" style="left:9%;bottom:5%">🌷</div>
+          <div class="tree" style="right:8%;bottom:4%">🌻</div>
+          <div id="potato">🥔</div>
+        </div>
+        <!-- HOẠT CẢNH 2 -->
+        <div class="scene" id="sc-ferry">
+          <div class="sun">🌤️</div>
+          <div class="rainbow" id="rainbow">🌈</div>
+          <div class="bank">🌴🏠🌴🌳🏡🌴🌳🏠🌴🌳🏡🌴</div>
+          <div id="stormFx"></div>
+          <div id="boat"><div class="deck"></div><div class="hull"></div></div>
+          <div id="dock"></div>
+          <div id="dockSign">⚓ BẾN TRI THỨC</div>
+        </div>
+        <!-- HOẠT CẢNH 3 -->
+        <div class="scene" id="sc-note">
+          <div class="board"><div class="b1">✿ THI ĐUA DẠY TỐT · HỌC TỐT ✿</div><div class="b2">Kiểm tra bài cũ</div></div>
+          <div id="deskGrid"></div>
+          <div id="teacher" style="left:50%;top:24%"><span class="nm">Thầy giáo</span><div class="bd"><span class="eye l"></span><span class="eye r"></span><span class="book">📕</span></div></div>
+        </div>
+        <!-- lớp phủ chung -->
+        <div id="toast"></div>
+        <div id="bubble"></div>
+        <div id="bigText"><span></span></div>
+        <button id="fsBtn">⛶ Toàn màn hình</button>
+        <button id="skipBtn">⏩ Bỏ qua hoạt cảnh</button>
+        <div id="ctlBar"><button id="startBtn">▶ Bắt đầu gọi tên</button></div>
+        <div id="reveal">
+          <div class="card">
+            <div class="kick" id="rvKick"></div>
+            <div class="pre" id="rvPre"></div>
+            <div class="name" id="rvName"></div>
+            <div class="post">Mời em lên bảng nhé! 👏</div>
+            <div class="rrow">
+              <button class="next" id="rvNext">🎉 Gọi tiếp bạn khác</button>
+              <button class="close" id="rvClose">Đổi hoạt cảnh</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:10px;color:#40614d;font-size:14px">💡 Cách dùng: nhập danh sách lớp ở panel bên phải (mỗi dòng một em), bấm <b>Bắt đầu gọi tên</b> và chiếu khung hoạt cảnh lên màn hình lớp. Tên đã gọi sẽ được ghi lại để không gọi trùng trong buổi.</p>
+  </div>
+
+  <aside id="panel">
+    <h3>📋 Danh sách lớp</h3>
+    <div class="addrow">
+      <input id="nameOne" type="text" placeholder="Nhập tên một học sinh rồi Enter…">
+      <button class="btn primary" id="addOneBtn">＋ Thêm</button>
+    </div>
+    <div id="roster"></div>
+    <div class="cnt" id="countTxt"></div>
+    <div class="row">
+      <button class="btn" id="pasteBtn">📋 Dán nhiều tên</button>
+      <button class="btn" id="fileBtn">📂 Nhập từ file</button>
+      <input type="file" id="fileIn" accept=".txt,.csv" style="display:none">
+    </div>
+    <div id="pasteBox" style="display:none">
+      <textarea id="namesIn" placeholder="Dán danh sách vào đây, mỗi dòng một em. Dán từ Excel hay Zalo cũng được, app tự lấy đúng cột họ tên."></textarea>
+      <div class="row"><button class="btn primary" id="pasteAddBtn">✔ Thêm các tên này</button></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="sampleBtn">Dùng danh sách mẫu</button>
+      <button class="btn warn" id="clearBtn">Xoá tất cả</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="noRepeat" checked> Không gọi trùng trong buổi học</label>
+    <h3 style="margin-top:12px">✅ Đã gọi (<span id="calledCnt">0</span>)</h3>
+    <div id="calledBox"><span style="color:#6b8574;font-size:13px">Chưa gọi bạn nào.</span></div>
+    <div class="row"><button class="btn" id="resetBtn">↩ Đặt lại lượt gọi</button></div>
+    <p class="tip">Thêm từng em: gõ tên rồi Enter. Xoá từng em: bấm nút ✕ ở cuối dòng tên. Thêm cả lớp: bấm Dán nhiều tên hoặc Nhập từ file (txt, csv; chép từ Excel sang cũng được). Danh sách tự lưu trên máy này.</p>
+  </aside>
+</div>
+
+<script>
+"use strict";
+/* ============ TIỆN ÍCH & TRẠNG THÁI ============ */
+const $ = id => document.getElementById(id);
+const SPEED = new URLSearchParams(location.search).get('fast') ? 0.12 : 1;
+const wait = ms => new Promise(r => setTimeout(r, Math.max(16, ms * SPEED)));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const COLORS = ['#ffd54f','#ffab91','#a5d6a7','#90caf9','#ce93d8','#fff59d','#ffcc80','#80cbc4','#f48fb1','#bcaaa4','#9fa8da','#c5e1a5','#f0f4c3','#b39ddb'];
+
+let names = [], called = [], scene = 'potato', running = false, skipFlag = false, soundOn = true;
+
+function beanHTML(name, i) {
+  return `<span class="nm">${name.replace(/</g, '&lt;')}</span><div class="bd" style="background:${COLORS[i % COLORS.length]}"><span class="eye l"></span><span class="eye r"></span><span class="mo"></span><span class="sweat">💦</span></div>`;
+}
+function makeBean(name, i) {
+  const d = document.createElement('div');
+  d.className = 'bean'; d.dataset.name = name; d.innerHTML = beanHTML(name, i);
+  return d;
+}
+
+/* ============ ÂM THANH (WebAudio, không cần file) ============ */
+let AC = null;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function tone(f, t, dur, type, vol, slideTo) {
+  if (!soundOn) return; const c = ac(); if (!c) return;
+  const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + t;
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, t0);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || .12, t0 + .015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + dur + .05);
+}
+const sndTick = () => tone(920, 0, .06, 'square', .045);
+const sndPop = () => tone(340, 0, .12, 'sine', .14, 720);
+const sndSplash = () => tone(500, 0, .22, 'sine', .07, 130);
+const sndBell = () => { tone(1568, 0, .7, 'triangle', .11); tone(2093, .02, .6, 'sine', .06); tone(1175, .12, .6, 'triangle', .07); };
+const sndFanfare = () => { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, i * .13, .24, 'triangle', .11)); };
+
+/* ============ LƯU / TẢI ============ */
+function saveAll() { try { localStorage.setItem('hcgt.names', JSON.stringify(names)); localStorage.setItem('hcgt.called', JSON.stringify(called)); localStorage.setItem('hcgt.scene', scene); } catch (e) {} }
+function loadAll() {
+  try {
+    names = JSON.parse(localStorage.getItem('hcgt.names') || 'null') || SAMPLE.slice();
+    called = JSON.parse(localStorage.getItem('hcgt.called') || '[]');
+    scene = localStorage.getItem('hcgt.scene') || 'potato';
+  } catch (e) { names = SAMPLE.slice(); called = []; }
+  called = called.filter(n => names.includes(n));
+}
+const SAMPLE = ['An','Bình','Châu','Dũng','Giang','Hà','Hải','Hùng','Khánh','Kiên','Lan','Linh','Long','Mai','Nam','Ngân','Nhi','Oanh','Phúc','Phương','Quân','Sơn','Thảo','Thư','Trang','Tú','Uyên','Vy','Yến','Đạt','Hiếu'];
+
+/* ============ PANEL ============ */
+function esc(t) { return t.replace(/</g, '&lt;'); }
+function syncPanel() {
+  const remain = names.filter(n => !called.includes(n)).length;
+  $('countTxt').textContent = `Tổng ${names.length} em · Chưa gọi: ${remain} em`;
+  $('calledCnt').textContent = called.length;
+  $('calledBox').innerHTML = called.length ? called.map(n => `<span class="chip">${esc(n)}</span>`).join('') : '<span style="color:#6b8574;font-size:13px">Chưa gọi bạn nào.</span>';
+  const r = $('roster');
+  r.innerHTML = names.length ? names.map((n, i) => `<div class="srow"><span class="no">${i + 1}</span><span class="sn" title="${esc(n)}">${esc(n)}</span><button class="del" data-i="${i}" title="Xoá em này" ${running ? 'disabled' : ''}>✕</button></div>`).join('') : '<div class="empty">Chưa có học sinh nào.<br>Gõ tên ở ô trên rồi Enter, hoặc bấm Dán nhiều tên.</div>';
+  r.querySelectorAll('.del').forEach(btn => btn.onclick = () => {
+    if (running) return;
+    const i = +btn.dataset.i, gone = names[i];
+    names.splice(i, 1);
+    called = called.filter(n => n !== gone);
+    saveAll(); syncPanel(); buildScene();
+  });
+}
+function addNames(list, silent) {
+  let added = 0;
+  list.forEach(raw => {
+    const nm = (raw || '').trim().replace(/\s+/g, ' ');
+    if (nm && !names.includes(nm)) { names.push(nm); added++; }
+  });
+  if (added) { saveAll(); syncPanel(); buildScene(); }
+  if (!silent) toast(added ? `Đã thêm ${added} học sinh vào danh sách ✔` : 'Không có tên mới nào (trùng hoặc trống).', 2300);
+  return added;
+}
+function parseNamesText(txt) {
+  const out = [];
+  (txt || '').split(/\r?\n/).forEach(line => {
+    const parts = line.split(/\t|,|;|\|/).map(x => x.trim()).filter(Boolean);
+    if (!parts.length) return;
+    let nm = (parts.length > 1 && /^\d+$/.test(parts[0])) ? parts[1] : parts[0];
+    nm = nm.replace(/^\d+\s*[.)]\s*/, '').trim();
+    if (nm) out.push(nm);
+  });
+  return out;
+}
+function doAddOne() {
+  const v = $('nameOne').value;
+  if (!v.trim()) return;
+  addNames([v], true);
+  $('nameOne').value = ''; $('nameOne').focus(); sndPop();
+}
+$('addOneBtn').onclick = doAddOne;
+$('nameOne').addEventListener('keydown', e => { if (e.key === 'Enter') doAddOne(); });
+$('pasteBtn').onclick = () => { const bx = $('pasteBox'); bx.style.display = bx.style.display === 'none' ? '' : 'none'; if (bx.style.display !== 'none') $('namesIn').focus(); };
+$('pasteAddBtn').onclick = () => { addNames(parseNamesText($('namesIn').value)); $('namesIn').value = ''; $('pasteBox').style.display = 'none'; };
+$('fileBtn').onclick = () => $('fileIn').click();
+$('fileIn').addEventListener('change', () => {
+  const f = $('fileIn').files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { addNames(parseNamesText(String(rd.result || ''))); };
+  rd.readAsText(f); $('fileIn').value = '';
+});
+$('sampleBtn').onclick = () => { names = SAMPLE.slice(); called = []; saveAll(); syncPanel(); buildScene(); };
+$('clearBtn').onclick = () => { if (confirm('Xoá toàn bộ danh sách lớp?')) { names = []; called = []; saveAll(); syncPanel(); buildScene(); } };
+$('resetBtn').onclick = () => { called = []; saveAll(); syncPanel(); };
+$('noRepeat').addEventListener('change', syncPanel);
+$('soundBtn').onclick = () => { soundOn = !soundOn; $('soundBtn').textContent = soundOn ? '🔊 Âm thanh: Bật' : '🔇 Âm thanh: Tắt'; if (soundOn) sndPop(); };
+$('panelBtn').onclick = () => { const p = $('panel'); const hid = p.style.display === 'none'; p.style.display = hid ? '' : 'none'; $('panelBtn').textContent = hid ? '🗂️ Ẩn panel lớp' : '🗂️ Hiện panel lớp'; };
+$('fsBtn').onclick = () => { const st = $('stage'); if (document.fullscreenElement) document.exitFullscreen(); else if (st.requestFullscreen) st.requestFullscreen(); };
+
+/* ============ SÂN KHẤU CHUNG ============ */
+function showBig(txt, ms) { const b = $('bigText'); b.querySelector('span').textContent = txt; b.style.display = 'flex'; setTimeout(() => b.style.display = 'none', ms || 900); }
+function toast(txt, ms) { const t = $('toast'); t.textContent = txt; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms || 2200); }
+function bubbleAt(xPct, yPct, txt, ms) { const b = $('bubble'); b.textContent = txt; b.style.left = `calc(${xPct}% - 30px)`; b.style.top = yPct + '%'; b.classList.add('on'); clearTimeout(b._h); if (ms) b._h = setTimeout(() => b.classList.remove('on'), ms); }
+function hideBubble() { $('bubble').classList.remove('on'); }
+function confetti() {
+  const st = $('stage');
+  for (let i = 0; i < 46; i++) {
+    const c = document.createElement('div'); c.className = 'confetti';
+    c.style.background = pick(COLORS); c.style.left = rnd(2, 97) + '%'; c.style.top = '-4%';
+    st.appendChild(c);
+    c.animate([{ transform: 'translateY(0) rotate(0)', opacity: 1 }, { transform: `translateY(${rnd(55, 96)}vh) rotate(${rnd(300, 900)}deg)`, opacity: .9 }], { duration: rnd(1300, 2400), easing: 'cubic-bezier(.2,.7,.4,1)' }).finished.then(() => c.remove()).catch(() => c.remove());
+  }
+}
+function poolNames() { return $('noRepeat').checked ? names.filter(n => !called.includes(n)) : names.slice(); }
+
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => { if (running) return; scene = t.dataset.sc; saveAll(); buildScene(); });
+$('skipBtn').onclick = () => { skipFlag = true; };
+
+function setRunning(on) {
+  running = on;
+  document.querySelectorAll('.tab').forEach(t => t.disabled = on);
+  $('startBtn').disabled = on; $('startBtn').style.display = on ? 'none' : '';
+  $('skipBtn').style.display = on ? 'block' : 'none';
+  $('nameOne').disabled = on; $('addOneBtn').disabled = on;
+}
+
+function buildScene() {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.sc === scene));
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('on'));
+  $('sc-' + scene).classList.add('on');
+  if (scene === 'potato') buildPotatoIdle();
+  if (scene === 'ferry') buildFerryIdle();
+  if (scene === 'note') buildNoteIdle();
+  syncPanel();
+}
+
+/* ============ VÒNG GỌI TÊN ============ */
+async function startRound() {
+  if (running) return;
+  if (names.length < 2) { toast('Cần ít nhất 2 học sinh trong danh sách lớp!', 2600); return; }
+  let pool = poolNames();
+  if (!pool.length) { toast('Đã gọi hết cả lớp rồi! Bấm Đặt lại lượt gọi để bắt đầu buổi mới.', 3200); return; }
+  const winner = pick(pool);
+  called.push(winner); saveAll(); syncPanel();
+  skipFlag = false; setRunning(true);
+  $('reveal').style.display = 'none';
+  try {
+    if (scene === 'potato') await runPotato(winner);
+    else if (scene === 'ferry') await runFerry(winner);
+    else await runNote(winner);
+  } finally {
+    setRunning(false);
+    showReveal(winner);
+  }
+}
+function showReveal(winner) {
+  const meta = {
+    potato: ['🥔 Khoai nóng bỏng tay', 'Chuông reo! Khoai đang nằm trong tay của…'],
+    ferry: ['⛵ Cập bến tri thức', 'Thầy đã đưa em cập bến an toàn. Người ở lại cuối cùng trên đò là…'],
+    note: ['📒 Thầy kiểm tra vở', 'Thầy dừng lại ngay bàn của…']
+  }[scene];
+  $('rvKick').textContent = meta[0]; $('rvPre').textContent = meta[1]; $('rvName').textContent = winner;
+  $('reveal').style.display = 'flex';
+  $('ctlBar').style.display = 'none';
+  sndFanfare(); confetti();
+}
+$('startBtn').onclick = startRound;
+$('rvNext').onclick = () => { $('reveal').style.display = 'none'; $('ctlBar').style.display = ''; buildScene(); startRound(); };
+$('rvClose').onclick = () => { $('reveal').style.display = 'none'; $('ctlBar').style.display = ''; buildScene(); };
+
+/* ================================================================
+   HOẠT CẢNH 1: KHOAI NÓNG BỎNG TAY
+================================================================ */
+let yardBeans = {};
+function buildPotatoIdle() {
+  const sc = $('sc-potato');
+  sc.querySelectorAll('.bean').forEach(b => b.remove());
+  yardBeans = {};
+  const n = Math.max(names.length, 1);
+  const cols = Math.ceil(Math.sqrt(n * 1.7)), rows = Math.ceil(n / cols);
+  names.forEach((nm, i) => {
+    const b = makeBean(nm, i);
+    const col = i % cols, row = Math.floor(i / cols);
+    const cw = 88 / cols, ch = 34 / rows;
+    const x = 6 + col * cw + cw / 2 + rnd(-cw * .18, cw * .18);
+    const y = 47 + row * ch + rnd(-ch * .14, ch * .14);
+    b.style.left = x + '%'; b.style.top = y + '%';
+    b.dataset.x = x; b.dataset.y = y;
+    sc.appendChild(b); yardBeans[nm] = b;
+  });
+  $('potato').style.display = 'none';
+}
+function potPosOf(el) { const s = $('stage').getBoundingClientRect(), r = el.getBoundingClientRect(); return { x: r.left - s.left + r.width / 2, y: r.top - s.top + 14 }; }
+async function runPotato(winner) {
+  buildPotatoIdle();
+  const pot = $('potato');
+  const seq = shuffle(names.filter(n => n !== winner)).slice(0, 12); seq.push(winner);
+  let curPos = potPosOf(yardBeans[seq[0]]);
+  pot.style.display = 'block'; pot.style.transform = `translate(${curPos.x}px,${curPos.y}px)`;
+  let cur = yardBeans[seq[0]]; cur.classList.add('hot'); sndPop();
+  // (vị trí đậu đã theo lưới ở buildPotatoIdle)
+  toast('Khoai nướng tới rồi! Ném nhanh lên, bỏng tay đó! 🥔🔥', 2100);
+  await wait(1200);
+  let gap = 560, fakeDone = false;
+  for (let i = 1; i < seq.length; i++) {
+    if (skipFlag) break;
+    const next = yardBeans[seq[i]], isLast = i === seq.length - 1, remain = seq.length - i;
+    if (remain <= 3 && !isLast) { showBig(String(remain), 620); sndTick(); await wait(430); }
+    if (isLast) { showBig('3 · 2 · 1 …', 800); await wait(650); }
+    const from = curPos, to = potPosOf(next);
+    const anim = pot.animate([
+      { transform: `translate(${from.x}px,${from.y}px)` },
+      { transform: `translate(${(from.x + to.x) / 2}px,${Math.min(from.y, to.y) - 85}px)`, offset: .55 },
+      { transform: `translate(${to.x}px,${to.y}px)` }
+    ], { duration: Math.max(70, gap * SPEED), easing: 'ease-in-out' });
+    try { await anim.finished; } catch (e) {}
+    pot.style.transform = `translate(${to.x}px,${to.y}px)`; curPos = to;
+    cur.classList.remove('hot'); next.classList.add('hot'); cur = next; sndPop();
+    if (!fakeDone && i === Math.floor(seq.length * .55)) {
+      fakeDone = true;
+      toast('Ơ kìa! Khoai quay xe chạy lại rồi! 😆', 1500);
+      await wait(500);
+      const back = yardBeans[seq[i - 1]], bp = potPosOf(back);
+      const a2 = pot.animate([{ transform: `translate(${curPos.x}px,${curPos.y}px)` }, { transform: `translate(${bp.x}px,${bp.y - 60}px)`, offset: .5 }, { transform: `translate(${bp.x}px,${bp.y}px)` }], { duration: Math.max(70, 330 * SPEED), easing: 'ease-in-out' });
+      try { await a2.finished; } catch (e) {}
+      pot.style.transform = `translate(${bp.x}px,${bp.y}px)`;
+      cur.classList.remove('hot'); back.classList.add('hot');
+      await wait(420);
+      const a3 = pot.animate([{ transform: `translate(${bp.x}px,${bp.y}px)` }, { transform: `translate(${curPos.x}px,${curPos.y - 60}px)`, offset: .5 }, { transform: `translate(${curPos.x}px,${curPos.y}px)` }], { duration: Math.max(70, 330 * SPEED), easing: 'ease-in-out' });
+      try { await a3.finished; } catch (e) {}
+      pot.style.transform = `translate(${curPos.x}px,${curPos.y}px)`;
+      back.classList.remove('hot'); cur.classList.add('hot'); sndPop();
+    }
+    gap = i < seq.length * .55 ? Math.max(120, gap * .85) : Math.min(900, gap * 1.32);
+    if (!isLast) await wait(gap * .55);
+  }
+  const wEl = yardBeans[winner];
+  Object.values(yardBeans).forEach(b => { if (b !== wEl) { b.classList.remove('hot'); b.classList.add('dim'); } });
+  wEl.classList.add('hot', 'win');
+  sndBell(); showBig('🔔 RENG RENG!', 1100);
+  await wait(1250);
+}
+
+/* ================================================================
+   HOẠT CẢNH 2: CHUYẾN ĐÒ SANG SÔNG
+================================================================ */
+let boatBeans = {};
+function buildFerryIdle() {
+  const sc = $('sc-ferry'), boat = $('boat');
+  boat.querySelectorAll('.bean').forEach(b => b.remove());
+  sc.querySelectorAll(':scope > .bean').forEach(b => b.remove());
+  boatBeans = {};
+  boat.style.left = '2%'; boat.classList.remove('rock');
+  $('stormFx').classList.remove('on'); $('rainbow').style.opacity = 0;
+  const t = document.createElement('div');
+  t.className = 'bean'; t.id = 'ferryTeacher';
+  t.innerHTML = `<span class="nm" style="background:#17301f;color:#fff">Thầy giáo</span><div style="font-size:44px;line-height:1.15">🧑‍🏫</div>`;
+  t.style.left = '7%'; t.style.top = '2%'; boat.appendChild(t);
+  const perRow = Math.max(6, Math.ceil(names.length / 4));
+  const rowsTotal = Math.max(1, Math.ceil(names.length / perRow));
+  const sc8 = names.length > 20 ? .62 : .74;
+  names.forEach((n, i) => {
+    const b = makeBean(n, i);
+    const row = Math.floor(i / perRow), col = i % perRow;
+    b.style.left = (18 + col * (78 / perRow) + 39 / perRow) + '%';
+    b.style.top = (rowsTotal === 1 ? 8 : row * (56 / (rowsTotal - 1 || 1))) + '%';
+    b.style.transform = `scale(${sc8})`; b.style.zIndex = 5 + row;
+    boat.appendChild(b); boatBeans[n] = b;
+  });
+}
+function moveBoat(toPct, dur) {
+  const boat = $('boat'), from = parseFloat(boat.style.left) || 2;
+  const a = boat.animate([{ left: from + '%' }, { left: toPct + '%' }], { duration: Math.max(60, dur * SPEED), easing: 'ease-in-out' });
+  boat.style.left = toPct + '%';
+  return a.finished.catch(() => {});
+}
+function absolutize(el) {
+  const s = $('stage').getBoundingClientRect(), r = el.getBoundingClientRect(), sc = $('sc-ferry');
+  sc.appendChild(el);
+  el.style.left = (r.left - s.left + r.width / 2) + 'px'; el.style.top = (r.top - s.top) + 'px';
+  el.style.transform = '';
+  return el;
+}
+async function flyTo(el, xPct, yPct, dur) {
+  const s = $('stage').getBoundingClientRect();
+  const tx = xPct / 100 * s.width, ty = yPct / 100 * s.height;
+  const cx = parseFloat(el.style.left) || 0, cy = parseFloat(el.style.top) || 0;
+  const a = el.animate([{ left: cx + 'px', top: cy + 'px' }, { left: tx + 'px', top: ty + 'px' }], { duration: Math.max(50, dur * SPEED), easing: 'ease-in-out' });
+  try { await a.finished; } catch (e) {}
+  el.style.left = xPct + '%'; el.style.top = yPct + '%';
+}
+async function runFerry(winner) {
+  buildFerryIdle();
+  const boat = $('boat');
+  toast('Đò ra khơi! Cả lớp ngồi yên, thầy đưa các em sang sông ⛵', 2500);
+  await moveBoat(20, 4000); if (!skipFlag) await wait(300);
+  if (!skipFlag) {
+    $('stormFx').classList.add('on'); boat.classList.add('rock');
+    Object.values(boatBeans).forEach(b => b.classList.add('duck'));
+    showBig('🌊 SÓNG LỚN!', 1400); sndSplash(); setTimeout(sndSplash, 500);
+    toast('Sóng lớn quá! Thầy dang tay che cho cả lớp, các em ngồi yên nhé!', 2900);
+    await wait(3600);
+    $('stormFx').classList.remove('on'); boat.classList.remove('rock');
+    Object.values(boatBeans).forEach(b => b.classList.remove('duck'));
+    $('rainbow').style.opacity = 1;
+    toast('Trời quang, cầu vồng lên rồi! Đò sắp cập bến 🌈', 2400);
+  }
+  await moveBoat(38, 2400);
+  toast('Cập bến! Từng bạn lên bờ nào ⚓', 1900);
+  const order = shuffle(names.filter(n => n !== winner));
+  let spot = 0;
+  for (const n of order) {
+    const el = absolutize(boatBeans[n]);
+    el.style.zIndex = 12;
+    const sx = 74.5 + (spot % 6) * 4.6 + rnd(-1, 1), sy = [56, 66.5, 76][Math.floor(spot / 6) % 3];
+    spot++;
+    if (skipFlag) { el.style.left = sx + '%'; el.style.top = sy + '%'; el.classList.add('dim'); }
+    else { sndPop(); await flyTo(el, sx, sy, 480); el.classList.add('dim'); await wait(120); }
+  }
+  const t = absolutize($('ferryTeacher'));
+  const wEl = absolutize(boatBeans[winner]);
+  wEl.style.zIndex = 14; t.style.zIndex = 13;
+  await flyTo(wEl, 86, 58, 500);
+  flyTo(t, 78, 58, 500);
+  wEl.classList.add('win'); sndBell();
+  toast('Thầy dìu bạn cuối cùng lên bờ an toàn! 🤝', 2100);
+  await wait(1300);
+}
+
+/* ================================================================
+   HOẠT CẢNH 3: THẦY KIỂM TRA VỞ
+================================================================ */
+let seatBeans = {};
+function buildNoteIdle() {
+  const grid = $('deskGrid');
+  grid.innerHTML = ''; seatBeans = {};
+  const n = Math.max(names.length, 1);
+  const cols = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(n * 1.5))));
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  names.forEach((nm, i) => {
+    const seat = document.createElement('div'); seat.className = 'seat';
+    const b = makeBean(nm, i);
+    b.style.position = 'relative'; b.style.margin = '0'; b.style.left = 'auto'; b.style.top = 'auto';
+    if (names.length > 20) b.style.transform = 'scale(.8)';
+    seat.appendChild(b);
+    const dk = document.createElement('div'); dk.className = 'desk'; seat.appendChild(dk);
+    grid.appendChild(seat); seatBeans[nm] = b;
+  });
+  const t = $('teacher'); t.style.left = '50%'; t.style.top = '23%';
+  hideBubble();
+}
+async function teacherTo(beanEl, above) {
+  const s = $('stage').getBoundingClientRect(), r = beanEl.getBoundingClientRect();
+  const t = $('teacher');
+  const tx = (r.left - s.left + r.width / 2) / s.width * 100;
+  const ty = (r.bottom - s.top + 6) / s.height * 100;
+  t.style.left = tx + '%'; t.style.top = Math.min(ty, 88) + '%';
+  await wait(620);
+  return { x: tx, y: Math.max(4, ty - (above || 17)) };
+}
+async function runNote(winner) {
+  buildNoteIdle();
+  const praise = ['Bài làm tốt lắm! 👍', 'Ổn rồi. Còn em bên cạnh…', 'Hửm…? Để thầy xem nào 🤔', 'Chép bài đầy đủ, rất tốt!', 'Vở sạch, chữ đẹp! ✨'];
+  toast('Thầy bắt đầu đi kiểm tra vở. Ai cũng mở vở ra nào! 📒', 2300);
+  await wait(1000);
+  const stops = shuffle(names.filter(n => n !== winner)).slice(0, 5);
+  let fakeDone = false;
+  for (let i = 0; i < stops.length; i++) {
+    if (skipFlag) break;
+    const nm = stops[i], el = seatBeans[nm];
+    const pos = await teacherTo(el);
+    el.classList.add('nervous');
+    bubbleAt(pos.x - 6, pos.y, pick(praise), 1400); sndTick();
+    await wait(1250);
+    el.classList.remove('nervous'); hideBubble();
+    if (!fakeDone && i === 1 && stops.length > 2) {
+      fakeDone = true;
+      const nx = seatBeans[stops[i + 1]];
+      await teacherTo(nx);
+      const back = await teacherTo(el);
+      bubbleAt(back.x - 6, back.y, 'Khoan đã… thầy xem lại chút! 👀', 1300);
+      el.classList.add('nervous'); await wait(1200);
+      el.classList.remove('nervous'); hideBubble();
+    }
+  }
+  const wEl = seatBeans[winner];
+  const pos = await teacherTo(wEl);
+  bubbleAt(pos.x - 6, pos.y, 'Thầy dừng ở bàn này. Mời em lên bảng! ✍️', 2100);
+  Object.values(seatBeans).forEach(b => { if (b !== wEl) b.classList.add('dim'); });
+  wEl.classList.add('win'); sndBell();
+  await wait(1500); hideBubble();
+}
+
+/* ============ KHỞI TẠO ============ */
+loadAll();
+buildScene();
+</script>
+</body>
+</html>

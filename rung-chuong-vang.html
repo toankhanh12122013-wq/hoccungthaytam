@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rung Chuông Vàng — Trò chơi lớp học</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: linear-gradient(160deg, #1a1440, #3b1d6e 60%, #6d28a8); color: #fff; min-height: 100vh; }
+  .wrap { max-width: 1240px; margin: auto; padding: 16px; }
+  header.top { text-align: center; padding: 10px 0 4px; }
+  header.top h1 { font-size: clamp(28px, 4.6vw, 50px); font-weight: 1000; color: #ffd94d; text-shadow: 0 4px 0 #9a6206, 0 8px 26px #0008; letter-spacing: .5px; }
+  header.top p { color: #d9c9ff; margin-top: 6px; font-size: 15px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; margin-top: 16px; }
+  @media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+  .stage { background: #ffffff10; border: 2px solid #ffffff2b; border-radius: 22px; padding: 20px; backdrop-filter: blur(4px); position: relative; overflow: hidden; }
+  .bell { font-size: 74px; text-align: center; line-height: 1; filter: drop-shadow(0 8px 16px #0007); }
+  .bell.ring { animation: ring .5s ease-in-out 6; transform-origin: top center; }
+  @keyframes ring { 0%,100% { transform: rotate(0); } 25% { transform: rotate(16deg); } 75% { transform: rotate(-16deg); } }
+  .progress { text-align: center; font-weight: 900; color: #ffd94d; font-size: 17px; margin-top: 8px; }
+  .timer { text-align: center; margin-top: 6px; font-size: 15px; font-weight: 800; color: #bfe3ff; min-height: 22px; }
+  .timer b { font-size: 22px; color: #fff; }
+  .timer.out b { color: #ff8f8f; }
+  .question { margin-top: 14px; background: #fff; color: #221650; border-radius: 16px; padding: 20px 22px; font-size: clamp(19px, 2.6vw, 27px); font-weight: 800; line-height: 1.45; min-height: 96px; box-shadow: 0 10px 26px #0005; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 14px; }
+  @media (max-width: 560px) { .opts { grid-template-columns: 1fr; } }
+  .opt { background: #2c1e63; border: 2px solid #57459e; color: #fff; border-radius: 14px; padding: 14px 16px; font-size: clamp(15px, 2vw, 19px); font-weight: 700; text-align: left; display: flex; gap: 10px; align-items: baseline; }
+  .opt .lt { background: #ffd94d; color: #6b4e00; font-weight: 1000; border-radius: 8px; padding: 1px 9px; font-size: .92em; }
+  .opt.correct { background: #0e9f6e; border-color: #37d399; box-shadow: 0 0 0 3px #37d39955, 0 8px 20px #0006; }
+  .opt.dim { opacity: .45; }
+  .controls { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 16px; }
+  button { cursor: pointer; border: 0; border-radius: 12px; font-weight: 900; font-size: 15px; padding: 12px 18px; }
+  .b-gold { background: linear-gradient(#ffe27a, #f5b301); color: #5c4300; box-shadow: 0 4px 0 #9a6206; }
+  .b-gold:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+  .b-blue { background: #31507e; color: #fff; box-shadow: 0 4px 0 #1a2c4d; }
+  .b-pink { background: #e75480; color: #fff; box-shadow: 0 4px 0 #93355a; }
+  .b-pink:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+  .b-ghost { background: #ffffff1f; color: #fff; }
+  .panel { background: #ffffff10; border: 2px solid #ffffff2b; border-radius: 22px; padding: 16px; }
+  .panel h2 { font-size: 16px; font-weight: 900; color: #ffd94d; margin-bottom: 10px; }
+  .alive { font-size: 14px; color: #d9c9ff; font-weight: 700; margin-bottom: 10px; }
+  .alive b { color: #fff; font-size: 19px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; max-height: 300px; overflow: auto; }
+  .chip { background: #fff; color: #221650; font-weight: 800; font-size: 13.5px; padding: 7px 11px; border-radius: 999px; border: 2px solid #ffd94d; cursor: pointer; user-select: none; }
+  .chip.out { background: #3a2a6e; color: #9d8fd0; border-color: #57459e; text-decoration: line-through; opacity: .75; }
+  .field { margin-top: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 800; color: #d9c9ff; margin-bottom: 5px; }
+  textarea { width: 100%; min-height: 120px; border-radius: 11px; border: 1.5px solid #57459e; background: #171038; color: #fff; padding: 10px; font-size: 13.5px; font-family: inherit; resize: vertical; }
+  textarea.names { min-height: 84px; }
+  .hint { font-size: 12px; color: #b7a8e8; line-height: 1.55; margin-top: 5px; }
+  .overlay { position: fixed; inset: 0; background: #0c0624d9; display: none; align-items: center; justify-content: center; z-index: 99; padding: 18px; }
+  .overlay.show { display: flex; }
+  .winbox { text-align: center; max-width: 640px; }
+  .winbox .bigbell { font-size: 120px; animation: ring .5s ease-in-out infinite; transform-origin: top center; display: inline-block; }
+  .winbox h2 { font-size: clamp(26px, 4.4vw, 44px); color: #ffd94d; font-weight: 1000; text-shadow: 0 4px 0 #9a6206; margin-top: 10px; }
+  .winbox .names { font-size: clamp(20px, 3.4vw, 32px); font-weight: 1000; margin-top: 12px; line-height: 1.5; }
+  .winbox p { color: #d9c9ff; margin-top: 8px; }
+  .fall { position: fixed; top: -40px; font-size: 26px; animation: fall linear forwards; pointer-events: none; z-index: 100; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(340deg); } }
+  .backlink { display: inline-block; margin-top: 14px; color: #ffd94d; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>🔔 RUNG CHUÔNG VÀNG</h1>
+    <p>Cả lớp cùng tranh tài: trả lời sai là rời sàn thi đấu, ai trụ lại đến câu cuối cùng sẽ rung chiếc chuông vàng.</p>
+  </header>
+
+  <div class="layout">
+    <div class="stage">
+      <div class="bell" id="bell">🔔</div>
+      <div class="progress" id="progress">Sẵn sàng bắt đầu</div>
+      <div class="timer" id="timer"></div>
+      <div class="question" id="question">Bấm nút Bắt đầu thi đấu để vào câu hỏi đầu tiên. Thầy cô sửa trước bộ câu hỏi và danh sách thí sinh ở khung bên phải nếu cần.</div>
+      <div class="opts" id="opts"></div>
+      <div class="controls">
+        <button class="b-gold" id="startBtn" type="button">▶ Bắt đầu thi đấu</button>
+        <button class="b-blue" id="timerBtn" type="button" disabled>⏱ Tính giờ 15 giây</button>
+        <button class="b-gold" id="revealBtn" type="button" disabled>✔ Hiện đáp án</button>
+        <button class="b-blue" id="nextBtn" type="button" disabled>Câu tiếp theo ➜</button>
+        <button class="b-pink" id="rescueBtn" type="button" disabled>🛟 Ném phao cứu trợ</button>
+        <button class="b-ghost" id="resetBtn" type="button">↺ Chơi lại từ đầu</button>
+      </div>
+      <p class="hint" style="margin-top:12px">Cách chơi trên lớp: chiếu câu hỏi, cả lớp giơ bảng chọn đáp án trong 15 giây. Hiện đáp án xong, bấm vào tên những bạn trả lời sai để loại khỏi sàn thi đấu. Phao cứu trợ đưa tất cả bạn đã bị loại trở lại, chỉ dùng được 1 lần trong cả trận và nên dùng trước câu hỏi cuối cùng.</p>
+      <a class="backlink" href="index.html">⬅ Quay về trang chủ</a>
+    </div>
+
+    <div class="panel">
+      <h2>👥 Sàn thi đấu</h2>
+      <div class="alive">Còn trên sàn: <b id="aliveCount">0</b> bạn · Đã loại: <b id="outCount">0</b> bạn</div>
+      <div class="chips" id="chips"></div>
+      <div class="field">
+        <label>Danh sách thí sinh (mỗi dòng một bạn)</label>
+        <textarea class="names" id="namesInput"></textarea>
+      </div>
+      <div class="field">
+        <label>Bộ câu hỏi</label>
+        <textarea id="qInput" style="min-height:170px"></textarea>
+        <p class="hint">Mỗi dòng một câu, viết cách nhau bằng dấu gạch đứng: Câu hỏi | Đáp án A | Đáp án B | Đáp án C | Đáp án D | Chữ cái đáp án đúng. Ví dụ: 2 + 2 bằng mấy? | 3 | 4 | 5 | 6 | B</p>
+      </div>
+      <button class="b-gold" id="applyBtn" type="button" style="margin-top:12px;width:100%">Áp dụng câu hỏi và danh sách mới</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="winbox">
+    <span class="bigbell">🔔</span>
+    <h2>CHUÔNG VÀNG ĐÃ RUNG!</h2>
+    <div class="names" id="winNames"></div>
+    <p id="winNote"></p>
+    <button class="b-gold" id="closeWin" type="button" style="margin-top:18px">Đóng</button>
+  </div>
+</div>
+
+<script>
+  const DEFAULT_Q = [
+    'Giá trị của sin²x + cos²x bằng bao nhiêu? | 0 | 1 | 2 | −1 | B',
+    'Hàm số y = sin x tuần hoàn với chu kì nào? | π | 2π | π/2 | 4π | B',
+    'Cấp số cộng 2, 5, 8, ... có số hạng thứ 10 bằng bao nhiêu? | 26 | 29 | 32 | 23 | B',
+    'Dãy số nào sau đây là cấp số nhân? | 1, 3, 5, 7 | 2, 4, 6, 8 | 1, 2, 4, 8 | 5, 4, 3, 2 | C',
+    'Giá trị của cos(π/2) bằng bao nhiêu? | 1 | −1 | 0 | 1/2 | C',
+    'Số nghiệm của phương trình sin x = 0 trên đoạn [0; 2π] là mấy? | 1 | 2 | 3 | 4 | C',
+    'Cấp số cộng có số hạng đầu 3, công sai 4. Số hạng thứ 5 bằng bao nhiêu? | 15 | 17 | 19 | 23 | C',
+    'Tổng 1 + 2 + 3 + ... + 100 bằng bao nhiêu? | 4950 | 5000 | 5050 | 5100 | C',
+    'Giá trị của tan(π/4) bằng bao nhiêu? | 0 | 1/2 | √3 | 1 | D',
+    'Cấp số nhân 3, 6, 12, ... có số hạng thứ 6 bằng bao nhiêu? | 48 | 96 | 72 | 60 | B',
+    'Giá trị lớn nhất của hàm số y = 3sin x + 1 bằng bao nhiêu? | 3 | 4 | 2 | 0 | B',
+    'Phương trình cos x = 1/2 có nghiệm là? | x = ±π/6 + k2π | x = ±π/3 + k2π | x = π/3 + k2π | x = ±π/4 + k2π | B',
+    'Đẳng thức nào sau đây đúng? | sin 2x = sin x cos x | sin 2x = 2 sin x cos x | cos 2x = cos x − sin x | tan 2x = 2 tan²x | B',
+    'Tổng 10 số hạng đầu của cấp số cộng 1, 4, 7, ... bằng bao nhiêu? | 135 | 140 | 145 | 150 | C',
+    'Cấp số nhân có số hạng đầu 2, công bội 3. Tổng 3 số hạng đầu bằng bao nhiêu? | 24 | 26 | 28 | 30 | B'
+  ].join('\n');
+  const DEFAULT_NAMES = ['An','Bình','Châu','Dũng','Giang','Hà','Hải','Hùng','Khánh','Kiên','Lan','Linh','Long','Mai','Nam','Ngân','Nhi','Oanh','Phúc','Phương','Quân','Sơn','Thảo','Thư','Trang','Tú','Uyên','Vy','Yến','Đạt','Hiếu'].join('\n');
+
+  let questions = [], players = [], qi = -1, rescueUsed = false, revealed = false, timerId = null, audioCtx = null;
+  const $ = id => document.getElementById(id);
+  const letters = ['A','B','C','D'];
+
+  function beep(freq, dur, delay, type, gain) {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = audioCtx.currentTime + (delay || 0);
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type || 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(gain || 0.15, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + dur);
+    } catch(e) {}
+  }
+  function bellSound() { [1318, 1760, 2637].forEach((f,i) => { beep(f, 1.4, i * 0.02, 'sine', 0.12); beep(f * 2, 0.7, i * 0.02, 'sine', 0.04); }); }
+  function popSound() { beep(660, 0.15, 0, 'triangle', 0.12); }
+
+  function parseQuestions(text) {
+    return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+      const p = l.split('|').map(x => x.trim());
+      if (p.length < 6) return null;
+      const key = letters.indexOf((p[5] || '').toUpperCase());
+      return { q: p[0], opts: [p[1], p[2], p[3], p[4]], key: key >= 0 ? key : 0 };
+    }).filter(Boolean);
+  }
+  function parseNames(text) {
+    const seen = new Set(); const out = [];
+    text.split(/\r?\n/).map(x => x.replace(/^\s*\d+\s*[.)\-]?\s*/, '').trim()).filter(Boolean).forEach(n => {
+      const k = n.toLowerCase(); if (!seen.has(k)) { seen.add(k); out.push({ name: n, out: false }); }
+    });
+    return out;
+  }
+  function renderPlayers() {
+    $('chips').innerHTML = players.map((p, i) => '<span class="chip' + (p.out ? ' out' : '') + '" data-i="' + i + '">' + p.name.replace(/</g, '&lt;') + '</span>').join('');
+    const alive = players.filter(p => !p.out).length;
+    $('aliveCount').textContent = alive;
+    $('outCount').textContent = players.length - alive;
+  }
+  function showQuestion() {
+    const item = questions[qi];
+    revealed = false;
+    $('progress').textContent = 'Câu ' + (qi + 1) + ' / ' + questions.length;
+    $('timer').textContent = '';
+    $('timer').classList.remove('out');
+    $('question').textContent = item.q;
+    $('opts').innerHTML = item.opts.map((o, i) => '<div class="opt" data-i="' + i + '"><span class="lt">' + letters[i] + '</span><span>' + o.replace(/</g, '&lt;') + '</span></div>').join('');
+    $('revealBtn').disabled = false;
+    $('timerBtn').disabled = false;
+    $('nextBtn').disabled = true;
+    $('rescueBtn').disabled = rescueUsed || !players.some(p => p.out);
+  }
+  function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+  function startTimer() {
+    stopTimer();
+    let s = 15;
+    $('timer').classList.remove('out');
+    $('timer').innerHTML = '⏱ Còn <b>' + s + '</b> giây';
+    beep(880, 0.08, 0, 'triangle', 0.06);
+    timerId = setInterval(() => {
+      s--;
+      if (s <= 0) {
+        stopTimer();
+        $('timer').innerHTML = '⏰ <b>Hết giờ!</b> Cả lớp hạ bảng.';
+        $('timer').classList.add('out');
+        beep(520, 0.35, 0, 'square', 0.08);
+        return;
+      }
+      $('timer').innerHTML = '⏱ Còn <b>' + s + '</b> giây';
+      if (s <= 3) beep(880, 0.08, 0, 'triangle', 0.06);
+    }, 1000);
+  }
+  function reveal() {
+    if (qi < 0 || revealed) return;
+    revealed = true;
+    stopTimer();
+    const item = questions[qi];
+    document.querySelectorAll('.opt').forEach(el => {
+      const i = +el.dataset.i;
+      if (i === item.key) el.classList.add('correct'); else el.classList.add('dim');
+    });
+    popSound();
+    $('revealBtn').disabled = true;
+    $('timerBtn').disabled = true;
+    $('nextBtn').disabled = false;
+    $('rescueBtn').disabled = rescueUsed || !players.some(p => p.out);
+  }
+  function celebrate(names, note) {
+    $('winNames').textContent = names.join(' · ');
+    $('winNote').textContent = note;
+    $('overlay').classList.add('show');
+    bellSound();
+    $('bell').classList.add('ring');
+    setTimeout(() => $('bell').classList.remove('ring'), 3200);
+    const icons = ['🎉','⭐','🔔','🎊','✨'];
+    for (let i = 0; i < 36; i++) {
+      const s = document.createElement('span');
+      s.className = 'fall'; s.textContent = icons[i % icons.length];
+      s.style.left = Math.random() * 96 + 'vw';
+      s.style.animationDuration = (2.2 + Math.random() * 2.4) + 's';
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 5200);
+    }
+  }
+  function next() {
+    const alive = players.filter(p => !p.out);
+    if (alive.length === 1 && qi >= 0) {
+      celebrate([alive[0].name], 'Bạn duy nhất trụ lại trên sàn thi đấu. Chuông vàng thuộc về bạn!');
+      $('nextBtn').disabled = true; return;
+    }
+    if (alive.length === 0) {
+      alert('Cả lớp đã rời sàn thi đấu. Thầy cô hãy ném phao cứu trợ hoặc chơi lại từ đầu nhé.');
+      return;
+    }
+    if (qi + 1 >= questions.length) {
+      celebrate(alive.map(p => p.name), alive.length > 1 ? 'Cả ' + alive.length + ' bạn cùng vượt qua câu hỏi cuối cùng và cùng rung chuông vàng!' : 'Vượt qua câu hỏi cuối cùng. Chuông vàng đã rung!');
+      $('nextBtn').disabled = true; return;
+    }
+    qi++;
+    showQuestion();
+  }
+  function start() {
+    questions = parseQuestions($('qInput').value);
+    players = parseNames($('namesInput').value);
+    if (!questions.length) { alert('Chưa có câu hỏi hợp lệ nào. Anh kiểm tra lại định dạng bộ câu hỏi nhé.'); return; }
+    if (!players.length) { alert('Chưa có thí sinh nào trong danh sách.'); return; }
+    qi = 0; rescueUsed = false; revealed = false;
+    renderPlayers();
+    showQuestion();
+    $('startBtn').textContent = '↺ Thi đấu lại từ đầu';
+  }
+
+  $('chips').addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    const p = players[+c.dataset.i]; if (!p) return;
+    p.out = !p.out;
+    renderPlayers();
+    if (qi >= 0) $('rescueBtn').disabled = rescueUsed || !players.some(x => x.out);
+  });
+  $('startBtn').onclick = start;
+  $('applyBtn').onclick = start;
+  $('timerBtn').onclick = startTimer;
+  $('revealBtn').onclick = reveal;
+  $('nextBtn').onclick = next;
+  $('rescueBtn').onclick = () => {
+    if (rescueUsed) return;
+    rescueUsed = true;
+    players.forEach(p => p.out = false);
+    renderPlayers();
+    $('rescueBtn').disabled = true;
+    $('progress').textContent = '🛟 Phao cứu trợ! Tất cả trở lại sàn thi đấu — Câu ' + (qi + 1) + ' / ' + questions.length;
+    beep(990, 0.2, 0, 'triangle', 0.1); beep(1320, 0.3, 0.15, 'triangle', 0.1);
+  };
+  $('resetBtn').onclick = () => {
+    stopTimer(); qi = -1; rescueUsed = false;
+    players.forEach(p => p.out = false);
+    renderPlayers();
+    $('progress').textContent = 'Sẵn sàng bắt đầu';
+    $('timer').textContent = '';
+    $('question').textContent = 'Bấm nút Bắt đầu thi đấu để vào câu hỏi đầu tiên. Thầy cô sửa trước bộ câu hỏi và danh sách thí sinh ở khung bên phải nếu cần.';
+    $('opts').innerHTML = '';
+    $('revealBtn').disabled = true; $('timerBtn').disabled = true; $('nextBtn').disabled = true; $('rescueBtn').disabled = true;
+    $('startBtn').textContent = '▶ Bắt đầu thi đấu';
+  };
+  $('closeWin').onclick = () => $('overlay').classList.remove('show');
+
+  $('qInput').value = DEFAULT_Q;
+  $('namesInput').value = DEFAULT_NAMES;
+  players = parseNames(DEFAULT_NAMES);
+  questions = parseQuestions(DEFAULT_Q);
+  renderPlayers();
+</script>
+</body>
+</html>

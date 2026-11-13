@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Học Toán Cùng Thầy Tâm — Trò chơi · Tài liệu · Thi thử</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: #f2f6fd; color: #1c2b45; }
+  a { text-decoration: none; }
+  header.top { position: sticky; top: 0; z-index: 50; background: #ffffffee; backdrop-filter: blur(8px); border-bottom: 1px solid #dde6f5; }
+  .top-in { max-width: 1180px; margin: auto; display: flex; align-items: center; gap: 14px; padding: 10px 16px; flex-wrap: wrap; }
+  .logo { font-size: 21px; font-weight: 900; color: #0e9f6e; display: flex; align-items: center; gap: 8px; }
+  .logo small { display: block; font-size: 11px; font-weight: 600; color: #7286a3; }
+  nav.main { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  nav.main a { padding: 8px 13px; border-radius: 999px; font-weight: 700; font-size: 14px; color: #31507e; }
+  nav.main a:hover { background: #e7f0ff; }
+  .hero { background: linear-gradient(120deg, #0e9f6e, #0b7ea4 55%, #274b9f); color: #fff; }
+  .hero-in { max-width: 1180px; margin: auto; padding: 46px 16px 40px; text-align: center; }
+  .hero h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.12; font-weight: 1000; text-shadow: 0 3px 14px #0004; }
+  .hero p { margin: 14px auto 0; max-width: 720px; font-size: clamp(15px, 2vw, 18px); color: #e6f4ff; }
+  .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+  .stat { background: #ffffff22; border: 1px solid #ffffff44; border-radius: 14px; padding: 10px 18px; font-weight: 800; font-size: 15px; }
+  .stat b { font-size: 20px; display: block; }
+  .hero .cta { margin-top: 24px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 12px 22px; border-radius: 999px; font-weight: 800; font-size: 15px; border: 0; cursor: pointer; }
+  .btn.white { background: #fff; color: #0b7ea4; box-shadow: 0 6px 16px #0003; }
+  .btn.ghost { background: transparent; color: #fff; border: 2px solid #ffffff88; }
+  .wrap { max-width: 1180px; margin: auto; padding: 8px 16px 50px; }
+  section.blk { margin-top: 42px; }
+  .blk-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .blk-head h2 { font-size: clamp(22px, 3vw, 30px); font-weight: 1000; }
+  .blk-head p { color: #5d718e; font-size: 15px; }
+  .searchbar { margin: 18px 0 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .searchbar input { flex: 1; min-width: 240px; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #ccd9ee; font-size: 15px; outline: none; background: #fff; }
+  .searchbar input:focus { border-color: #0b7ea4; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-top: 18px; }
+  .card { background: #fff; border-radius: 18px; overflow: hidden; border: 1px solid #e2eaf6; box-shadow: 0 3px 10px #1c2b450d; display: flex; flex-direction: column; transition: transform .15s, box-shadow .15s; }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px #1c2b4520; }
+  .thumb { height: 108px; display: grid; place-items: center; font-size: 52px; }
+  .card .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+  .card h3 { font-size: 17px; font-weight: 900; line-height: 1.25; }
+  .card p { font-size: 13.5px; color: #5d718e; line-height: 1.45; flex: 1; }
+  .badge { align-self: flex-start; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: #eef4ff; color: #31507e; }
+  .badge.hot { background: #fff1d6; color: #9a6206; }
+  .play { margin-top: 6px; text-align: center; background: #0e9f6e; color: #fff; font-weight: 800; padding: 10px; border-radius: 11px; font-size: 14.5px; }
+  .play:hover { background: #0b8459; }
+  .doc { background: #fff; border: 1px solid #e2eaf6; border-radius: 16px; padding: 18px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; box-shadow: 0 3px 10px #1c2b450d; }
+  .doc .ic { font-size: 40px; }
+  .doc .tt { flex: 1; min-width: 230px; }
+  .doc .tt h3 { font-size: 17px; font-weight: 900; }
+  .doc .tt p { font-size: 13.5px; color: #5d718e; margin-top: 4px; line-height: 1.5; }
+  .dl { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dl a { padding: 10px 16px; border-radius: 11px; font-weight: 800; font-size: 14px; }
+  .dl a.pdf { background: #e2483d; color: #fff; }
+  .dl a.word { background: #2b6cb0; color: #fff; }
+  .dl a.go { background: #0e9f6e; color: #fff; }
+  .docs-grid { display: grid; gap: 14px; margin-top: 18px; }
+  .soon { border: 1.5px dashed #c3d2ea; border-radius: 16px; padding: 18px; color: #7286a3; background: #fbfdff; }
+  .soon h3 { font-size: 16px; color: #43597a; }
+  .tip { margin-top: 18px; background: #fff8e6; border: 1px solid #f0d48a; border-radius: 14px; padding: 15px 18px; font-size: 14.5px; line-height: 1.6; }
+  footer { background: #12233f; color: #bcd; margin-top: 60px; }
+  .foot-in { max-width: 1180px; margin: auto; padding: 26px 16px; text-align: center; font-size: 14px; line-height: 1.7; }
+  .hidden-card { display: none !important; }
+  .showcase { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 22px; }
+  .tile { border-radius: 18px; padding: 20px 16px 16px; color: #fff; display: block; box-shadow: 0 8px 20px #1c2b4522; transition: transform .15s; }
+  .tile:hover { transform: translateY(-4px); }
+  .tile .emo { font-size: 44px; }
+  .tile .cat { font-size: 11.5px; font-weight: 800; opacity: .85; text-transform: uppercase; letter-spacing: .6px; margin-top: 10px; }
+  .tile h3 { font-size: 18px; font-weight: 1000; margin-top: 3px; line-height: 1.3; }
+  .gates { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 20px; }
+  .gate { background: #fff; border: 1.5px solid #e2eaf6; border-radius: 18px; padding: 20px; display: block; box-shadow: 0 3px 10px #1c2b450d; transition: transform .15s, box-shadow .15s; }
+  .gate:hover { transform: translateY(-4px); box-shadow: 0 12px 24px #1c2b4520; }
+  .gate .emo { font-size: 36px; }
+  .gate h3 { font-size: 18px; font-weight: 1000; margin-top: 8px; color: #1c2b45; }
+  .gate p { font-size: 13.5px; color: #5d718e; line-height: 1.55; margin-top: 6px; }
+  .gate .go { display: inline-block; margin-top: 12px; font-weight: 900; color: #0b7ea4; font-size: 14.5px; }
+  .faq { margin-top: 18px; display: grid; gap: 10px; }
+  .faq details { background: #fff; border: 1px solid #e2eaf6; border-radius: 14px; padding: 14px 18px; }
+  .faq summary { font-weight: 900; font-size: 15.5px; cursor: pointer; color: #274b9f; }
+  .faq p { margin-top: 8px; font-size: 14px; color: #43597a; line-height: 1.6; }
+  @media (max-width: 640px) { .thumb { height: 88px; font-size: 42px; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo">📚 Học Toán Cùng Thầy Tâm<small>Học vui · Hiểu sâu · Thi tốt</small></div>
+    <nav class="main">
+      <a href="#tro-choi">🎮 Trò chơi</a>
+      <a href="#kho-on-tap">🏆 Ôn tập</a>
+      <a href="lop-hoc.html">🏫 Lớp học</a>
+      <a href="#ra-de">🛠 Ra đề</a>
+      <a href="#goi-ten">🎲 Gọi tên may mắn</a>
+      <a href="#tai-lieu">📚 Tài liệu</a>
+      <a href="kho-de-thi-thu.html">📝 Kho đề TN</a>
+      <a href="#thi-thu">📝 Thi thử</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-in">
+    <h1>Học Toán bằng trò chơi,<br>luyện thi bằng đề thật</h1>
+    <p>Chào mừng em đến với trang học tập của thầy Nguyễn Văn Tâm: chơi trò chơi ôn kiến thức ngay trên màn hình, tải tài liệu ôn tập và làm đề thi thử có bấm giờ như thi thật.</p>
+    <div class="stats">
+      <div class="stat"><b>37</b>trò chơi</div>
+      <div class="stat"><b>4</b>phần trong mỗi đề thi</div>
+      <div class="stat"><b>45 phút</b>mỗi đề thi thử</div>
+      <div class="stat"><b>Miễn phí</b>chơi ngay, không cần đăng nhập</div>
+    </div>
+    <div class="cta">
+      <a class="btn white" href="#tro-choi">🎮 Chơi ngay</a>
+      <button class="btn ghost" id="randomGame" type="button">🎲 Chọn ngẫu nhiên một trò</button>
+      <a class="btn ghost" href="#thi-thu">📝 Vào phòng thi thử</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section class="blk" style="margin-top:26px">
+    <div class="blk-head">
+      <h2>🌟 Nổi bật trên trang của thầy Tâm</h2>
+      <p>Những trò chơi và hoạt động đang hot nhất của lớp mình.</p>
+    </div>
+    <div class="showcase">
+      <a class="tile" style="background:linear-gradient(135deg,#3b1d6e,#8b5cf6)" href="rung-chuong-vang-toan-12.html" target="_blank">
+        <div class="emo">🔔</div><div class="cat">Trò chơi cả lớp</div><h3>Rung Chuông Vàng — Toán 12</h3>
+      </a>
+      <a class="tile" style="background:linear-gradient(135deg,#1e3d2f,#58a05c)" href="zombie-toan-12.html" target="_blank">
+        <div class="emo">🧟</div><div class="cat">Hành động · Trắc nghiệm</div><h3>Zombie Toán 12 — Bắn hạ zombie bằng đáp án đúng</h3>
+      </a>
+      <a class="tile" style="background:linear-gradient(135deg,#a8437d,#e75480)" href="ai-gesture-quiz.html" target="_blank">
+        <div class="emo">🖐️</div><div class="cat">Công nghệ AI</div><h3>AI Gesture Quiz — Trả lời bằng cử chỉ tay</h3>
+      </a>
+      <a class="tile" style="background:linear-gradient(135deg,#c2571b,#f59e0b)" href="vuon-hoa-tri-an.html" target="_blank">
+        <div class="emo">🌷</div><div class="cat">Hoạt động tháng 11</div><h3>Vườn Hoa Tri Ân — Tưới hoa bằng câu trả lời</h3>
+      </a>
+    </div>
+    <div class="gates">
+      <a class="gate" href="#tro-choi">
+        <div class="emo">🎮</div><h3>Kho trò chơi lớp học</h3>
+        <p>37 trò chơi: phiêu lưu tri thức, gọi tên may mắn, rung chuông vàng, bắn zombie, ai là triệu phú, chiếc nón kỳ diệu, bingo toán học... Nạp câu hỏi từ file Word theo mẫu là chơi ngay trên màn hình chiếu.</p>
+        <span class="go">Khám phá →</span>
+      </a>
+      <a class="gate" href="on-tap-toan-thpt.html" target="_blank">
+        <div class="emo">🏆</div><h3>Ôn tập theo lớp 10 · 11 · 12</h3>
+        <p>15 trò trắc nghiệm, 150 câu hỏi bám chương trình mới, chấm ngay tại chỗ. Bộ lớp 11 bám đúng giữa kì 1: lượng giác, dãy số, cấp số cộng, cấp số nhân.</p>
+        <span class="go">Khám phá →</span>
+      </a>
+      <a class="gate" href="lop-hoc.html">
+        <div class="emo">🏫</div><h3>Lớp học &amp; điểm thưởng</h3>
+        <p>Danh sách lớp với avatar cho từng em, cộng điểm thưởng và trừ điểm kèm lý do rõ ràng, bảng điểm cả lớp và tổng kết tuần như các lớp học trực tuyến hiện đại.</p>
+        <span class="go">Khám phá →</span>
+      </a>
+      <a class="gate" href="#ra-de">
+        <div class="emo">🛠</div><h3>Ra đề &amp; chấm bài</h3>
+        <p>Trộn đề từ file Word thành nhiều mã đề kèm đáp án, chấm bài nhập tay hoặc quét camera, và quét thẻ giấy chấm ngay cả lớp trong một lượt quét.</p>
+        <span class="go">Khám phá →</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="searchbar">
+    <input type="text" id="findGame" placeholder="🔎 Tìm trò chơi theo tên, ví dụ: hải tặc, vũ trụ, khủng long...">
+  </div>
+
+  <section class="blk" id="lop-hoc">
+    <div class="doc" style="background:linear-gradient(120deg,#fffbe9,#fff);border-color:#f0d48a">
+      <div class="ic">🏫</div>
+      <div class="tt">
+        <h3>Quản lý lớp học — Danh sách &amp; tích điểm thưởng phạt</h3>
+        <p>Trang dành cho thầy cô: lập danh sách lớp với ảnh đại diện dễ thương cho từng em, cộng điểm thưởng và trừ điểm kèm lý do rõ ràng, xem bảng điểm của cả lớp và tổng kết tuần. Dữ liệu lưu ngay trên máy, chiếu lên màn hình cả lớp cùng theo dõi.</p>
+      </div>
+      <div class="dl">
+        <a class="pdf" style="background:#0e9f6e" href="lop-hoc.html">Mở trang quản lý lớp ▶</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="ra-de">
+    <div class="blk-head">
+      <h2>🛠 Ra đề &amp; chấm bài</h2>
+      <p>Công cụ dành cho thầy cô để ra đề kiểm tra từ file Word có sẵn.</p>
+    </div>
+    <div class="docs-grid">
+      <div class="doc" style="background:linear-gradient(120deg,#eefaf4,#fff);border-color:#bfe6d2">
+        <div class="ic">🔀</div>
+        <div class="tt">
+          <h3>Ứng dụng Trộn Đề (TronDe) — bản V14</h3>
+          <p>Nạp file Word đề gốc, trộn thành tối đa 24 mã đề, tự sinh bảng đáp án, chấm bài nhập tay hoặc quét bằng camera. Khung xem trước hiện đúng công thức toán học, kể cả công thức MathType. Mọi dữ liệu chỉ lưu trên máy của thầy cô.</p>
+        </div>
+        <div class="dl">
+          <a class="pdf" style="background:#0e9f6e" href="tron-de.html" target="_blank">Mở ứng dụng trộn đề ▶</a>
+          <a class="word" href="tron-de-dien-thoai.zip">⬇ Gói cài lên điện thoại</a>
+        </div>
+      </div>
+      <div class="doc" style="background:linear-gradient(120deg,#fff8e6,#fff);border-color:#f0d48a">
+        <div class="ic">🗳</div>
+        <div class="tt">
+          <h3>Quét Thẻ Giấy — Toán 12</h3>
+          <p>Mỗi học sinh được in một thẻ giấy cố định. Tới câu hỏi, cả lớp giơ thẻ và xoay chữ A, B, C hoặc D lên trên theo đáp án của mình; thầy dùng điện thoại quét một lượt là máy chấm ngay từng câu và tổng kết cả buổi. Đã có sẵn bộ đề 28 câu, nạp thêm được từ file Word theo mẫu.</p>
+        </div>
+        <div class="dl">
+          <a class="pdf" style="background:#9a6206" href="quet-the-giay.html" target="_blank">Mở trang quét thẻ ▶</a>
+        </div>
+      </div>
+      <div class="doc" style="background:linear-gradient(120deg,#f3efff,#fff);border-color:#cdbcf5">
+        <div class="ic">🪧</div>
+        <div class="tt">
+          <h3>Thẻ Trả Lời — Quét thẻ giấy trên lớp (mới)</h3>
+          <p>Thiết kế theo video anh gửi: nhập danh sách lớp, in thẻ có sẵn tên và mã riêng cho từng em — chọn đáp án nào xoay cạnh đó lên trên rồi giơ cao. Mở buổi học, lia camera một vòng quanh lớp là máy tự ghi nhận đáp án từng em: sơ đồ lớp sáng lên theo từng em, chốt câu là có biểu đồ bốn đáp án và đúng sai của từng em, cuối buổi có bảng tổng kết và file kết quả.</p>
+        </div>
+        <div class="dl">
+          <a class="pdf" style="background:#6d28a8" href="the-tra-loi.html" target="_blank">Mở Thẻ Trả Lời ▶</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="kho-on-tap">
+    <div class="doc" style="background:linear-gradient(120deg,#eef4ff,#fff);border-color:#c9dbff">
+      <div class="ic">🏆</div>
+      <div class="tt">
+        <h3>Kho trò chơi ôn tập Toán THPT — 15 trò, 150 câu hỏi</h3>
+        <p>Nguyên một kho trò chơi trắc nghiệm bám chương trình mới: mỗi lớp 10, 11 và 12 có 5 trò riêng, mỗi trò 10 câu chọn đáp án A, B, C, D, chấm đúng sai ngay tại chỗ và tính điểm liền tay. Chơi cá nhân để nhận huy hiệu, hoặc chia 2 đến 4 đội thi đua ngay trên lớp.</p>
+      </div>
+      <div class="dl">
+        <a class="pdf" style="background:#274b9f" href="on-tap-toan-thpt.html" target="_blank">Vào kho trò chơi ▶</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="tro-choi">
+    <div class="blk-head">
+      <h2>🎮 Trò chơi phiêu lưu tri thức</h2>
+      <p>Trả lời đúng để tiến bước trong hành trình. Thầy cô nhập sẵn bộ câu hỏi ôn tập của bài học hôm nay.</p>
+    </div>
+    <div class="grid" id="advGrid">
+      <div class="card" data-name="ai là triệu phú ai la trieu phu học đường hoc duong">
+        <div class="thumb" style="background:linear-gradient(135deg,#3b1d6e,#ffb300)">💰</div>
+        <div class="body">
+          <h3>Ai Là Triệu Phú — Học Đường</h3>
+          <p>Leo thang giải thưởng qua từng câu hỏi Toán 12, có đủ 3 quyền trợ giúp huyền thoại: 50:50, hỏi ý kiến khán giả và tư vấn chuyên gia. Trang còn có sẵn vòng quay chọn người may mắn để gọi một bạn lên ghế nóng.</p>
+          <span class="badge hot">🆕 Trò mới · Có quay chọn người chơi</span>
+          <a class="play" href="ai-la-trieu-phu.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="chiếc nón kỳ diệu chiec non ky dieu đoán chữ doan chu thuật ngữ thuat ngu">
+        <div class="thumb" style="background:linear-gradient(135deg,#6d28a8,#f783ac)">🎡</div>
+        <div class="body">
+          <h3>Chiếc Nón Kỳ Diệu — Đoán Thuật Ngữ</h3>
+          <p>Quay nón lấy ô điểm rồi đoán từng chữ cái của thuật ngữ Toán học bị che, có gợi ý kèm theo cho từng câu. Đoán đúng chữ nào nhân điểm chữ đó, gặp ô Phá sản là mất hết điểm vòng — hồi hộp tới chữ cuối cùng.</p>
+          <span class="badge hot">🆕 Trò mới · Toán 10 – 11 – 12</span>
+          <a class="play" href="chiec-non-ky-dieu.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="bingo toán học bingo toan hoc cả lớp ca lop">
+        <div class="thumb" style="background:linear-gradient(135deg,#0b5563,#37d67a)">🎱</div>
+        <div class="body">
+          <h3>Bingo Toán Học — Cả Lớp Cùng Chơi</h3>
+          <p>Bốn đội, mỗi đội một bảng 5×5 chứa các đáp án. Thầy cô rút câu hỏi, đội nào có đáp án đúng thì đánh dấu ô đó — đủ một hàng ngang, dọc hoặc chéo là BINGO. Cả lớp cùng chơi trên một màn hình chiếu.</p>
+          <span class="badge hot">🆕 Trò mới · Chơi theo 4 đội</span>
+          <a class="play" href="bingo-toan-hoc.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="lật thẻ trí nhớ lat the tri nho ghép cặp ghep cap bài tập trả lời ngắn theo chương cap do">
+        <div class="thumb" style="background:linear-gradient(135deg,#7b1d5a,#ff9d5c)">🃏</div>
+        <div class="body">
+          <h3>Lật Thẻ Trí Nhớ — Bài Tập Theo Chương</h3>
+          <p>Chọn 1 trong 6 chương Toán 10 – 11 – 12, lật thẻ ghép thẻ BÀI TẬP trả lời ngắn với thẻ ĐÁP ÁN. 3 cấp độ tăng dần: Nhận biết → Thông hiểu → Vận dụng, qua cấp trước mới mở được cấp sau, có chấm sao theo số lượt lật.</p>
+          <span class="badge hot">🆕 Làm mới · 6 chương · 3 cấp độ · 108 bài tập</span>
+          <a class="play" href="lat-the-tri-nho.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="rung chuông vàng toán 12 rung chuong vang toan 12">
+        <div class="thumb" style="background:linear-gradient(135deg,#3b1d6e,#ffd94d)">🔔</div>
+        <div class="body">
+          <h3>Rung Chuông Vàng — Toán 12</h3>
+          <p>Bản của thầy cô: nạp cả bộ câu hỏi từ file Word soạn theo mẫu (Câu, bốn phương án A B C D, dòng Đáp án) là chơi ngay, không phải gõ từng câu. Công thức toán hiện đẹp ngay trên sàn thi đấu, có phao cứu trợ và loại dần thí sinh.</p>
+          <span class="badge hot">🌟 Bản chính · Toán 12 học kì 1</span>
+          <a class="play" href="rung-chuong-vang-toan-12.html" target="_blank">Chơi ngay ▶</a>
+          <a class="play" style="background:#31507e" href="cau-hoi-rung-chuong-vang-toan-12-mau.docx">⬇ Bộ câu hỏi mẫu (Word)</a>
+        </div>
+      </div>
+      <div class="card" data-name="rung chuông vàng toán 11 rung chuong vang toan 11">
+        <div class="thumb" style="background:linear-gradient(135deg,#6d28a8,#ffb35c)">🔔</div>
+        <div class="body">
+          <h3>Rung Chuông Vàng — Toán 11</h3>
+          <p>Bản gọn chạy offline, không cần mạng: sẵn 15 câu Toán 11 trong trang, sửa câu hỏi và danh sách ngay trên sàn thi đấu. Hợp khi lớp không có mạng hoặc cần mở chơi thật nhanh.</p>
+          <span class="badge">Chạy offline · Sẵn câu hỏi</span>
+          <a class="play" href="rung-chuong-vang.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="zombie toán 12 bắn zombie trắc nghiệm">
+        <div class="thumb" style="background:linear-gradient(135deg,#1e3d2f,#7ac74f)">🧟</div>
+        <div class="body">
+          <h3>Zombie Toán 12 — Bắn Hạ Zombie</h3>
+          <p>Trả lời đúng câu trắc nghiệm để bắn hạ từng con zombie đang tiến về phía lớp. Nạp bộ câu hỏi từ file Word theo mẫu giống trò Rung Chuông Vàng, học sinh cũng vào chơi được bằng mã QR hoặc PIN.</p>
+          <span class="badge hot">🆕 Trò mới · Toán 12</span>
+          <a class="play" href="zombie-toan-12.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="ai gesture quiz chibi cử chỉ tay">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffe0ec,#a685ff)">🖐️</div>
+        <div class="body">
+          <h3>AI Gesture Quiz Chibi</h3>
+          <p>Trả lời trắc nghiệm bằng cử chỉ tay trước camera: giơ tay chọn đáp án, không cần bấm phím. Nhập câu hỏi từ file Word soạn theo mẫu (công thức Equation trong Word được chuyển tự động), TXT hoặc JSON.</p>
+          <span class="badge hot">🆕 Trò mới · Chơi bằng cử chỉ</span>
+          <a class="play" href="ai-gesture-quiz.html" target="_blank">Chơi ngay ▶</a>
+          <a class="play" style="background:#31507e" href="de-mau-gesture-quiz.docx">⬇ Đề mẫu (Word)</a>
+        </div>
+      </div>
+      <div class="card" data-name="chuyến đò tri ân qua sông">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffe9a8,#ffb35c)">⛵</div>
+        <div class="body">
+          <h3>Chuyến Đò Tri Ân</h3>
+          <p>Cùng cô chèo đò sang sông tri thức trong tháng 11 tri ân thầy cô. Trả lời đúng để chuyến đò cập bến an toàn.</p>
+          <span class="badge hot">🌟 Chủ đề tháng 11</span>
+          <a class="play" href="chuyen-do-tri-an.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="đền pha lê tri thức">
+        <div class="thumb" style="background:linear-gradient(135deg,#c9f2ff,#7db4ff)">💎</div>
+        <div class="body">
+          <h3>Đền Pha Lê Tri Thức</h3>
+          <p>Khám phá ngôi đền pha lê kỳ bí, mở từng cánh cửa bí mật bằng những câu trả lời chính xác.</p>
+          <span class="badge">Phiêu lưu · Trắc nghiệm</span>
+          <a class="play" href="den-pha-le-tri-thuc.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="thám hiểm vũ trụ hành tinh">
+        <div class="thumb" style="background:linear-gradient(135deg,#2b3a6e,#7a4fd0)">🪐</div>
+        <div class="body">
+          <h3>Thám Hiểm Vũ Trụ</h3>
+          <p>Du hành giữa các hành tinh, thu thập năng lượng tri thức để đưa con tàu trở về Trái Đất.</p>
+          <span class="badge">Phiêu lưu · Trắc nghiệm</span>
+          <a class="play" href="tham-hiem-vu-tru.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="giải cứu vương quốc hữu tỉ số hữu tỉ">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffd6e8,#ff8fb5)">👑</div>
+        <div class="body">
+          <h3>Giải Cứu Vương Quốc Hữu Tỉ</h3>
+          <p>Vương quốc số hữu tỉ đang gặp nạn. Dùng các phép tính với số hữu tỉ để giải cứu vương quốc.</p>
+          <span class="badge">Ôn tập · Số hữu tỉ</span>
+          <a class="play" href="giai-cuu-vuong-quoc-huu-ti.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="goi-ten">
+    <div class="blk-head">
+      <h2>🎲 Gọi tên may mắn</h2>
+      <p>Đầu giờ và giữa giờ: chọn ngẫu nhiên một bạn lên bảng hay trả lời câu hỏi, công bằng và đầy hồi hộp.</p>
+    </div>
+    <div class="grid" id="callGrid">
+      <div class="card" data-name="cỗ máy gọi tên may mắn bóng">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffe492,#f6a83c)">🎰</div>
+        <div class="body">
+          <h3>Cỗ Máy Gọi Tên May Mắn</h3>
+          <p>Những quả bóng mang tên cả lớp nhảy trong lồng kính. Bóng nào rơi ra, bạn đó được gọi tên kèm một câu hỏi.</p>
+          <a class="play" href="co-may-goi-ten.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="hoạt cảnh gọi tên khoai nóng chuyến đò kiểm tra vở">
+        <div class="thumb" style="background:linear-gradient(135deg,#d8f7c9,#7ed37e)">🥔</div>
+        <div class="body">
+          <h3>Hoạt Cảnh Gọi Tên</h3>
+          <p>Ba hoạt cảnh quen thuộc của lớp mình: Khoai Nóng Bỏng Tay, Chuyến Đò Sang Sông và Thầy Kiểm Tra Vở.</p>
+          <span class="badge hot">🌟 Hoạt cảnh của lớp</span>
+          <a class="play" href="hoat-canh-goi-ten.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="đua bi may mắn">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffd1dc,#ff8fa3)">🔮</div>
+        <div class="body">
+          <h3>Đua Bi May Mắn</h3>
+          <p>Những viên bi lăn đua gay cấn. Viên bi về đích mang theo tên của bạn may mắn.</p>
+          <a class="play" href="dua-bi-may-man.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="đường đua thú cưng">
+        <div class="thumb" style="background:linear-gradient(135deg,#d3f8e2,#5fd68b)">🐶</div>
+        <div class="body">
+          <h3>Đường Đua Thú Cưng</h3>
+          <p>Các thú cưng dễ thương đua nhau về đích. Thú cưng thắng cuộc sẽ chọn ra bạn được gọi tên.</p>
+          <a class="play" href="duong-dua-thu-cung.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="kho báu hải tặc">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffe3b3,#e09f3e)">🏴‍☠️</div>
+        <div class="body">
+          <h3>Kho Báu Hải Tặc</h3>
+          <p>Rương kho báu giữa đảo hoang chỉ mở ra cho một bạn duy nhất trong mỗi lượt chơi.</p>
+          <a class="play" href="kho-bau-hai-tac.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="khủng long săn trứng">
+        <div class="thumb" style="background:linear-gradient(135deg,#e2ffd1,#8ed081)">🦖</div>
+        <div class="body">
+          <h3>Khủng Long Săn Trứng</h3>
+          <p>Chú khủng long đi săn những quả trứng bí ẩn. Mỗi quả trứng nở ra một cái tên.</p>
+          <a class="play" href="khung-long-san-trung.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="lá bài ma thuật">
+        <div class="thumb" style="background:linear-gradient(135deg,#e6dcff,#a685ff)">🃏</div>
+        <div class="body">
+          <h3>Lá Bài Ma Thuật</h3>
+          <p>Những lá bài úp bí ẩn, lật lá nào là gọi tên bạn nấy. Hồi hộp đến lá cuối cùng.</p>
+          <a class="play" href="la-bai-ma-thuat.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="tàu lượn siêu tốc">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffe0ec,#ff6b9d)">🎢</div>
+        <div class="body">
+          <h3>Tàu Lượn Siêu Tốc</h3>
+          <p>Chuyến tàu lượn lao vun vút qua những khúc cua. Tàu dừng ở ga nào, bạn ở ga đó được gọi tên.</p>
+          <a class="play" href="tau-luon-sieu-toc.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="triệu hồi tinh cầu">
+        <div class="thumb" style="background:linear-gradient(135deg,#d9e8ff,#6f9dff)">🔮</div>
+        <div class="body">
+          <h3>Triệu Hồi Tinh Cầu</h3>
+          <p>Triệu hồi những tinh cầu kỳ diệu giữa lớp học, mỗi tinh cầu chứa một cái tên may mắn.</p>
+          <a class="play" href="trieu-hoi-tinh-cau.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+      <div class="card" data-name="vườn hoa tri ân tháng 11">
+        <div class="thumb" style="background:linear-gradient(135deg,#ffeef7,#ffb7d9)">🌷</div>
+        <div class="body">
+          <h3>Vườn Hoa Tri Ân</h3>
+          <p>Hoạt động cả tháng 11: mỗi bạn một chậu hoa, trả lời câu hỏi ôn bài để tưới nước. Hoa nở thành điểm 8, 9, 10 và cả lớp có một vườn hoa chung vào ngày 20/11.</p>
+          <span class="badge hot">🌟 Hoạt động tháng 11</span>
+          <a class="play" href="vuon-hoa-tri-an.html" target="_blank">Chơi ngay ▶</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="tai-lieu">
+    <div class="blk-head">
+      <h2>📚 Tài liệu học tập</h2>
+      <p>Tài liệu ôn tập theo từng khối lớp, tải về để học ở nhà hoặc in ra giấy.</p>
+    </div>
+    <div class="docs-grid">
+      <div class="doc">
+        <div class="ic">📘</div>
+        <div class="tt">
+          <h3>Toán 11 — Bộ đề ôn tập giữa học kì 1</h3>
+          <p>Hai đề song song theo đúng ma trận của trường: lượng giác và phương trình lượng giác, dãy số, cấp số cộng, cấp số nhân. Dùng làm tài liệu ôn tập trước khi vào phòng thi thử ở mục dưới.</p>
+        </div>
+        <div class="dl">
+          <a class="pdf" href="de-giua-ki-1-toan-11-de-1.pdf" target="_blank">Đề 1 · PDF</a>
+          <a class="pdf" href="de-giua-ki-1-toan-11-de-2.pdf" target="_blank">Đề 2 · PDF</a>
+        </div>
+      </div>
+      <div class="soon">
+        <h3>📗 Lớp 10 — Đang cập nhật</h3>
+        <p style="margin-top:5px">Tài liệu lớp 10 sẽ được thầy cô bổ sung trong thời gian tới.</p>
+      </div>
+      <div class="doc">
+        <div class="ic">📙</div>
+        <div class="tt">
+          <h3>Toán 12 — Kho đề thi thử tốt nghiệp</h3>
+          <p>Kho chung các đề khảo sát và thi thử tốt nghiệp của các trường trong cả nước: hiện có 18 đề của Chuyên Bắc Ninh, Chuyên KHTN Hà Nội, Nguyễn Khuyến TP.HCM, Chuyên Trần Đại Nghĩa, Sở Sơn La, Sở Ninh Bình… và đề tốt nghiệp mã 1010. Mỗi đề làm online ngay trên trang với bấm giờ 90 phút và chấm tự động, hoặc tải file gốc về in. Có đề mới chỉ cần gửi file Word về kho theo hướng dẫn trong trang kho đề.</p>
+        </div>
+        <div class="dl">
+          <a class="go" href="kho-de-thi-thu.html">📚 Vào kho đề thi thử</a>
+          <a class="word" href="lam-de-online.html?de=de-thi-thu-01-chuyen-bac-ninh.docx">▶ Làm online đề Bắc Ninh</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk" id="thi-thu">
+    <div class="blk-head">
+      <h2>📝 Phòng thi thử</h2>
+      <p>Đề thi thử giữa học kì 1 môn Toán lớp 11, thời gian làm bài 45 phút.</p>
+    </div>
+    <div class="docs-grid">
+      <div class="doc">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề thi thử số 1 — Giữa học kì 1, Toán 11</h3>
+          <p>Cấu trúc: Phần I gồm 16 câu trắc nghiệm nhiều lựa chọn (4 điểm); Phần II gồm 2 câu đúng – sai, mỗi câu 4 ý (2 điểm); Phần III gồm 4 câu trả lời ngắn (2 điểm); Phần IV gồm 3 bài tự luận (2 điểm).</p>
+        </div>
+        <div class="dl">
+          <a class="pdf" href="de-giua-ki-1-toan-11-de-1.pdf" target="_blank">⬇ Tải PDF để in</a>
+          <a class="word" href="de-giua-ki-1-toan-11-de-1.docx" target="_blank">⬇ Tải file Word</a>
+        </div>
+      </div>
+      <div class="doc">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề thi thử số 2 — Giữa học kì 1, Toán 11</h3>
+          <p>Đề song song với đề số 1, cùng ma trận và độ khó, dùng để luyện thêm hoặc thi lại sau khi đã sửa bài đề số 1.</p>
+        </div>
+        <div class="dl">
+          <a class="pdf" href="de-giua-ki-1-toan-11-de-2.pdf" target="_blank">⬇ Tải PDF để in</a>
+          <a class="word" href="de-giua-ki-1-toan-11-de-2.docx" target="_blank">⬇ Tải file Word</a>
+        </div>
+      </div>
+    </div>
+    <div class="tip">
+      <b>🎯 Cách thi thử cho hiệu quả:</b> chuẩn bị giấy nháp và máy tính cầm tay, bấm giờ đúng 45 phút, làm bài nghiêm túc như thi thật và không xem tài liệu. Làm xong, ghi lại những câu chưa chắc chắn để hỏi thầy cô hoặc trao đổi với bạn. Thi thử đều đặn giúp em quen áp lực thời gian và tự thấy mình tiến bộ qua từng đề.
+    </div>
+  </section>
+
+  <section class="blk" id="hoi-dap">
+    <div class="blk-head">
+      <h2>❓ Câu hỏi thường gặp</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Học sinh vào chơi trò chơi bằng cách nào?</summary>
+        <p>Chỉ cần mở trang này và bấm Chơi ngay ở trò mình thích, không cần tài khoản hay mật khẩu. Một số trò như Rung Chuông Vàng và Zombie Toán 12 còn cho học sinh quét mã QR hoặc nhập mã PIN 6 số do thầy cô chiếu lên để vào phòng và trả lời ngay trên điện thoại.</p>
+      </details>
+      <details>
+        <summary>Thầy cô muốn dùng câu hỏi của bài mình đang dạy thì làm sao?</summary>
+        <p>Soạn câu hỏi trong file Word theo mẫu: mỗi câu gồm đề bài, bốn phương án A, B, C, D và dòng Đáp án ở cuối; công thức gõ bằng Equation trong Word sẽ tự chuyển sang dạng hiển thị đẹp. Sau đó mở trò chơi lên và nạp file Word vào là chơi ngay bằng chính bộ câu hỏi đó.</p>
+      </details>
+      <details>
+        <summary>Dữ liệu danh sách lớp và điểm thưởng được lưu ở đâu?</summary>
+        <p>Dữ liệu chỉ lưu ngay trên trình duyệt của máy thầy cô đang dùng, không gửi đi nơi khác. Thầy cô nên thỉnh thoảng bấm nút Xuất dữ liệu (JSON) ở trang Lớp học để sao lưu, và nhập lại khi đổi máy.</p>
+      </details>
+      <details>
+        <summary>Không có mạng thì chơi được không?</summary>
+        <p>Phần lớn trò chơi trong trang chạy offline sau khi đã mở được trang. Một số trò của thầy cô nạp thư viện từ mạng nên cần có mạng ở lần mở đầu; bản Rung Chuông Vàng Toán 11 trong trang được chuẩn bị sẵn để chơi offline hoàn toàn.</p>
+      </details>
+      <details>
+        <summary>Làm đề thi thử xong thì xem đáp án ở đâu?</summary>
+        <p>Các em làm bài nghiêm túc trong 45 phút như thi thật, ghi lại những câu chưa chắc chắn. Đáp án và hướng dẫn chấm do thầy cô giữ để chữa bài trên lớp, như vậy buổi chữa bài mới có ý nghĩa.</p>
+      </details>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="foot-in">
+    📚 <b>Học Toán Cùng Thầy Tâm</b> — Trang học tập của thầy Nguyễn Văn Tâm · Trung tâm GDNN-GDTX Ba Tri<br>
+    Chơi trò chơi để ôn bài · Đọc tài liệu để hiểu sâu · Thi thử để sẵn sàng<br>
+    <span style="opacity:.65;font-size:13px">Bản gói V18 — mỗi đề thi thử là một trang chứa sẵn đề: bấm là thi ngay, chấm điểm tại chỗ, không cần mạng, không cần file Word đi kèm</span>
+  </div>
+</footer>
+
+<script>
+  const cards = [...document.querySelectorAll('.card')];
+  document.getElementById('findGame').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    cards.forEach(c => {
+      const hit = !q || (c.dataset.name || '').includes(q) || c.querySelector('h3').textContent.toLowerCase().includes(q);
+      c.classList.toggle('hidden-card', !hit);
+    });
+  });
+  document.getElementById('randomGame').addEventListener('click', () => {
+    const links = [...document.querySelectorAll('.card .play')];
+    const pick = links[Math.floor(Math.random() * links.length)];
+    window.open(pick.getAttribute('href'), '_blank');
+  });
+</script>
+</body>
+</html>

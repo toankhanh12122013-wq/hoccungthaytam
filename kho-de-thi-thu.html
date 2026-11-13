@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kho đề thi thử tốt nghiệp — Học Toán Cùng Thầy Tâm</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif; background: #f2f6fd; color: #1c2b45; }
+  a { text-decoration: none; }
+  header.top { position: sticky; top: 0; z-index: 50; background: #ffffffee; backdrop-filter: blur(8px); border-bottom: 1px solid #dde6f5; }
+  .top-in { max-width: 1180px; margin: auto; display: flex; align-items: center; gap: 14px; padding: 10px 16px; flex-wrap: wrap; }
+  .logo { font-size: 21px; font-weight: 900; color: #0e9f6e; display: flex; align-items: center; gap: 8px; }
+  .logo small { display: block; font-size: 11px; font-weight: 600; color: #7286a3; }
+  nav.main { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  nav.main a { padding: 8px 13px; border-radius: 999px; font-weight: 700; font-size: 14px; color: #31507e; }
+  nav.main a:hover { background: #e7f0ff; }
+  nav.main a.on { background: #0e9f6e; color: #fff; }
+  .hero { background: linear-gradient(120deg, #274b9f, #0b7ea4 55%, #0e9f6e); color: #fff; }
+  .hero-in { max-width: 1180px; margin: auto; padding: 38px 16px 32px; text-align: center; }
+  .hero h1 { font-size: clamp(26px, 4.4vw, 42px); font-weight: 1000; line-height: 1.15; text-shadow: 0 3px 14px #0004; }
+  .hero p { margin: 12px auto 0; max-width: 760px; font-size: clamp(14.5px, 2vw, 17px); color: #e6f4ff; line-height: 1.6; }
+  .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+  .stat { background: #ffffff22; border: 1px solid #ffffff44; border-radius: 14px; padding: 9px 18px; font-weight: 800; font-size: 14.5px; }
+  .stat b { font-size: 19px; display: block; }
+  .wrap { max-width: 1180px; margin: auto; padding: 8px 16px 50px; }
+  section.blk { margin-top: 36px; }
+  .blk-head h2 { font-size: clamp(21px, 3vw, 28px); font-weight: 1000; }
+  .blk-head p { color: #5d718e; font-size: 15px; margin-top: 4px; }
+  .searchbar { margin: 16px 0 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .searchbar input { flex: 1; min-width: 240px; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #ccd9ee; font-size: 15px; outline: none; background: #fff; }
+  .searchbar input:focus { border-color: #0b7ea4; }
+  .docs-grid { display: grid; gap: 14px; margin-top: 18px; }
+  .doc { background: #fff; border: 1px solid #e2eaf6; border-radius: 16px; padding: 18px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; box-shadow: 0 3px 10px #1c2b450d; }
+  .doc .ic { font-size: 40px; }
+  .doc .tt { flex: 1; min-width: 240px; }
+  .doc .tt h3 { font-size: 17.5px; font-weight: 900; line-height: 1.3; }
+  .doc .tt p { font-size: 13.5px; color: #5d718e; margin-top: 4px; line-height: 1.55; }
+  .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .meta span { background: #eef4ff; color: #31507e; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 3px 10px; }
+  .dl { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dl a { padding: 10px 16px; border-radius: 11px; font-weight: 800; font-size: 14px; }
+  .dl a.go { background: #0e9f6e; color: #fff; }
+  .dl a.pdf { background: #e2483d; color: #fff; }
+  .dl a.word { background: #2b6cb0; color: #fff; }
+  .guidebox { margin-top: 18px; background: #fff; border: 1px solid #e2eaf6; border-radius: 16px; padding: 20px 22px; box-shadow: 0 3px 10px #1c2b450d; }
+  .guidebox h3 { font-size: 18px; font-weight: 1000; }
+  .guidebox ol { margin: 10px 0 0 22px; font-size: 14.5px; line-height: 1.7; color: #43597a; }
+  .guidebox ol b { color: #1c2b45; }
+  .tip { margin-top: 16px; background: #fff8e6; border: 1px solid #f0d48a; border-radius: 14px; padding: 15px 18px; font-size: 14.5px; line-height: 1.65; }
+  .hidden-card { display: none !important; }
+  footer { background: #12233f; color: #bcd; margin-top: 60px; }
+  .foot-in { max-width: 1180px; margin: auto; padding: 26px 16px; text-align: center; font-size: 14px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="index.html">📚 Học Toán Cùng Thầy Tâm<small>Học vui · Hiểu sâu · Thi tốt</small></a>
+    <nav class="main">
+      <a href="index.html">🏠 Trang chủ</a>
+      <a href="index.html#tro-choi">🎮 Trò chơi</a>
+      <a href="index.html#tai-lieu">📚 Tài liệu</a>
+      <a class="on" href="kho-de-thi-thu.html">📝 Kho đề thi thử</a>
+      <a href="lop-hoc.html">🏫 Lớp học</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-in">
+    <h1>📝 Kho đề thi thử tốt nghiệp</h1>
+    <p>Nguồn đề khảo sát chất lượng và thi thử tốt nghiệp môn Toán của các trường trong cả nước, gom về một nơi duy nhất. Mỗi đề làm được ngay trên trang với bấm giờ 90 phút và chấm tự động theo thang điểm của Bộ, hoặc tải file về in ra giấy để làm như thi thật.</p>
+    <div class="stats">
+      <div class="stat"><b>18</b>đề đang có trong kho</div>
+      <div class="stat"><b>22 câu</b>mỗi đề: 12 + 4 + 6</div>
+      <div class="stat"><b>90 phút</b>bấm giờ như thi thật</div>
+      <div class="stat"><b>Chấm tự động</b>thang điểm của Bộ</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div style="background:#fff8e6;border:1.5px solid #f0d48a;border-radius:16px;padding:18px 22px;margin-bottom:20px;font-size:15px;line-height:1.7">
+    <b style="font-size:17px">🎯 Cách thi thử online — 3 bước</b>
+    <ol style="margin:8px 0 8px 22px">
+      <li>Chọn một đề bên dưới rồi bấm nút xanh <b>Thi thử online — chấm điểm ngay</b>.</li>
+      <li>Nhập <b>họ tên và lớp</b>, bấm <b>Bắt đầu làm bài</b>: đồng hồ 90 phút bắt đầu chạy, em làm bài ngay trên trang (chọn đáp án Phần I, bấm Đúng/Sai từng ý Phần II, gõ đáp số Phần III).</li>
+      <li>Bấm <b>Nộp bài</b> (hoặc để hết giờ trang tự nộp): trang chấm ngay theo thang điểm của Bộ, hiện điểm từng phần, đáp án đúng của từng câu và nút <b>in phiếu kết quả</b> có họ tên, lớp.</li>
+    </ol>
+    <b>Mức chấm tự động:</b> 12 đề đầu chấm đủ cả 3 phần. Đề 13 (Sở Sơn La) chấm được gần đủ, thiếu 1 câu Phần II. Các đề 14–18 chấm tự động Phần I và phần lớn Phần II; riêng Phần III đáp số trong file gốc là công thức nên các câu đó trang ghi rõ <i>tự đối chiếu</i>, em xem đáp án và lời giải ở cuối file Word của đề.<br>
+    <b>Mở từ thư mục trên máy cũng thi được ngay:</b> mỗi đề là một trang riêng đã chứa sẵn toàn bộ đề bên trong, nên dù mở từ thư mục Downloads chưa có mạng, bấm vào đề là thi thử và chấm điểm ngay, học sinh không phải tìm thêm file nào khác.
+  </div>
+
+  <section class="blk" id="fbBlk" hidden>
+    <div class="blk-head">
+      <h2>🌟 Đề mới đăng lên kho</h2>
+      <p>Các đề thầy cô đăng trực tiếp bằng trang Đăng đề, lưu trên kho trực tuyến. Bấm Làm online để làm bài ngay, hoặc tải file Word gốc về máy.</p>
+    </div>
+    <div class="docs-grid" id="fbList"></div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-head">
+      <h2>📂 Danh sách đề trong kho</h2>
+      <p>Bấm <b>Làm online</b> để làm bài ngay trên trang, trang tự đọc file đề gốc và tự chấm bằng bảng đáp án có sẵn trong file. File Word và PDF là bản gốc của trường ra đề, cuối file có đáp án và lời giải chi tiết để tự kiểm tra sau khi làm.</p>
+    </div>
+    <div class="searchbar">
+      <input id="findExam" type="text" placeholder="🔎 Tìm đề theo tên trường, ví dụ: Bắc Ninh, KHTN, Nguyễn Khuyến…">
+    </div>
+    <div class="docs-grid" id="examList">
+
+      <div class="doc" data-name="bắc ninh chuyên bắc ninh kscl lần 1 2025 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 1 — THPT Chuyên Bắc Ninh</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Chuyên Bắc Ninh, Sở GD&amp;ĐT Bắc Ninh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-01-chuyen-bac-ninh.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-01-chuyen-bac-ninh.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-01-chuyen-bac-ninh.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="khtn hà nội chuyên khoa học tự nhiên kscl lần 1 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 1 — THPT Chuyên KHTN Hà Nội</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT 2026 lần 1 của Trường THPT Chuyên Khoa học Tự nhiên, ĐHQG Hà Nội. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-02-chuyen-khtn-ha-noi.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-02-chuyen-khtn-ha-noi.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-02-chuyen-khtn-ha-noi.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="nguyễn khuyến tphcm hồ chí minh kscl tháng 11">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL tháng 11 — THCS-THPT Nguyễn Khuyến, TP.HCM</h3>
+          <p>Đề khảo sát chất lượng tháng 11 ôn thi tốt nghiệp THPT của Trường THCS-THPT Nguyễn Khuyến, TP. Hồ Chí Minh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-03-nguyen-khuyen-tphcm.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-03-nguyen-khuyen-tphcm.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-03-nguyen-khuyen-tphcm.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="bãi cháy quảng ninh kscl lần 1 2025 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 1 — THPT Bãi Cháy, Quảng Ninh</h3>
+          <p>Đề khảo sát chất lượng lần 1 ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Bãi Cháy, Sở GD&ĐT Quảng Ninh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-04-bai-chay-quang-ninh.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-04-bai-chay-quang-ninh.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-04-bai-chay-quang-ninh.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="nguyễn khuyến tphcm hồ chí minh kscl 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL — THPT Nguyễn Khuyến, TP.HCM</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Nguyễn Khuyến, Sở GD&ĐT TP. Hồ Chí Minh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-05-nguyen-khuyen-tphcm-2026.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-05-nguyen-khuyen-tphcm-2026.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-05-nguyen-khuyen-tphcm-2026.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="nguyễn thị minh khai hà nội kscl lần 2 mã 1201">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 2 — THPT Nguyễn Thị Minh Khai, Hà Nội</h3>
+          <p>Đề khảo sát chất lượng lần 2 ôn thi tốt nghiệp THPT 2026 (mã đề 1201) của Trường THPT Nguyễn Thị Minh Khai, Sở GD&ĐT Hà Nội. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-06-nguyen-thi-minh-khai-ha-noi.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-06-nguyen-thi-minh-khai-ha-noi.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-06-nguyen-thi-minh-khai-ha-noi.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="nguyễn trãi ba đình hà nội kscl lần 2 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 2 — THPT Nguyễn Trãi – Ba Đình, Hà Nội</h3>
+          <p>Đề khảo sát chất lượng lần 2 ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Nguyễn Trãi – Ba Đình, Sở GD&ĐT Hà Nội. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-07-nguyen-trai-ba-dinh-ha-noi.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-07-nguyen-trai-ba-dinh-ha-noi.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-07-nguyen-trai-ba-dinh-ha-noi.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="gia định tphcm hồ chí minh kscl 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL — THPT Gia Định, TP.HCM</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Gia Định, Sở GD&ĐT TP. Hồ Chí Minh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-08-gia-dinh-tphcm.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-08-gia-dinh-tphcm.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-08-gia-dinh-tphcm.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="sở lâm đồng kscl 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL — Sở GD&ĐT Lâm Đồng</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT năm học 2025–2026 của Sở GD&ĐT Lâm Đồng. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-09-so-lam-dong.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-09-so-lam-dong.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-09-so-lam-dong.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="phan đăng lưu tphcm hồ chí minh kscl 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL — THPT Phan Đăng Lưu, TP.HCM</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Phan Đăng Lưu, Sở GD&ĐT TP. Hồ Chí Minh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-10-phan-dang-luu-tphcm.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-10-phan-dang-luu-tphcm.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-10-phan-dang-luu-tphcm.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="phổ thông năng khiếu đhqg tphcm kscl lần 1 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 1 — Phổ thông Năng Khiếu, ĐHQG TP.HCM</h3>
+          <p>Đề khảo sát chất lượng lần 1 ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường Phổ thông Năng Khiếu, Đại học Quốc gia TP. Hồ Chí Minh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-11-pho-thong-nang-khieu-tphcm.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-11-pho-thong-nang-khieu-tphcm.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-11-pho-thong-nang-khieu-tphcm.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="cụm 4 trường vĩnh phúc kscl lần 3 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 3 — Cụm 4 trường THPT, Vĩnh Phúc</h3>
+          <p>Đề khảo sát chất lượng lần 3 ôn thi tốt nghiệp THPT năm học 2025–2026 của Cụm 4 trường THPT tỉnh Vĩnh Phúc. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động cả 3 phần</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-12-cum-4-truong-vinh-phuc.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-12-cum-4-truong-vinh-phuc.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-12-cum-4-truong-vinh-phuc.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="sở sơn la kscl lần 3 2025 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 3 — Sở GD&ĐT Sơn La</h3>
+          <p>Đề khảo sát chất lượng lần 3 ôn thi tốt nghiệp THPT năm học 2025–2026 của Sở GD&ĐT Sơn La. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động Phần I, III và 3/4 câu Phần II</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-13-so-son-la-lan-3.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-13-so-son-la-lan-3.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-13-so-son-la-lan-3.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="sở ninh bình kscl lần 4 2025 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 4 — Sở GD&ĐT Ninh Bình</h3>
+          <p>Đề khảo sát chất lượng lần 4 ôn thi tốt nghiệp THPT năm học 2025–2026 của Sở GD&ĐT Ninh Bình. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động Phần I và 3/4 câu Phần II · Phần III tự đối chiếu lời giải</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-14-so-ninh-binh-lan-4.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-14-so-ninh-binh-lan-4.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-14-so-ninh-binh-lan-4.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="liên trường nghệ an kscl lần 5 2025 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL lần 5 — Liên trường THPT Nghệ An</h3>
+          <p>Đề khảo sát chất lượng lần 5 ôn thi tốt nghiệp THPT năm học 2025–2026 của Liên trường THPT tỉnh Nghệ An. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động Phần I và 2/4 câu Phần II · Phần III tự đối chiếu lời giải</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-15-lien-truong-nghe-an-lan-5.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-15-lien-truong-nghe-an-lan-5.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-15-lien-truong-nghe-an-lan-5.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="chuyên trần đại nghĩa tphcm hồ chí minh kscl 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL — THPT Chuyên Trần Đại Nghĩa, TP.HCM</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Chuyên Trần Đại Nghĩa, Sở GD&ĐT TP. Hồ Chí Minh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động Phần I và 3/4 câu Phần II · Phần III tự đối chiếu lời giải</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-16-chuyen-tran-dai-nghia-tphcm.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-16-chuyen-tran-dai-nghia-tphcm.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-16-chuyen-tran-dai-nghia-tphcm.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="nguyễn trung trực tphcm hồ chí minh kscl 2026">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề KSCL — THPT Nguyễn Trung Trực, TP.HCM</h3>
+          <p>Đề khảo sát chất lượng ôn thi tốt nghiệp THPT năm học 2025–2026 của Trường THPT Nguyễn Trung Trực, Sở GD&ĐT TP. Hồ Chí Minh. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động Phần I và 1/4 câu Phần II · Phần III tự đối chiếu lời giải</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-17-nguyen-trung-truc-tphcm.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-17-nguyen-trung-truc-tphcm.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-17-nguyen-trung-truc-tphcm.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+      <div class="doc" data-name="đề thi tốt nghiệp mã 1010 2026 chính thức">
+        <div class="ic">📄</div>
+        <div class="tt">
+          <h3>Đề thi tốt nghiệp THPT 2026 — Mã đề 1010</h3>
+          <p>Đề thi tốt nghiệp THPT năm 2026, mã đề 1010, trình bày theo đúng cấu trúc và hình thức đề chính thức: Phần I 12 câu, Phần II 4 câu đúng – sai, Phần III 6 câu trả lời ngắn, thời gian 90 phút.</p>
+          <div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span><span>Có lời giải chi tiết</span><span>Chấm tự động Phần I và 3/4 câu Phần II · Phần III tự đối chiếu lời giải</span></div>
+        </div>
+        <div class="dl">
+          <a class="go" href="de-thi-thu-18-de-tot-nghiep-ma-1010.html">▶ Thi thử online — chấm điểm ngay</a>
+          <a class="word" href="de-thi-thu-18-de-tot-nghiep-ma-1010.docx">⬇ Word gốc</a>
+          <a class="pdf" href="de-thi-thu-18-de-tot-nghiep-ma-1010.pdf" target="_blank">⬇ PDF để in</a>
+        </div>
+      </div>
+
+    </div>
+    <div class="tip"><b>🎯 Cách luyện đề cho hiệu quả:</b> chuẩn bị giấy nháp và máy tính cầm tay, bấm giờ đúng 90 phút, làm nghiêm túc như thi thật và không xem trước đáp án ở cuối file. Làm xong ghi lại những câu chưa chắc chắn, xem lời giải chi tiết trong file Word rồi làm lại đúng những câu đó sau vài ngày. Mỗi tuần một đề đều đặn sẽ thấy điểm số đi lên rõ rệt.</div>
+  </section>
+
+  <section class="blk">
+    <div class="blk-head">
+      <h2>➕ Gửi đề về kho</h2>
+      <p>Thầy cô và các em có đề thi thử hay, gửi về kho theo ba bước sau để cả lớp cùng luyện.</p>
+    </div>
+    <div class="guidebox">
+      <h3>Ba bước gửi một đề mới — nay đã tự động</h3>
+      <ol>
+        <li><b>Chuẩn bị file Word của đề.</b> File cần đủ ba phần (Phần I trắc nghiệm nhiều lựa chọn, Phần II đúng – sai, Phần III trả lời ngắn) và có <b>bảng đáp án ở cuối file</b>: Phần I ghi chữ cái đúng của từng câu, Phần II ghi Đúng – Sai của từng ý, Phần III ghi đáp số của từng câu, giống như ba đề mẫu đang có trong kho. Công thức gõ bằng MathType hay Equation trong Word đều được, trang đọc được cả hai.</li>
+        <li><b>Mở trang <a href="dang-de.html">➕ Đăng đề</a></b> (chỉ thầy cô có mã đăng đề mới đăng được), chọn file Word. Trang tự kiểm tra cấu trúc đề và bảng đáp án ngay tại chỗ, chỗ nào chưa đạt sẽ báo rõ.</li>
+        <li><b>Bấm Đăng đề lên kho.</b> File được lưu thẳng lên kho trực tuyến, đề hiện ngay ở mục <b>🌟 Đề mới đăng lên kho</b> phía trên và học sinh làm online được luôn — không phải tải file lên GitHub, không phải chờ ai duyệt.</li>
+      </ol>
+      <p style="margin-top:10px"><a href="dang-de.html" style="display:inline-block;background:#0e9f6e;color:#fff;padding:11px 20px;border-radius:999px;font-weight:900;font-size:14.5px">➕ Mở trang Đăng đề</a></p>
+    </div>
+    <div class="tip"><b>📌 Về nguồn đề:</b> mọi đề trong kho đều ghi rõ tên trường ra đề ngay trên thẻ đề. Kho chỉ nhận file Word gốc có đáp án ở cuối file; đề chụp ảnh hoặc file PDF không có bảng đáp án thì trang chưa tự chấm online được, thầy cô vui lòng gửi bản Word.</div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="foot-in">
+    📚 <b>Học Toán Cùng Thầy Tâm</b> — Trang học tập của thầy Nguyễn Văn Tâm · Trung tâm GDNN-GDTX Ba Tri<br>
+    Chơi trò chơi để ôn bài · Đọc tài liệu để hiểu sâu · Thi thử để sẵn sàng
+  </div>
+</footer>
+
+<script>
+  const examCards = [...document.querySelectorAll('#examList .doc')];
+  document.getElementById('findExam').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    examCards.forEach(c => {
+      const hit = !q || (c.dataset.name || '').includes(q) || c.querySelector('h3').textContent.toLowerCase().includes(q);
+      c.classList.toggle('hidden-card', !hit);
+    });
+  });
+</script>
+<script>
+  /* Danh sach de dang tu dong tren Firebase (khoDeList) */
+  (async () => {
+    const KHO_DB = 'https://rungchuongvang-4ef8d-default-rtdb.asia-southeast1.firebasedatabase.app';
+    const esc2 = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    try {
+      const r = await fetch(KHO_DB + '/khoDeList.json');
+      if (!r.ok) return;
+      const data = await r.json();
+      if (!data) return;
+      const items = Object.entries(data).sort((a, b) => (b[1].ngay || '').localeCompare(a[1].ngay || ''));
+      if (!items.length) return;
+      const grid = document.getElementById('fbList');
+      grid.innerHTML = items.map(([id, m]) =>
+        '<div class="doc"><div class="ic">📄</div><div class="tt"><h3>' + esc2(m.ten || '(chưa đặt tên)') + '</h3><p>' +
+        (m.truong ? esc2(m.truong) + '. ' : '') + 'Đề đăng lên kho trực tuyến' + (m.ngay ? ' ngày ' + new Date(m.ngay).toLocaleDateString('vi-VN') : '') + '. Đủ ba phần theo cấu trúc đề thi tốt nghiệp hiện nay.</p>' +
+        '<div class="meta"><span>⏱ 90 phút</span><span>Phần I · 12 câu</span><span>Phần II · 4 câu đúng – sai</span><span>Phần III · 6 câu trả lời ngắn</span>' +
+        ((m.mucCham === 'full' || m.coDapAn) ? '<span>Chấm tự động đủ 3 phần</span>' : (m.mucCham === 'part' ? '<span>Chấm tự động một phần</span>' : '<span>Chưa chấm tự động</span>')) + '</div></div>' +
+        '<div class="dl"><a class="go" href="lam-de-online.html?nguon=fb&id=' + encodeURIComponent(id) + '">▶ Thi thử online — chấm điểm ngay</a>' +
+        '<a class="word" href="javascript:void(0)" data-dl="' + esc2(id) + '" data-name="' + esc2(m.file || 'de-thi-thu.docx') + '">⬇ Word gốc</a></div></div>').join('');
+      document.getElementById('fbBlk').hidden = false;
+      grid.querySelectorAll('[data-dl]').forEach(a => a.addEventListener('click', async () => {
+        const old = a.textContent; a.textContent = 'Đang tải file…';
+        try {
+          const rr = await fetch(KHO_DB + '/khoDeFiles/' + encodeURIComponent(a.dataset.dl) + '.json');
+          const d = await rr.json();
+          if (!d || !d.b64) throw new Error('no file');
+          const bin = atob(d.b64); const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }));
+          const tmp = document.createElement('a'); tmp.href = url; tmp.download = a.dataset.name; tmp.click();
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+        } catch (e) { alert('Chưa tải được file Word của đề này, em thử Làm online nhé.'); }
+        a.textContent = old;
+      }));
+    } catch (e) { /* Kho truc tuyen chua mo hoac mat mang: an muc nay, cac de mau van dung binh thuong */ }
+  })();
+</script>
+</body>
+</html>
